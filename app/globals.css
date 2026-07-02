@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --primary-navy: #0b1220;
+  --deep-navy: #111827;
+  --slate: #334155;
+  --background: #f6f8fb;
+  --card-white: #ffffff;
+  --warm-cream: #fff7ed;
+  --amber-accent: #f59e0b;
+  --risk-red: #ef4444;
+  --safe-green: #10b981;
+  --info-blue: #2563eb;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--primary-navy);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.625rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  color: #0b1220;
+}
+
+.input:focus {
+  outline: 2px solid #2563eb33;
+  border-color: #2563eb;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.card {
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  padding: 0.9rem;
+}
+
+.panel-card {
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(11, 18, 32, 0.06);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  background: #0b1220;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  background: #334155;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.625rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0b1220;
+}
+
+.badge-sample {
+  display: inline-block;
+  border-radius: 9999px;
+  background: #fff7ed;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.risk-highlight {
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
 }

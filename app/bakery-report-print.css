@@ -1,0 +1,17 @@
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  header,
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .report-doc {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+}
