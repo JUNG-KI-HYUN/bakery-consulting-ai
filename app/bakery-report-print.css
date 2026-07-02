@@ -14,4 +14,21 @@
     font-size: 12pt;
     line-height: 1.5;
   }
+
+  .report-doc section,
+  .print-card,
+  .report-doc article {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .report-doc .grid {
+    gap: 8px !important;
+  }
+
+  .report-doc .rounded-2xl,
+  .report-doc .rounded-xl,
+  .report-doc .rounded-lg {
+    border-radius: 8px !important;
+  }
 }

@@ -29,7 +29,7 @@ export function buildNarrative(
       "상권 정보는 1차 MVP 기준 정성 검토(참고값)입니다. 실제 유동/매출 데이터는 별도 API 연동 후 확인이 필요합니다.",
     leaseAnalysis: `보증금 ${record.candidateStore.deposit.toLocaleString()}원, 월세 ${record.candidateStore.rent.toLocaleString()}원 기준이며 특약 협의 필요사항은 '${record.candidateStore.specialTerms}'입니다.`,
     facilityRiskAnalysis:
-      "전기, 배기, 급배수, 소방, 위생 관련 사항은 현장 실측 및 전문가 확인 필요 항목입니다.",
+      "베이커리는 시설에서 많이 막힐 수 있습니다. 전기, 배기, 급배수, 소방, 위생, 인허가 관련 항목은 현장 실측과 전문가 확인이 필요합니다.",
     layoutFeasibilityAnalysis:
       record.facilityCheck.drawingConfirmed
         ? "도면/사진 확인 기준으로 장비 반입 및 제조/판매 동선은 참고 수준에서 검토되었습니다."
@@ -38,20 +38,20 @@ export function buildNarrative(
       breakEven.breakEvenSales,
     ).toLocaleString()}원(참고값)이며, 추정 월순이익은 약 ${Math.round(
       breakEven.estimatedMonthlyNetProfit,
-    ).toLocaleString()}원입니다.`,
+    ).toLocaleString()}원입니다. 이 수치는 입력값 기준 추정치이며 실제 결과는 달라질 수 있습니다.`,
     marketingPotentialAnalysis:
-      "오픈 후 3개월은 지도/리뷰 기반 채널, 지역 제휴, 시식/체험형 프로모션 중심 운영을 권장합니다(참고안).",
+      "오픈 초기 3개월은 고객이 이 매장을 기억하게 만드는 시간입니다. 지도/리뷰 채널과 지역 제휴, 시식/체험형 프로모션을 함께 검토하는 편이 좋습니다(참고안).",
     brandStoryDirection:
-      "점포는 계약 전에 검증하고, 브랜드는 오픈 전에 설계해야 합니다. 본 후보 점포는 시설 확인이 우선이지만, 브랜드 측면에서는 고객이 기억할 한 문장과 시그니처 메뉴를 함께 정리할 필요가 있습니다.",
+      "이 점포, 계약 전에 먼저 확인해볼게요. 점포는 계약 전에 검증하고 브랜드는 오픈 전에 설계해야 합니다. 고객이 기억할 한 문장과 시그니처 메뉴를 함께 정리하는 것이 좋습니다.",
     marketingPotential:
-      "상권이 좋아도 이야기가 없으면 기억되지 않고, 이야기가 좋아도 비용 구조가 무너지면 오래 버티기 어렵습니다. 네이버 플레이스, 블로그, 인스타그램 소재는 실행 가능성이 있습니다.",
+      "상권이 좋아도 이야기가 없으면 기억되기 어렵고, 이야기가 좋아도 비용 구조가 무너지면 오래 버티기 어렵습니다. 네이버 플레이스, 블로그, 인스타그램 소재는 실행 가능성을 검토할 수 있습니다.",
     threeMonthMarketingPlan:
-      "오픈 전 2주는 플레이스 기본 세팅과 촬영 콘텐츠 준비, 1개월차는 리뷰 확보 중심 운영, 2개월차는 지역 키워드 블로그/인스타 노출, 3개월차는 단골 전환 이벤트 중심 운영이 적합합니다(참고용입니다).",
+      "오픈 전 2주는 플레이스 기본 세팅과 촬영 콘텐츠를 준비하고, 1개월차는 리뷰 확보, 2개월차는 지역 키워드 노출, 3개월차는 단골 전환 이벤트 중심으로 운영을 검토할 수 있습니다(참고용입니다).",
     localKeywordStrategy: `대표 고객층은 ${target}을 우선 가정하고, 지역 키워드는 '${keywords}' 기준으로 콘텐츠 일관성을 맞추는 전략이 검토가 필요합니다.`,
     reviewAndRegularCustomerStrategy: `시그니처 메뉴 후보 '${signature}'를 중심으로 첫 방문 리뷰 유도와 재방문 스탬프/세트 제안을 병행하면 단골 전환 가능성이 있습니다.`,
     interiorToneSuggestion: `추천 인테리어 톤은 '${tone}' 방향으로 검토 가능하며, 실제 시공 가능 여부는 전문가 확인이 필요합니다.`,
-    layoutIdea: `운영 방식은 '${operationType}' 기준으로, 제조공간은 '${kitchen}' 배치를 우선 검토하는 편이 안전합니다.`,
-    equipmentPlacementIdea: `쇼케이스는 '${showcase}', 카운터/픽업대는 '${counter}' 위치 아이디어로 1차 검토 가능합니다.`,
+    layoutIdea: `운영 방식은 '${operationType}' 기준으로, 제조공간은 '${kitchen}' 배치를 우선 검토하는 편이 안전합니다. 확정 전에는 현장 조건 확인이 필요합니다.`,
+    equipmentPlacementIdea: `쇼케이스는 '${showcase}', 카운터/픽업대는 '${counter}' 위치 아이디어로 1차 검토할 수 있습니다.`,
     hallUsageIdea: `홀/대기 공간은 '${hall}' 구성을 우선 고려하되, 현장 폭과 동선 간섭 여부 확인이 필요합니다.`,
     customerFlowOpinion: `고객 동선은 '${customerFlow}' 흐름을 기준으로 검토 가능하며, 혼잡 시간대 시뮬레이션이 권장됩니다.`,
     staffFlowOpinion: `직원 동선은 '${staffFlow}' 기준으로 검토 가능하나, 장비 반입/배기 위치와 함께 재검토가 필요합니다.`,
