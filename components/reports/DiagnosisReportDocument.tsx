@@ -132,6 +132,84 @@ export function DiagnosisReportDocument({ result }: { result: DiagnosisResult })
         </div>
       </section>
 
+      {result.startupCostResult && result.startupCost && (
+        <section className="print-card rounded-xl border border-slate-200 bg-white p-4">
+          <h2 className="font-semibold">창업비용 예상표</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            이 금액은 추정치이며 실제 비용은 시공사, 장비 견적, 현장 상황에 따라
+            달라질 수 있습니다.
+          </p>
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm text-slate-700">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+                  <th className="py-2 pr-4">항목</th>
+                  <th className="py-2 pr-4">금액(추정)</th>
+                  <th className="py-2">비고</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(
+                  [
+                    ["보증금", result.startupCostDeposit ?? 0],
+                    ["권리금", result.startupCostPremium ?? 0],
+                    ["인테리어비", result.startupCost.interiorCost],
+                    ["제조장비비", result.startupCost.productionEquipmentCost],
+                    ["판매장비비", result.startupCost.salesEquipmentCost],
+                    ["간판비", result.startupCost.signageCost],
+                    ["초도물품비", result.startupCost.initialSuppliesCost],
+                    ["인허가 관련비", result.startupCost.licenseRelatedCost, "전문가 확인 필요"],
+                    ["예비비", result.startupCost.reserveCost],
+                  ] as [string, number, string?][]
+                ).map(([label, amount, note]) => (
+                  <tr key={label} className="border-b border-slate-100">
+                    <td className="py-2 pr-4">{label}</td>
+                    <td className="py-2 pr-4">{Math.round(amount).toLocaleString()}원</td>
+                    <td className="py-2 text-xs text-amber-700">{note ?? ""}</td>
+                  </tr>
+                ))}
+                <tr className="font-semibold text-[#0B1220]">
+                  <td className="py-2 pr-4">총 창업비용(추정)</td>
+                  <td className="py-2 pr-4">
+                    {Math.round(result.startupCostResult.totalCost).toLocaleString()}원
+                  </td>
+                  <td className="py-2" />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">창업예산</p>
+              <p className="mt-1 font-semibold">
+                {(result.startupBudget ?? 0).toLocaleString()}원
+              </p>
+            </article>
+            <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">예산 대비 차액</p>
+              <p className="mt-1 font-semibold">
+                {Math.round(result.startupCostResult.budgetDifference).toLocaleString()}원
+              </p>
+            </article>
+            <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">예산 초과율(추정치)</p>
+              <p className="mt-1 font-semibold">
+                {result.startupCostResult.budgetOverRatePercent.toFixed(2)}%
+              </p>
+            </article>
+            <article className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">예비비 비율(추정치)</p>
+              <p className="mt-1 font-semibold">
+                {result.startupCostResult.reserveRatePercent.toFixed(2)}%
+              </p>
+            </article>
+          </div>
+          <p className="mt-3 text-xs text-amber-700">
+            인허가·소방·전기 관련 항목은 전문가 확인 필요
+          </p>
+        </section>
+      )}
+
       <section className="print-card rounded-xl border border-slate-200 bg-white p-4">
         <h2 className="font-semibold">손익분기점 요약 (추정치)</h2>
         <p className="mt-1 text-sm text-slate-600">

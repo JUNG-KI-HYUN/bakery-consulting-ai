@@ -8,10 +8,22 @@ import { ConsultationForm } from "@/components/diagnosis/ConsultationForm";
 import { DiagnosisResultView } from "@/components/diagnosis/DiagnosisResultView";
 import { FacilityCheckForm } from "@/components/diagnosis/FacilityCheckForm";
 import { InteriorSketchForm } from "@/components/diagnosis/InteriorSketchForm";
+import { StartupCostForm } from "@/components/diagnosis/StartupCostForm";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { sampleConsultation } from "@/lib/diagnosis/sample-data";
 import { calculateBreakEven } from "@/lib/diagnosis/calculateBreakEven";
-import { DiagnosisResult } from "@/lib/diagnosis/types";
+import { calculateStartupCost } from "@/lib/diagnosis/calculateStartupCost";
+import { DiagnosisResult, StartupCostInput } from "@/lib/diagnosis/types";
+
+const emptyStartupCost: StartupCostInput = {
+  interiorCost: 0,
+  productionEquipmentCost: 0,
+  salesEquipmentCost: 0,
+  signageCost: 0,
+  initialSuppliesCost: 0,
+  licenseRelatedCost: 0,
+  reserveCost: 0,
+};
 
 export default function NewConsultationPage() {
   const [record, setRecord] = useState({
@@ -29,6 +41,21 @@ export default function NewConsultationPage() {
     () => calculateBreakEven(record.breakEven),
     [record.breakEven],
   );
+
+  const startupCostResult = useMemo(() => {
+    if (!record.startupCost) return undefined;
+    return calculateStartupCost(
+      record.startupCost,
+      record.candidateStore.deposit,
+      record.candidateStore.premium,
+      record.consultation.startupBudget,
+    );
+  }, [
+    record.startupCost,
+    record.candidateStore.deposit,
+    record.candidateStore.premium,
+    record.consultation.startupBudget,
+  ]);
 
   const save = async () => {
     await fetch("/api/consultations", {
@@ -83,6 +110,14 @@ export default function NewConsultationPage() {
         value={record.breakEven}
         result={breakEvenResult}
         onChange={(next) => setRecord({ ...record, breakEven: next })}
+      />
+      <StartupCostForm
+        value={record.startupCost ?? emptyStartupCost}
+        result={startupCostResult}
+        deposit={record.candidateStore.deposit}
+        premium={record.candidateStore.premium}
+        startupBudget={record.consultation.startupBudget}
+        onChange={(next) => setRecord({ ...record, startupCost: next })}
       />
       <BrandMarketingForm
         value={record.brandMarketing ?? sampleConsultation.brandMarketing!}

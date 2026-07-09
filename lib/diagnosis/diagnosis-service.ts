@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { mockAiDiagnosis } from "./mockAiDiagnosis";
+import { buildDiagnosisResult } from "./mockAiDiagnosis";
 import { ConsultationRecord, DiagnosisResult } from "./types";
 import { sampleConsultation } from "./sample-data";
 
@@ -51,7 +51,7 @@ export async function saveConsultation(record: ConsultationRecord) {
 export async function runDiagnosis(id: string): Promise<DiagnosisResult | null> {
   const record = await getConsultationById(id);
   if (!record) return null;
-  const result = mockAiDiagnosis(record);
+  const result = buildDiagnosisResult(record);
 
   await ensureDataFiles();
   const draftsRaw = await fs.readFile(draftsBackupFile, "utf-8");

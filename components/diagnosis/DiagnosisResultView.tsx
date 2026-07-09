@@ -4,6 +4,71 @@ import { InteriorSketchBoard } from "./InteriorSketchBoard";
 import { ChecklistSection } from "./ChecklistSection";
 import { RiskVerdictBadge } from "./RiskVerdictBadge";
 
+function StartupCostSection({ result }: { result: DiagnosisResult }) {
+  if (!result.startupCostResult || !result.startupCost) return null;
+
+  const rows: [string, number, string?][] = [
+    ["보증금", result.startupCostDeposit ?? 0],
+    ["권리금", result.startupCostPremium ?? 0],
+    ["인테리어비", result.startupCost.interiorCost],
+    ["제조장비비", result.startupCost.productionEquipmentCost],
+    ["판매장비비", result.startupCost.salesEquipmentCost],
+    ["간판비", result.startupCost.signageCost],
+    ["초도물품비", result.startupCost.initialSuppliesCost],
+    ["인허가 관련비", result.startupCost.licenseRelatedCost, "전문가 확인 필요"],
+    ["예비비", result.startupCost.reserveCost],
+  ];
+
+  return (
+    <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+      <h3 className="text-base font-semibold text-[#0B1220]">창업비용 예상표</h3>
+      <p className="text-sm text-slate-600">
+        이 금액은 추정치이며 실제 비용은 시공사, 장비 견적, 현장 상황에 따라
+        달라질 수 있습니다.
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-slate-700">
+          <thead>
+            <tr className="border-b border-slate-200 text-left text-xs text-slate-500">
+              <th className="py-2 pr-4">항목</th>
+              <th className="py-2 pr-4">금액(추정)</th>
+              <th className="py-2">비고</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, amount, note]) => (
+              <tr key={label} className="border-b border-slate-100">
+                <td className="py-2 pr-4">{label}</td>
+                <td className="py-2 pr-4">{Math.round(amount).toLocaleString()}원</td>
+                <td className="py-2 text-xs text-amber-700">{note ?? ""}</td>
+              </tr>
+            ))}
+            <tr className="font-semibold text-[#0B1220]">
+              <td className="py-2 pr-4">총 창업비용(추정)</td>
+              <td className="py-2 pr-4">
+                {Math.round(result.startupCostResult.totalCost).toLocaleString()}원
+              </td>
+              <td className="py-2" />
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="grid gap-1 text-sm text-slate-700 md:grid-cols-2">
+        <p>창업예산: {(result.startupBudget ?? 0).toLocaleString()}원</p>
+        <p>
+          예산 대비 차액:{" "}
+          {Math.round(result.startupCostResult.budgetDifference).toLocaleString()}원
+        </p>
+        <p>예산 초과율(추정): {result.startupCostResult.budgetOverRatePercent.toFixed(2)}%</p>
+        <p>예비비 비율(추정): {result.startupCostResult.reserveRatePercent.toFixed(2)}%</p>
+      </div>
+      <p className="text-xs text-amber-700">
+        인허가·소방·전기 관련 항목은 전문가 확인 필요
+      </p>
+    </section>
+  );
+}
+
 export function DiagnosisResultView({
   result,
   consultationId,
@@ -17,7 +82,7 @@ export function DiagnosisResultView({
     <section className="panel-card space-y-5 rounded-2xl p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold text-[#2563EB]">STEP 5</p>
+          <p className="text-xs font-semibold text-[#2563EB]">진단 결과</p>
           <h2 className="text-lg font-bold text-[#0B1220]">
             AI 1차 점포진단 결과
           </h2>
@@ -133,6 +198,7 @@ export function DiagnosisResultView({
           <h3 className="font-semibold">도면 기반 매장세팅 가능성</h3>
           <p className="mt-1">{result.sections.layoutFeasibilityAnalysis}</p>
         </article>
+        <StartupCostSection result={result} />
         <article className="card">
           <h3 className="font-semibold">손익분기점 분석</h3>
           <p className="mt-1">{result.sections.breakEvenAnalysis}</p>

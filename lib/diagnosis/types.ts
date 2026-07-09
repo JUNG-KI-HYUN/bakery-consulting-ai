@@ -77,6 +77,23 @@ export interface BreakEvenResult {
   premiumRecoveryMonths: number | null;
 }
 
+export interface StartupCostInput {
+  interiorCost: number;
+  productionEquipmentCost: number;
+  salesEquipmentCost: number;
+  signageCost: number;
+  initialSuppliesCost: number;
+  licenseRelatedCost: number;
+  reserveCost: number;
+}
+
+export interface StartupCostResult {
+  totalCost: number;
+  budgetDifference: number;
+  budgetOverRatePercent: number;
+  reserveRatePercent: number;
+}
+
 export interface BrandMarketingInput {
   brandConcept: string;
   founderStory: string;
@@ -134,6 +151,7 @@ export interface ConsultationRecord {
   candidateStore: CandidateStoreInput;
   facilityCheck: FacilityCheckInput;
   breakEven: BreakEvenInput;
+  startupCost?: StartupCostInput;
   brandMarketing?: BrandMarketingInput;
   interiorSketch?: InteriorSketchInput;
 }
@@ -143,6 +161,11 @@ export interface DiagnosisResult {
   verdict: Verdict;
   reasons: string[];
   breakEvenResult: BreakEvenResult;
+  startupCostResult?: StartupCostResult;
+  startupCost?: StartupCostInput;
+  startupCostDeposit?: number;
+  startupCostPremium?: number;
+  startupBudget?: number;
   sections: DiagnosisSections;
   generatedAt: string;
 }
