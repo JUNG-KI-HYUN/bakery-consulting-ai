@@ -23,6 +23,7 @@ const navItems = [
   { href: "/", label: "대시보드" },
   { href: "/consultations", label: "상담 목록" },
   { href: "/consultations/new", label: "상담 등록" },
+  { href: "/markets", label: "상권분석" },
 ];
 
 export default function RootLayout({
