@@ -19,6 +19,7 @@
 
 # production
 /build
+/docs/market-data/archive/*.zip
 
 # misc
 .DS_Store

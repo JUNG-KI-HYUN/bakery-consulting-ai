@@ -1,0 +1,2036 @@
+{
+  "type": "FeatureCollection",
+  "name": "frameone_seoul_markets_v1",
+  "crs_note": "GeoJSON output must use WGS84 (EPSG:4326). Geometry remains null until verified.",
+  "checked_at": "2026-08-26",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "SEOUL-JONGNO-GWANGHWAMUN-JONGNO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JONGNO-GWANGHWAMUN-JONGNO",
+        "gu": "종로구",
+        "name": "광화문·종로권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JONGNO-INSADONG-IKSEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JONGNO-INSADONG-IKSEON",
+        "gu": "종로구",
+        "name": "인사동·익선권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JONGNO-SAMCHEONG-BUKCHON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JONGNO-SAMCHEONG-BUKCHON",
+        "gu": "종로구",
+        "name": "삼청·북촌권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JONGNO-DAEHANGNO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JONGNO-DAEHANGNO",
+        "gu": "종로구",
+        "name": "대학로권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JONGNO-SEOCHEON-GYEONGBOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JONGNO-SEOCHEON-GYEONGBOK",
+        "gu": "종로구",
+        "name": "서촌·경복궁권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JONGNO-DONGDAEMUN-CHANGSIN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JONGNO-DONGDAEMUN-CHANGSIN",
+        "gu": "종로구",
+        "name": "동대문·창신권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JONGNO-BUAM-PYEONGCHANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JONGNO-BUAM-PYEONGCHANG",
+        "gu": "종로구",
+        "name": "부암·평창권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNG-MYEONGDONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNG-MYEONGDONG",
+        "gu": "중구",
+        "name": "명동권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNG-EULJIRO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNG-EULJIRO",
+        "gu": "중구",
+        "name": "을지로권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNG-NAMDAEMUN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNG-NAMDAEMUN",
+        "gu": "중구",
+        "name": "남대문권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNG-DONGDAEMUN-FASHION",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNG-DONGDAEMUN-FASHION",
+        "gu": "중구",
+        "name": "동대문패션타운권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNG-SEOULSTN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNG-SEOULSTN",
+        "gu": "중구",
+        "name": "서울역권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNG-CITYHALL-BUKCHANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNG-CITYHALL-BUKCHANG",
+        "gu": "중구",
+        "name": "시청·북창권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNG-SINDANG-YAKSU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNG-SINDANG-YAKSU",
+        "gu": "중구",
+        "name": "신당·약수권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YONGSAN-ITAEWON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YONGSAN-ITAEWON",
+        "gu": "용산구",
+        "name": "이태원권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YONGSAN-HANNAM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YONGSAN-HANNAM",
+        "gu": "용산구",
+        "name": "한남권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YONGSAN-HAEBANGCHON-GYEONGNIDAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YONGSAN-HAEBANGCHON-GYEONGNIDAN",
+        "gu": "용산구",
+        "name": "해방촌·경리단권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YONGSAN-YONGLIDAN-SINYONGSAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YONGSAN-YONGLIDAN-SINYONGSAN",
+        "gu": "용산구",
+        "name": "용리단길·신용산권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YONGSAN-YONGSANSTN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YONGSAN-YONGSANSTN",
+        "gu": "용산구",
+        "name": "용산역권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YONGSAN-NAMYEONG-SOOKMYUNG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YONGSAN-NAMYEONG-SOOKMYUNG",
+        "gu": "용산구",
+        "name": "남영·숙대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YONGSAN-HYOCHANG-HUAM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YONGSAN-HYOCHANG-HUAM",
+        "gu": "용산구",
+        "name": "효창·후암권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGDONG-SEONGSU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGDONG-SEONGSU",
+        "gu": "성동구",
+        "name": "성수권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGDONG-SEOULFOREST",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGDONG-SEOULFOREST",
+        "gu": "성동구",
+        "name": "서울숲권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGDONG-WANGSIMNI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGDONG-WANGSIMNI",
+        "gu": "성동구",
+        "name": "왕십리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGDONG-HAENGDANG-HANYANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGDONG-HAENGDANG-HANYANG",
+        "gu": "성동구",
+        "name": "행당·한양대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGDONG-GEUMHO-OKSU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGDONG-GEUMHO-OKSU",
+        "gu": "성동구",
+        "name": "금호·옥수권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGDONG-MAJANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGDONG-MAJANG",
+        "gu": "성동구",
+        "name": "마장권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANGJIN-KONKUK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANGJIN-KONKUK",
+        "gu": "광진구",
+        "name": "건대입구권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANGJIN-GUI-GANGBYEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANGJIN-GUI-GANGBYEON",
+        "gu": "광진구",
+        "name": "구의·강변권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANGJIN-JAYANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANGJIN-JAYANG",
+        "gu": "광진구",
+        "name": "자양권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANGJIN-CHILDRENSPARK-SEJONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANGJIN-CHILDRENSPARK-SEJONG",
+        "gu": "광진구",
+        "name": "어린이대공원·세종대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANGJIN-GUNJA-JUNGGOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANGJIN-GUNJA-JUNGGOK",
+        "gu": "광진구",
+        "name": "군자·중곡권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGDAEMUN-CHEONGNYANGNI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGDAEMUN-CHEONGNYANGNI",
+        "gu": "동대문구",
+        "name": "청량리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGDAEMUN-HOEGI-KYUNGHEE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGDAEMUN-HOEGI-KYUNGHEE",
+        "gu": "동대문구",
+        "name": "회기·경희대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGDAEMUN-HUFS-IMUN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGDAEMUN-HUFS-IMUN",
+        "gu": "동대문구",
+        "name": "외대앞·이문권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGDAEMUN-JANGAN-DAPSIMNI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGDAEMUN-JANGAN-DAPSIMNI",
+        "gu": "동대문구",
+        "name": "장안·답십리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGDAEMUN-JEONNONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGDAEMUN-JEONNONG",
+        "gu": "동대문구",
+        "name": "전농권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGDAEMUN-JEGI-YONGDU-SINSEOL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGDAEMUN-JEGI-YONGDU-SINSEOL",
+        "gu": "동대문구",
+        "name": "제기·용두·신설권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNGNANG-SANGBONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNGNANG-SANGBONG",
+        "gu": "중랑구",
+        "name": "상봉권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNGNANG-MANGU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNGNANG-MANGU",
+        "gu": "중랑구",
+        "name": "망우권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNGNANG-MYEONMOK-SAGAJUNG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNGNANG-MYEONMOK-SAGAJUNG",
+        "gu": "중랑구",
+        "name": "면목·사가정권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNGNANG-SINNAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNGNANG-SINNAE",
+        "gu": "중랑구",
+        "name": "신내권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-JUNGNANG-JUNGHWA",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-JUNGNANG-JUNGHWA",
+        "gu": "중랑구",
+        "name": "중화권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGBUK-SUNGSHIN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGBUK-SUNGSHIN",
+        "gu": "성북구",
+        "name": "성신여대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGBUK-ANAM-KOREAUNIV",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGBUK-ANAM-KOREAUNIV",
+        "gu": "성북구",
+        "name": "안암·고대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGBUK-GIREUM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGBUK-GIREUM",
+        "gu": "성북구",
+        "name": "길음권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGBUK-HANSUNG-SEONGBUK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGBUK-HANSUNG-SEONGBUK",
+        "gu": "성북구",
+        "name": "한성대·성북동권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGBUK-SEOKGYE-JANGWI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGBUK-SEOKGYE-JANGWI",
+        "gu": "성북구",
+        "name": "석계·장위권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEONGBUK-JEONGNEUNG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEONGBUK-JEONGNEUNG",
+        "gu": "성북구",
+        "name": "정릉권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGBUK-SUYU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGBUK-SUYU",
+        "gu": "강북구",
+        "name": "수유권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGBUK-MIASAGEORI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGBUK-MIASAGEORI",
+        "gu": "강북구",
+        "name": "미아사거리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGBUK-MIA-BEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGBUK-MIA-BEON",
+        "gu": "강북구",
+        "name": "미아·번동권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGBUK-UI-BUKHANSAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGBUK-UI-BUKHANSAN",
+        "gu": "강북구",
+        "name": "우이·북한산권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DOBONG-CHANGDONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DOBONG-CHANGDONG",
+        "gu": "도봉구",
+        "name": "창동권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DOBONG-SSANGMUN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DOBONG-SSANGMUN",
+        "gu": "도봉구",
+        "name": "쌍문권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DOBONG-BANGHAK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DOBONG-BANGHAK",
+        "gu": "도봉구",
+        "name": "방학권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DOBONG-DOBONGSAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DOBONG-DOBONGSAN",
+        "gu": "도봉구",
+        "name": "도봉산권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-NOWON-NOWONSTN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-NOWON-NOWONSTN",
+        "gu": "노원구",
+        "name": "노원역권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-NOWON-GONGNEUNG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-NOWON-GONGNEUNG",
+        "gu": "노원구",
+        "name": "공릉권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-NOWON-JUNGGYE-ACADEMY",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-NOWON-JUNGGYE-ACADEMY",
+        "gu": "노원구",
+        "name": "중계은행사거리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-NOWON-TAEREUNG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-NOWON-TAEREUNG",
+        "gu": "노원구",
+        "name": "태릉입구권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-NOWON-SANGGYE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-NOWON-SANGGYE",
+        "gu": "노원구",
+        "name": "상계권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-NOWON-WOLGYE-KWANGWOON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-NOWON-WOLGYE-KWANGWOON",
+        "gu": "노원구",
+        "name": "월계·광운대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-EUNPYEONG-YEONSINNAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-EUNPYEONG-YEONSINNAE",
+        "gu": "은평구",
+        "name": "연신내권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-EUNPYEONG-BULGWANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-EUNPYEONG-BULGWANG",
+        "gu": "은평구",
+        "name": "불광권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-EUNPYEONG-EUNGAM-SAEJEOL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-EUNPYEONG-EUNGAM-SAEJEOL",
+        "gu": "은평구",
+        "name": "응암·새절권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-EUNPYEONG-GUPABAL-NEWTOWN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-EUNPYEONG-GUPABAL-NEWTOWN",
+        "gu": "은평구",
+        "name": "구파발·은평뉴타운권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-EUNPYEONG-NOKBEON-SUSAEK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-EUNPYEONG-NOKBEON-SUSAEK",
+        "gu": "은평구",
+        "name": "녹번·수색권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEODAEMUN-SINCHON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEODAEMUN-SINCHON",
+        "gu": "서대문구",
+        "name": "신촌권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEODAEMUN-EWHA",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEODAEMUN-EWHA",
+        "gu": "서대문구",
+        "name": "이대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEODAEMUN-YEONHUI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEODAEMUN-YEONHUI",
+        "gu": "서대문구",
+        "name": "연희권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEODAEMUN-HONGJE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEODAEMUN-HONGJE",
+        "gu": "서대문구",
+        "name": "홍제권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEODAEMUN-GAJWA-NAMGAJWA",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEODAEMUN-GAJWA-NAMGAJWA",
+        "gu": "서대문구",
+        "name": "가좌·남가좌권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEODAEMUN-DONGNIMUN-YEONGCHEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEODAEMUN-DONGNIMUN-YEONGCHEON",
+        "gu": "서대문구",
+        "name": "독립문·영천시장권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-HONGDAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-HONGDAE",
+        "gu": "마포구",
+        "name": "홍대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-YEONNAM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-YEONNAM",
+        "gu": "마포구",
+        "name": "연남권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-HAPJEONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-HAPJEONG",
+        "gu": "마포구",
+        "name": "합정권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-MANGWON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-MANGWON",
+        "gu": "마포구",
+        "name": "망원권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-SANGSU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-SANGSU",
+        "gu": "마포구",
+        "name": "상수권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-GONGDEOK-MAPO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-GONGDEOK-MAPO",
+        "gu": "마포구",
+        "name": "공덕·마포권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-DAEHEUNG-SOGANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-DAEHEUNG-SOGANG",
+        "gu": "마포구",
+        "name": "대흥·서강대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-MAPO-SANGAM-DMC",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-MAPO-SANGAM-DMC",
+        "gu": "마포구",
+        "name": "상암DMC권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YANGCHEON-MOKDONG-OGEORI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YANGCHEON-MOKDONG-OGEORI",
+        "gu": "양천구",
+        "name": "목동오거리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YANGCHEON-OMOKGYO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YANGCHEON-OMOKGYO",
+        "gu": "양천구",
+        "name": "오목교권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YANGCHEON-MOKDONG-ACADEMY",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YANGCHEON-MOKDONG-ACADEMY",
+        "gu": "양천구",
+        "name": "목동학원가권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YANGCHEON-SINJEONGNEGEORI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YANGCHEON-SINJEONGNEGEORI",
+        "gu": "양천구",
+        "name": "신정네거리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YANGCHEON-SINWOL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YANGCHEON-SINWOL",
+        "gu": "양천구",
+        "name": "신월권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGSEO-MAGOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGSEO-MAGOK",
+        "gu": "강서구",
+        "name": "마곡권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGSEO-BALSAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGSEO-BALSAN",
+        "gu": "강서구",
+        "name": "발산권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGSEO-GIMPOAIRPORT",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGSEO-GIMPOAIRPORT",
+        "gu": "강서구",
+        "name": "김포공항·롯데몰권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGSEO-HWAGOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGSEO-HWAGOK",
+        "gu": "강서구",
+        "name": "화곡권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGSEO-KKACHISAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGSEO-KKACHISAN",
+        "gu": "강서구",
+        "name": "까치산권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGSEO-DEUNGCHON-YEOMCHANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGSEO-DEUNGCHON-YEOMCHANG",
+        "gu": "강서구",
+        "name": "등촌·염창권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGSEO-BANGHWA",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGSEO-BANGHWA",
+        "gu": "강서구",
+        "name": "방화권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GURO-GURODIGITAL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GURO-GURODIGITAL",
+        "gu": "구로구",
+        "name": "구로디지털단지권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GURO-SINDORIM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GURO-SINDORIM",
+        "gu": "구로구",
+        "name": "신도림권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GURO-GUROSTN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GURO-GUROSTN",
+        "gu": "구로구",
+        "name": "구로역권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GURO-GOCHEOK-GAEBONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GURO-GOCHEOK-GAEBONG",
+        "gu": "구로구",
+        "name": "고척·개봉권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GURO-ORYU-ONSU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GURO-ORYU-ONSU",
+        "gu": "구로구",
+        "name": "오류·온수권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GURO-CHEONWANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GURO-CHEONWANG",
+        "gu": "구로구",
+        "name": "천왕권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GEUMCHEON-GASANDIGITAL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GEUMCHEON-GASANDIGITAL",
+        "gu": "금천구",
+        "name": "가산디지털단지권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GEUMCHEON-DOKSAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GEUMCHEON-DOKSAN",
+        "gu": "금천구",
+        "name": "독산권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GEUMCHEON-SIHEUNG-SAGEORI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GEUMCHEON-SIHEUNG-SAGEORI",
+        "gu": "금천구",
+        "name": "시흥사거리권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GEUMCHEON-GEUMCHEONGU-OFFICE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GEUMCHEON-GEUMCHEONGU-OFFICE",
+        "gu": "금천구",
+        "name": "금천구청권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YEONGDEUNGPO-YEOUIDO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YEONGDEUNGPO-YEOUIDO",
+        "gu": "영등포구",
+        "name": "여의도권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YEONGDEUNGPO-YEONGDEUNGPOSTN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YEONGDEUNGPO-YEONGDEUNGPOSTN",
+        "gu": "영등포구",
+        "name": "영등포역·타임스퀘어권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YEONGDEUNGPO-MULLAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YEONGDEUNGPO-MULLAE",
+        "gu": "영등포구",
+        "name": "문래권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YEONGDEUNGPO-DANGSAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YEONGDEUNGPO-DANGSAN",
+        "gu": "영등포구",
+        "name": "당산권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YEONGDEUNGPO-SEONYUDO-YANGPYEONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YEONGDEUNGPO-SEONYUDO-YANGPYEONG",
+        "gu": "영등포구",
+        "name": "선유도·양평권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YEONGDEUNGPO-SINGIL-DAERIM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YEONGDEUNGPO-SINGIL-DAERIM",
+        "gu": "영등포구",
+        "name": "신길·대림권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-YEONGDEUNGPO-YEONGDEUNGPO-MARKET",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-YEONGDEUNGPO-YEONGDEUNGPO-MARKET",
+        "gu": "영등포구",
+        "name": "영등포시장권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGJAK-SADANG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGJAK-SADANG",
+        "gu": "동작구",
+        "name": "사당권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGJAK-ISU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGJAK-ISU",
+        "gu": "동작구",
+        "name": "이수권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGJAK-NORYANGJIN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGJAK-NORYANGJIN",
+        "gu": "동작구",
+        "name": "노량진권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGJAK-HEUKSEOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGJAK-HEUKSEOK",
+        "gu": "동작구",
+        "name": "흑석권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGJAK-SANGDO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGJAK-SANGDO",
+        "gu": "동작구",
+        "name": "상도권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-DONGJAK-SINDAEBANG-BORAMAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-DONGJAK-SINDAEBANG-BORAMAE",
+        "gu": "동작구",
+        "name": "신대방삼거리·보라매권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANAK-SILLIM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANAK-SILLIM",
+        "gu": "관악구",
+        "name": "신림권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANAK-SNU-SHAROSU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANAK-SNU-SHAROSU",
+        "gu": "관악구",
+        "name": "서울대입구·샤로수길권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANAK-NAKSEONGDAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANAK-NAKSEONGDAE",
+        "gu": "관악구",
+        "name": "낙성대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANAK-BONGCHEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANAK-BONGCHEON",
+        "gu": "관악구",
+        "name": "봉천권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANAK-DAEHAKDONG-GWANAKSAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANAK-DAEHAKDONG-GWANAKSAN",
+        "gu": "관악구",
+        "name": "대학동·관악산입구권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GWANAK-SINDAEBANG-NANGOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GWANAK-SINDAEBANG-NANGOK",
+        "gu": "관악구",
+        "name": "신대방·난곡권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-GANGNAMSTN-WEST",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-GANGNAMSTN-WEST",
+        "gu": "서초구",
+        "name": "강남역 서초권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-GYODAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-GYODAE",
+        "gu": "서초구",
+        "name": "교대권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-SEOCHO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-SEOCHO",
+        "gu": "서초구",
+        "name": "서초권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-BANPO-EXPRESSTERMINAL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-BANPO-EXPRESSTERMINAL",
+        "gu": "서초구",
+        "name": "반포·고속터미널권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-JAMWON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-JAMWON",
+        "gu": "서초구",
+        "name": "잠원권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-BANGBAE-SEORAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-BANGBAE-SEORAE",
+        "gu": "서초구",
+        "name": "방배·서래마을권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-YANGJAE",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-YANGJAE",
+        "gu": "서초구",
+        "name": "양재권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SEOCHO-NAEGOK-CHEONGGYESAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SEOCHO-NAEGOK-CHEONGGYESAN",
+        "gu": "서초구",
+        "name": "내곡·청계산입구권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-GANGNAMSTN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-GANGNAMSTN",
+        "gu": "강남구",
+        "name": "강남역권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-YEOKSAM-TEHERAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-YEOKSAM-TEHERAN",
+        "gu": "강남구",
+        "name": "역삼·테헤란로권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-SEOLLEUNG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-SEOLLEUNG",
+        "gu": "강남구",
+        "name": "선릉권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-SAMSUNG-COEX",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-SAMSUNG-COEX",
+        "gu": "강남구",
+        "name": "삼성·코엑스권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-CHEONGDAM",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-CHEONGDAM",
+        "gu": "강남구",
+        "name": "청담권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-APGUJEONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-APGUJEONG",
+        "gu": "강남구",
+        "name": "압구정권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-SINSA-GAROSU",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-SINSA-GAROSU",
+        "gu": "강남구",
+        "name": "신사·가로수길권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-NONHYEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-NONHYEON",
+        "gu": "강남구",
+        "name": "논현권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-DAECHI-DOGOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-DAECHI-DOGOK",
+        "gu": "강남구",
+        "name": "대치·도곡권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGNAM-SUSEO-SEGOK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGNAM-SUSEO-SEGOK",
+        "gu": "강남구",
+        "name": "수서·세곡권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-JAMSIL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-JAMSIL",
+        "gu": "송파구",
+        "name": "잠실권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-SONGRIDAN",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-SONGRIDAN",
+        "gu": "송파구",
+        "name": "송리단길권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-BANGI",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-BANGI",
+        "gu": "송파구",
+        "name": "방이권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-MUNJEONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-MUNJEONG",
+        "gu": "송파구",
+        "name": "문정권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-GARAKMARKET",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-GARAKMARKET",
+        "gu": "송파구",
+        "name": "가락시장권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-SEOKCHON-SAMJEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-SEOKCHON-SAMJEON",
+        "gu": "송파구",
+        "name": "석촌·삼전권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-OLYMPICPARK",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-OLYMPICPARK",
+        "gu": "송파구",
+        "name": "올림픽공원권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-WIRYE-SONGPA",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-WIRYE-SONGPA",
+        "gu": "송파구",
+        "name": "위례송파권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-SONGPA-GEOYEO-MACHEON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-SONGPA-GEOYEO-MACHEON",
+        "gu": "송파구",
+        "name": "거여·마천권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGDONG-CHEONHO",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGDONG-CHEONHO",
+        "gu": "강동구",
+        "name": "천호권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGDONG-GANGDONG-GILDONG",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGDONG-GANGDONG-GILDONG",
+        "gu": "강동구",
+        "name": "강동·길동권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGDONG-AMSA",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGDONG-AMSA",
+        "gu": "강동구",
+        "name": "암사권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGDONG-GODEOK-SANGIL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGDONG-GODEOK-SANGIL",
+        "gu": "강동구",
+        "name": "고덕·상일권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGDONG-DUNCHON",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGDONG-DUNCHON",
+        "gu": "강동구",
+        "name": "둔촌권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "SEOUL-GANGDONG-MYEONGIL",
+      "geometry": null,
+      "properties": {
+        "market_id": "SEOUL-GANGDONG-MYEONGIL",
+        "gu": "강동구",
+        "name": "명일권",
+        "boundary_type": "프레임원 분석권역",
+        "boundary_confidence": "D",
+        "geometry_status": "확인 필요"
+      }
+    }
+  ]
+}

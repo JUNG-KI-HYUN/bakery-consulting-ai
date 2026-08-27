@@ -1,0 +1,21 @@
+{
+  "districts": 25,
+  "markets": 156,
+  "submarkets": 382,
+  "nodes": 763,
+  "id_changes": 2,
+  "official_crosswalk_markets": 156,
+  "admin_crosswalk_markets": 156,
+  "grid_crosswalk_markets": 0,
+  "official_features": 1650,
+  "admin_features": 425,
+  "grid_features": 10125,
+  "priority_counts": {
+    "S": 25,
+    "A": 49,
+    "B": 49,
+    "C": 30,
+    "D": 3
+  },
+  "pilot_metrics_loaded": 0
+}

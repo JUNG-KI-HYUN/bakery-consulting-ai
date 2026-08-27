@@ -1,0 +1,6988 @@
+{
+  "schema_version": "1.0.0",
+  "checked_at": "2026-08-26",
+  "records": [
+    {
+      "market_id": "SEOUL-JONGNO-GWANGHWAMUN-JONGNO",
+      "city": "서울특별시",
+      "gu": "종로구",
+      "gu_code": "JONGNO",
+      "name": "광화문·종로권",
+      "submarkets_draft": [
+        "광화문광장",
+        "청진동",
+        "종각",
+        "청계천 북측"
+      ],
+      "core_stations": [
+        "광화문",
+        "종각"
+      ],
+      "core_streets_nodes": [
+        "세종대로",
+        "종로",
+        "청계천로"
+      ],
+      "adjacent_markets_text": "서촌권·인사동·익선권·명동권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "관광형",
+        "환승거점형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "TOURISM",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "공공기관 방문객",
+        "관광객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JONGNO-INSADONG-IKSEON",
+      "city": "서울특별시",
+      "gu": "종로구",
+      "gu_code": "JONGNO",
+      "name": "인사동·익선권",
+      "submarkets_draft": [
+        "인사동길",
+        "익선동 한옥거리",
+        "종로3가 북측"
+      ],
+      "core_stations": [
+        "안국",
+        "종로3가"
+      ],
+      "core_streets_nodes": [
+        "인사동길",
+        "익선동 골목"
+      ],
+      "adjacent_markets_text": "광화문·종로권·삼청·북촌권·을지로권",
+      "market_type_labels": [
+        "관광형",
+        "외국인 관광형",
+        "골목상권형"
+      ],
+      "market_type_codes": [
+        "TOURISM",
+        "FOREIGN",
+        "ALLEY"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "외국인",
+        "데이트 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JONGNO-SAMCHEONG-BUKCHON",
+      "city": "서울특별시",
+      "gu": "종로구",
+      "gu_code": "JONGNO",
+      "name": "삼청·북촌권",
+      "submarkets_draft": [
+        "북촌한옥마을",
+        "삼청동길",
+        "안국동"
+      ],
+      "core_stations": [
+        "안국"
+      ],
+      "core_streets_nodes": [
+        "삼청로",
+        "북촌로"
+      ],
+      "adjacent_markets_text": "인사동·익선권·서촌권",
+      "market_type_labels": [
+        "관광형",
+        "외국인 관광형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "TOURISM",
+        "FOREIGN",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "외국인",
+        "문화 목적 방문객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JONGNO-DAEHANGNO",
+      "city": "서울특별시",
+      "gu": "종로구",
+      "gu_code": "JONGNO",
+      "name": "대학로권",
+      "submarkets_draft": [
+        "혜화역",
+        "마로니에공원",
+        "성균관대 남측"
+      ],
+      "core_stations": [
+        "혜화"
+      ],
+      "core_streets_nodes": [
+        "대학로",
+        "동숭길"
+      ],
+      "adjacent_markets_text": "성북동권·동대문·창신권",
+      "market_type_labels": [
+        "대학가형",
+        "공연문화형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "CULTURE",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "공연 관람객",
+        "청년층"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JONGNO-SEOCHEON-GYEONGBOK",
+      "city": "서울특별시",
+      "gu": "종로구",
+      "gu_code": "JONGNO",
+      "name": "서촌·경복궁권",
+      "submarkets_draft": [
+        "경복궁 서측",
+        "통인시장",
+        "세종마을"
+      ],
+      "core_stations": [
+        "경복궁"
+      ],
+      "core_streets_nodes": [
+        "자하문로",
+        "옥인길",
+        "통인시장길"
+      ],
+      "adjacent_markets_text": "광화문·종로권·삼청·북촌권",
+      "market_type_labels": [
+        "관광형",
+        "골목상권형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TOURISM",
+        "ALLEY",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "관광객",
+        "데이트 고객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JONGNO-DONGDAEMUN-CHANGSIN",
+      "city": "서울특별시",
+      "gu": "종로구",
+      "gu_code": "JONGNO",
+      "name": "동대문·창신권",
+      "submarkets_draft": [
+        "동대문역",
+        "창신동 봉제거리",
+        "흥인지문 북측"
+      ],
+      "core_stations": [
+        "동대문",
+        "동묘앞"
+      ],
+      "core_streets_nodes": [
+        "종로",
+        "창신길"
+      ],
+      "adjacent_markets_text": "동대문패션타운권·신설동·용두권",
+      "market_type_labels": [
+        "전통시장형",
+        "산업형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "INDUSTRIAL",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "지역 거주민",
+        "관광객",
+        "도매 종사자"
+      ],
+      "bakery_priority": "중",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JONGNO-BUAM-PYEONGCHANG",
+      "city": "서울특별시",
+      "gu": "종로구",
+      "gu_code": "JONGNO",
+      "name": "부암·평창권",
+      "submarkets_draft": [
+        "부암동 주민센터",
+        "평창동 문화시설축"
+      ],
+      "core_stations": [
+        "경복궁(버스 연계)"
+      ],
+      "core_streets_nodes": [
+        "창의문로",
+        "평창문화로"
+      ],
+      "adjacent_markets_text": "서촌·경복궁권·은평 북한산권",
+      "market_type_labels": [
+        "주거생활형",
+        "공원·산책형",
+        "문화형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "PARK",
+        "CULTURE"
+      ],
+      "core_consumers_hypothesis": [
+        "고소득 거주민",
+        "문화 목적 방문객",
+        "산책객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNG-MYEONGDONG",
+      "city": "서울특별시",
+      "gu": "중구",
+      "gu_code": "JUNG",
+      "name": "명동권",
+      "submarkets_draft": [
+        "명동길",
+        "중앙로",
+        "을지로입구 남측"
+      ],
+      "core_stations": [
+        "명동",
+        "을지로입구"
+      ],
+      "core_streets_nodes": [
+        "명동길",
+        "남대문로"
+      ],
+      "adjacent_markets_text": "시청·북창권·을지로권·남대문권",
+      "market_type_labels": [
+        "외국인 관광형",
+        "쇼핑형",
+        "대형 상업형"
+      ],
+      "market_type_codes": [
+        "FOREIGN",
+        "MALL",
+        "COMMERCIAL_LARGE"
+      ],
+      "core_consumers_hypothesis": [
+        "외국인 관광객",
+        "쇼핑객",
+        "직장인"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNG-EULJIRO",
+      "city": "서울특별시",
+      "gu": "중구",
+      "gu_code": "JUNG",
+      "name": "을지로권",
+      "submarkets_draft": [
+        "을지로3가",
+        "세운상가",
+        "힙지로 골목"
+      ],
+      "core_stations": [
+        "을지로3가",
+        "을지로4가"
+      ],
+      "core_streets_nodes": [
+        "을지로",
+        "수표로",
+        "세운상가축"
+      ],
+      "adjacent_markets_text": "명동권·충무로권·인사동·익선권",
+      "market_type_labels": [
+        "트렌드 목적형",
+        "산업형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "TREND",
+        "INDUSTRIAL",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "청년 목적 방문객",
+        "제조업 종사자"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNG-NAMDAEMUN",
+      "city": "서울특별시",
+      "gu": "중구",
+      "gu_code": "JUNG",
+      "name": "남대문권",
+      "submarkets_draft": [
+        "남대문시장",
+        "회현역",
+        "숭례문"
+      ],
+      "core_stations": [
+        "회현"
+      ],
+      "core_streets_nodes": [
+        "남대문시장길",
+        "퇴계로"
+      ],
+      "adjacent_markets_text": "서울역권·명동권·시청·북창권",
+      "market_type_labels": [
+        "전통시장형",
+        "관광형",
+        "도매형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "TOURISM",
+        "WHOLESALE"
+      ],
+      "core_consumers_hypothesis": [
+        "상인",
+        "관광객",
+        "직장인"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNG-DONGDAEMUN-FASHION",
+      "city": "서울특별시",
+      "gu": "중구",
+      "gu_code": "JUNG",
+      "name": "동대문패션타운권",
+      "submarkets_draft": [
+        "DDP",
+        "두타",
+        "평화시장",
+        "광희동"
+      ],
+      "core_stations": [
+        "동대문역사문화공원",
+        "동대문"
+      ],
+      "core_streets_nodes": [
+        "을지로",
+        "장충단로"
+      ],
+      "adjacent_markets_text": "동대문·창신권·신당권",
+      "market_type_labels": [
+        "쇼핑몰형",
+        "외국인 관광형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "MALL",
+        "FOREIGN",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "도매상인",
+        "야간 방문객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNG-SEOULSTN",
+      "city": "서울특별시",
+      "gu": "중구",
+      "gu_code": "JUNG",
+      "name": "서울역권",
+      "submarkets_draft": [
+        "서울역 동측",
+        "서소문",
+        "만리동 연결축"
+      ],
+      "core_stations": [
+        "서울역"
+      ],
+      "core_streets_nodes": [
+        "세종대로",
+        "통일로",
+        "퇴계로"
+      ],
+      "adjacent_markets_text": "남대문권·후암·서울역남부권",
+      "market_type_labels": [
+        "환승거점형",
+        "오피스형",
+        "관광형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "OFFICE_MIXED",
+        "TOURISM"
+      ],
+      "core_consumers_hypothesis": [
+        "철도 이용객",
+        "직장인",
+        "관광객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNG-CITYHALL-BUKCHANG",
+      "city": "서울특별시",
+      "gu": "중구",
+      "gu_code": "JUNG",
+      "name": "시청·북창권",
+      "submarkets_draft": [
+        "서울시청",
+        "덕수궁",
+        "북창동",
+        "무교동"
+      ],
+      "core_stations": [
+        "시청"
+      ],
+      "core_streets_nodes": [
+        "세종대로",
+        "무교로",
+        "북창동길"
+      ],
+      "adjacent_markets_text": "광화문·종로권·명동권·남대문권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "관광형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "TOURISM",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "관광객",
+        "회식 수요"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNG-SINDANG-YAKSU",
+      "city": "서울특별시",
+      "gu": "중구",
+      "gu_code": "JUNG",
+      "name": "신당·약수권",
+      "submarkets_draft": [
+        "신당동 떡볶이타운",
+        "중앙시장",
+        "약수역"
+      ],
+      "core_stations": [
+        "신당",
+        "약수"
+      ],
+      "core_streets_nodes": [
+        "다산로",
+        "퇴계로"
+      ],
+      "adjacent_markets_text": "동대문패션타운권·왕십리권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "트렌드 목적형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "TREND"
+      ],
+      "core_consumers_hypothesis": [
+        "지역 거주민",
+        "젊은 목적 방문객",
+        "시장 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YONGSAN-ITAEWON",
+      "city": "서울특별시",
+      "gu": "용산구",
+      "gu_code": "YONGSAN",
+      "name": "이태원권",
+      "submarkets_draft": [
+        "이태원역",
+        "세계음식거리",
+        "앤틱가구거리"
+      ],
+      "core_stations": [
+        "이태원"
+      ],
+      "core_streets_nodes": [
+        "이태원로",
+        "보광로"
+      ],
+      "adjacent_markets_text": "한남권·해방촌·경리단권",
+      "market_type_labels": [
+        "외국인 관광형",
+        "야간형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "FOREIGN",
+        "NIGHT",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "외국인",
+        "관광객",
+        "야간 방문객",
+        "데이트 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YONGSAN-HANNAM",
+      "city": "서울특별시",
+      "gu": "용산구",
+      "gu_code": "YONGSAN",
+      "name": "한남권",
+      "submarkets_draft": [
+        "한남오거리",
+        "한남동 카페거리",
+        "리움미술관 연결축"
+      ],
+      "core_stations": [
+        "한강진"
+      ],
+      "core_streets_nodes": [
+        "이태원로",
+        "독서당로"
+      ],
+      "adjacent_markets_text": "이태원권·옥수권",
+      "market_type_labels": [
+        "프리미엄 주거형",
+        "문화형",
+        "트렌드 목적형"
+      ],
+      "market_type_codes": [
+        "PREMIUM_RESIDENTIAL",
+        "CULTURE",
+        "TREND"
+      ],
+      "core_consumers_hypothesis": [
+        "고소득 거주민",
+        "문화 목적 방문객",
+        "외국인"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YONGSAN-HAEBANGCHON-GYEONGNIDAN",
+      "city": "서울특별시",
+      "gu": "용산구",
+      "gu_code": "YONGSAN",
+      "name": "해방촌·경리단권",
+      "submarkets_draft": [
+        "신흥시장",
+        "해방촌오거리",
+        "경리단길"
+      ],
+      "core_stations": [
+        "녹사평"
+      ],
+      "core_streets_nodes": [
+        "소월로",
+        "신흥로",
+        "회나무로"
+      ],
+      "adjacent_markets_text": "이태원권·후암권",
+      "market_type_labels": [
+        "골목상권형",
+        "관광형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "ALLEY",
+        "TOURISM",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "외국인",
+        "청년 거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YONGSAN-YONGLIDAN-SINYONGSAN",
+      "city": "서울특별시",
+      "gu": "용산구",
+      "gu_code": "YONGSAN",
+      "name": "용리단길·신용산권",
+      "submarkets_draft": [
+        "신용산역 동측",
+        "용리단길",
+        "삼각지역"
+      ],
+      "core_stations": [
+        "신용산",
+        "삼각지"
+      ],
+      "core_streets_nodes": [
+        "한강대로",
+        "한강로"
+      ],
+      "adjacent_markets_text": "용산역권·남영·숙대권",
+      "market_type_labels": [
+        "트렌드 목적형",
+        "오피스형",
+        "골목상권형"
+      ],
+      "market_type_codes": [
+        "TREND",
+        "OFFICE_MIXED",
+        "ALLEY"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "청년 목적 방문객",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YONGSAN-YONGSANSTN",
+      "city": "서울특별시",
+      "gu": "용산구",
+      "gu_code": "YONGSAN",
+      "name": "용산역권",
+      "submarkets_draft": [
+        "용산역",
+        "아이파크몰",
+        "전자상가"
+      ],
+      "core_stations": [
+        "용산"
+      ],
+      "core_streets_nodes": [
+        "한강대로",
+        "청파로"
+      ],
+      "adjacent_markets_text": "용리단길·신용산권·효창권",
+      "market_type_labels": [
+        "환승거점형",
+        "쇼핑몰형",
+        "오피스형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "철도 이용객",
+        "쇼핑객",
+        "직장인"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YONGSAN-NAMYEONG-SOOKMYUNG",
+      "city": "서울특별시",
+      "gu": "용산구",
+      "gu_code": "YONGSAN",
+      "name": "남영·숙대권",
+      "submarkets_draft": [
+        "남영역",
+        "숙대입구",
+        "숙명여대 정문"
+      ],
+      "core_stations": [
+        "남영",
+        "숙대입구"
+      ],
+      "core_streets_nodes": [
+        "한강대로",
+        "청파로"
+      ],
+      "adjacent_markets_text": "서울역권·용리단길·신용산권",
+      "market_type_labels": [
+        "대학가형",
+        "오피스형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "OFFICE_MIXED",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "직장인",
+        "지역 거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YONGSAN-HYOCHANG-HUAM",
+      "city": "서울특별시",
+      "gu": "용산구",
+      "gu_code": "YONGSAN",
+      "name": "효창·후암권",
+      "submarkets_draft": [
+        "효창공원앞",
+        "후암시장",
+        "서울역 남부"
+      ],
+      "core_stations": [
+        "효창공원앞",
+        "서울역"
+      ],
+      "core_streets_nodes": [
+        "백범로",
+        "후암로"
+      ],
+      "adjacent_markets_text": "공덕권·남영·숙대권·서울역권",
+      "market_type_labels": [
+        "주거생활형",
+        "공원·산책형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "PARK",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "산책객",
+        "철도 이용객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGDONG-SEONGSU",
+      "city": "서울특별시",
+      "gu": "성동구",
+      "gu_code": "SEONGDONG",
+      "name": "성수권",
+      "submarkets_draft": [
+        "연무장길",
+        "성수역 북측",
+        "성수역 남측",
+        "아뜰리에길",
+        "뚝섬 연결축"
+      ],
+      "core_stations": [
+        "성수",
+        "뚝섬"
+      ],
+      "core_streets_nodes": [
+        "연무장길",
+        "성수이로",
+        "아차산로"
+      ],
+      "adjacent_markets_text": "서울숲권·건대입구권",
+      "market_type_labels": [
+        "트렌드 목적형",
+        "오피스형",
+        "관광형",
+        "골목상권형"
+      ],
+      "market_type_codes": [
+        "TREND",
+        "OFFICE_MIXED",
+        "TOURISM",
+        "ALLEY"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "관광객",
+        "목적 방문객",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGDONG-SEOULFOREST",
+      "city": "서울특별시",
+      "gu": "성동구",
+      "gu_code": "SEONGDONG",
+      "name": "서울숲권",
+      "submarkets_draft": [
+        "서울숲",
+        "아크로서울포레스트",
+        "서울숲 카페거리"
+      ],
+      "core_stations": [
+        "서울숲",
+        "뚝섬"
+      ],
+      "core_streets_nodes": [
+        "서울숲2길",
+        "왕십리로"
+      ],
+      "adjacent_markets_text": "성수권·한남권",
+      "market_type_labels": [
+        "공원·산책형",
+        "프리미엄 주거형",
+        "관광형"
+      ],
+      "market_type_codes": [
+        "PARK",
+        "PREMIUM_RESIDENTIAL",
+        "TOURISM"
+      ],
+      "core_consumers_hypothesis": [
+        "가족",
+        "데이트 고객",
+        "고소득 거주민",
+        "관광객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGDONG-WANGSIMNI",
+      "city": "서울특별시",
+      "gu": "성동구",
+      "gu_code": "SEONGDONG",
+      "name": "왕십리권",
+      "submarkets_draft": [
+        "왕십리역",
+        "비트플렉스",
+        "행당시장 연결축"
+      ],
+      "core_stations": [
+        "왕십리"
+      ],
+      "core_streets_nodes": [
+        "왕십리광장로",
+        "고산자로"
+      ],
+      "adjacent_markets_text": "행당권·마장권·신당권",
+      "market_type_labels": [
+        "환승거점형",
+        "쇼핑몰형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "대학생",
+        "거주민",
+        "직장인"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGDONG-HAENGDANG-HANYANG",
+      "city": "서울특별시",
+      "gu": "성동구",
+      "gu_code": "SEONGDONG",
+      "name": "행당·한양대권",
+      "submarkets_draft": [
+        "한양대 정문",
+        "행당시장",
+        "왕십리 남측"
+      ],
+      "core_stations": [
+        "한양대",
+        "왕십리"
+      ],
+      "core_streets_nodes": [
+        "왕십리로",
+        "마조로"
+      ],
+      "adjacent_markets_text": "왕십리권·금호권",
+      "market_type_labels": [
+        "대학가형",
+        "주거생활형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "RESIDENTIAL",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "교직원",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGDONG-GEUMHO-OKSU",
+      "city": "서울특별시",
+      "gu": "성동구",
+      "gu_code": "SEONGDONG",
+      "name": "금호·옥수권",
+      "submarkets_draft": [
+        "금호역",
+        "옥수역",
+        "독서당로 주거축"
+      ],
+      "core_stations": [
+        "금호",
+        "옥수"
+      ],
+      "core_streets_nodes": [
+        "독서당로",
+        "동호로"
+      ],
+      "adjacent_markets_text": "한남권·행당·한양대권",
+      "market_type_labels": [
+        "주거생활형",
+        "역세권형",
+        "한강·수변형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "TRANSIT",
+        "WATERFRONT"
+      ],
+      "core_consumers_hypothesis": [
+        "고소득 거주민",
+        "가족",
+        "통근객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGDONG-MAJANG",
+      "city": "서울특별시",
+      "gu": "성동구",
+      "gu_code": "SEONGDONG",
+      "name": "마장권",
+      "submarkets_draft": [
+        "마장축산물시장",
+        "마장역",
+        "청계천 북측"
+      ],
+      "core_stations": [
+        "마장"
+      ],
+      "core_streets_nodes": [
+        "마장로",
+        "고산자로"
+      ],
+      "adjacent_markets_text": "왕십리권·청량리권",
+      "market_type_labels": [
+        "전통시장형",
+        "산업형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "INDUSTRIAL",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "시장 상인",
+        "식음 목적 방문객",
+        "거주민"
+      ],
+      "bakery_priority": "중",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANGJIN-KONKUK",
+      "city": "서울특별시",
+      "gu": "광진구",
+      "gu_code": "GWANGJIN",
+      "name": "건대입구권",
+      "submarkets_draft": [
+        "건대입구역",
+        "건대 맛의거리",
+        "커먼그라운드"
+      ],
+      "core_stations": [
+        "건대입구"
+      ],
+      "core_streets_nodes": [
+        "아차산로",
+        "동일로",
+        "능동로"
+      ],
+      "adjacent_markets_text": "성수권·자양권",
+      "market_type_labels": [
+        "대학가형",
+        "먹자골목형",
+        "야간형",
+        "쇼핑형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "DINING_CLUSTER",
+        "NIGHT",
+        "MALL"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "20대",
+        "야간 방문객",
+        "쇼핑객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANGJIN-GUI-GANGBYEON",
+      "city": "서울특별시",
+      "gu": "광진구",
+      "gu_code": "GWANGJIN",
+      "name": "구의·강변권",
+      "submarkets_draft": [
+        "구의역",
+        "강변역",
+        "테크노마트",
+        "동서울터미널"
+      ],
+      "core_stations": [
+        "구의",
+        "강변"
+      ],
+      "core_streets_nodes": [
+        "아차산로",
+        "강변역로"
+      ],
+      "adjacent_markets_text": "자양권·군자권",
+      "market_type_labels": [
+        "환승거점형",
+        "쇼핑몰형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "터미널 이용객",
+        "직장인",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANGJIN-JAYANG",
+      "city": "서울특별시",
+      "gu": "광진구",
+      "gu_code": "GWANGJIN",
+      "name": "자양권",
+      "submarkets_draft": [
+        "자양전통시장",
+        "뚝섬한강공원 연결 주거축"
+      ],
+      "core_stations": [
+        "자양",
+        "건대입구"
+      ],
+      "core_streets_nodes": [
+        "자양로",
+        "뚝섬로"
+      ],
+      "adjacent_markets_text": "건대입구권·구의·강변권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "한강·수변형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "WATERFRONT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "가족",
+        "한강 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANGJIN-CHILDRENSPARK-SEJONG",
+      "city": "서울특별시",
+      "gu": "광진구",
+      "gu_code": "GWANGJIN",
+      "name": "어린이대공원·세종대권",
+      "submarkets_draft": [
+        "어린이대공원",
+        "세종대",
+        "능동로"
+      ],
+      "core_stations": [
+        "어린이대공원"
+      ],
+      "core_streets_nodes": [
+        "능동로",
+        "광나루로"
+      ],
+      "adjacent_markets_text": "건대입구권·군자권",
+      "market_type_labels": [
+        "대학가형",
+        "공원·산책형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "PARK",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "가족",
+        "공원 방문객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANGJIN-GUNJA-JUNGGOK",
+      "city": "서울특별시",
+      "gu": "광진구",
+      "gu_code": "GWANGJIN",
+      "name": "군자·중곡권",
+      "submarkets_draft": [
+        "군자역",
+        "중곡제일시장",
+        "용마산 남측 생활권"
+      ],
+      "core_stations": [
+        "군자",
+        "중곡"
+      ],
+      "core_streets_nodes": [
+        "천호대로",
+        "능동로"
+      ],
+      "adjacent_markets_text": "어린이대공원·세종대권·사가정권",
+      "market_type_labels": [
+        "역세권형",
+        "주거생활형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "RESIDENTIAL",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "직장인",
+        "환승객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGDAEMUN-CHEONGNYANGNI",
+      "city": "서울특별시",
+      "gu": "동대문구",
+      "gu_code": "DONGDAEMUN",
+      "name": "청량리권",
+      "submarkets_draft": [
+        "청량리역",
+        "롯데백화점",
+        "청량리시장"
+      ],
+      "core_stations": [
+        "청량리"
+      ],
+      "core_streets_nodes": [
+        "왕산로",
+        "홍릉로"
+      ],
+      "adjacent_markets_text": "전농권·제기·용두권",
+      "market_type_labels": [
+        "환승거점형",
+        "전통시장형",
+        "쇼핑형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MARKET",
+        "MALL"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "시장 이용객",
+        "거주민",
+        "고령층"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGDAEMUN-HOEGI-KYUNGHEE",
+      "city": "서울특별시",
+      "gu": "동대문구",
+      "gu_code": "DONGDAEMUN",
+      "name": "회기·경희대권",
+      "submarkets_draft": [
+        "회기역",
+        "경희대 정문",
+        "경희대로"
+      ],
+      "core_stations": [
+        "회기"
+      ],
+      "core_streets_nodes": [
+        "회기로",
+        "경희대로"
+      ],
+      "adjacent_markets_text": "외대앞권·청량리권",
+      "market_type_labels": [
+        "대학가형",
+        "의료형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "MEDICAL",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "교직원",
+        "병원 방문객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGDAEMUN-HUFS-IMUN",
+      "city": "서울특별시",
+      "gu": "동대문구",
+      "gu_code": "DONGDAEMUN",
+      "name": "외대앞·이문권",
+      "submarkets_draft": [
+        "외대앞역",
+        "한국외대 정문",
+        "이문동"
+      ],
+      "core_stations": [
+        "외대앞"
+      ],
+      "core_streets_nodes": [
+        "이문로",
+        "휘경로"
+      ],
+      "adjacent_markets_text": "회기·경희대권·석계·장위권",
+      "market_type_labels": [
+        "대학가형",
+        "외국인 생활형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "FOREIGN",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "외국인 학생",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGDAEMUN-JANGAN-DAPSIMNI",
+      "city": "서울특별시",
+      "gu": "동대문구",
+      "gu_code": "DONGDAEMUN",
+      "name": "장안·답십리권",
+      "submarkets_draft": [
+        "장안동 사거리",
+        "답십리역",
+        "자동차부품상가축"
+      ],
+      "core_stations": [
+        "장한평",
+        "답십리"
+      ],
+      "core_streets_nodes": [
+        "천호대로",
+        "장한로"
+      ],
+      "adjacent_markets_text": "군자·중곡권·전농권",
+      "market_type_labels": [
+        "주거생활형",
+        "산업형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "INDUSTRIAL",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "자동차산업 종사자",
+        "직장인"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGDAEMUN-JEONNONG",
+      "city": "서울특별시",
+      "gu": "동대문구",
+      "gu_code": "DONGDAEMUN",
+      "name": "전농권",
+      "submarkets_draft": [
+        "전농사거리",
+        "전농동 아파트단지",
+        "청량리 남측"
+      ],
+      "core_stations": [
+        "청량리"
+      ],
+      "core_streets_nodes": [
+        "전농로",
+        "답십리로"
+      ],
+      "adjacent_markets_text": "청량리권·장안·답십리권",
+      "market_type_labels": [
+        "주거생활형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "가족",
+        "거주민",
+        "통근객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGDAEMUN-JEGI-YONGDU-SINSEOL",
+      "city": "서울특별시",
+      "gu": "동대문구",
+      "gu_code": "DONGDAEMUN",
+      "name": "제기·용두·신설권",
+      "submarkets_draft": [
+        "경동시장",
+        "서울약령시장",
+        "신설동역"
+      ],
+      "core_stations": [
+        "제기동",
+        "용두",
+        "신설동"
+      ],
+      "core_streets_nodes": [
+        "왕산로",
+        "무학로"
+      ],
+      "adjacent_markets_text": "청량리권·동대문·창신권",
+      "market_type_labels": [
+        "전통시장형",
+        "의료형",
+        "환승거점형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "MEDICAL",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "시장 이용객",
+        "고령층",
+        "환승객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNGNANG-SANGBONG",
+      "city": "서울특별시",
+      "gu": "중랑구",
+      "gu_code": "JUNGNANG",
+      "name": "상봉권",
+      "submarkets_draft": [
+        "상봉역",
+        "코스트코",
+        "상봉터미널 일대"
+      ],
+      "core_stations": [
+        "상봉"
+      ],
+      "core_streets_nodes": [
+        "망우로",
+        "상봉로"
+      ],
+      "adjacent_markets_text": "망우권·중화권",
+      "market_type_labels": [
+        "환승거점형",
+        "쇼핑형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "쇼핑객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNGNANG-MANGU",
+      "city": "서울특별시",
+      "gu": "중랑구",
+      "gu_code": "JUNGNANG",
+      "name": "망우권",
+      "submarkets_draft": [
+        "망우역",
+        "우림시장",
+        "망우로 생활축"
+      ],
+      "core_stations": [
+        "망우"
+      ],
+      "core_streets_nodes": [
+        "망우로",
+        "용마산로"
+      ],
+      "adjacent_markets_text": "상봉권·신내권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "통근객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNGNANG-MYEONMOK-SAGAJUNG",
+      "city": "서울특별시",
+      "gu": "중랑구",
+      "gu_code": "JUNGNANG",
+      "name": "면목·사가정권",
+      "submarkets_draft": [
+        "사가정역",
+        "면목시장",
+        "용마산 서측"
+      ],
+      "core_stations": [
+        "사가정",
+        "면목"
+      ],
+      "core_streets_nodes": [
+        "사가정로",
+        "면목로"
+      ],
+      "adjacent_markets_text": "군자·중곡권·망우권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "가족",
+        "학생"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNGNANG-SINNAE",
+      "city": "서울특별시",
+      "gu": "중랑구",
+      "gu_code": "JUNGNANG",
+      "name": "신내권",
+      "submarkets_draft": [
+        "신내역",
+        "신내지구",
+        "봉화산역 주거권"
+      ],
+      "core_stations": [
+        "신내",
+        "봉화산"
+      ],
+      "core_streets_nodes": [
+        "신내로",
+        "봉화산로"
+      ],
+      "adjacent_markets_text": "망우권·별내 연계권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "가족",
+        "거주민",
+        "통근객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-JUNGNANG-JUNGHWA",
+      "city": "서울특별시",
+      "gu": "중랑구",
+      "gu_code": "JUNGNANG",
+      "name": "중화권",
+      "submarkets_draft": [
+        "중화역",
+        "중랑천",
+        "태릉시장 생활권"
+      ],
+      "core_stations": [
+        "중화"
+      ],
+      "core_streets_nodes": [
+        "동일로",
+        "중랑천로"
+      ],
+      "adjacent_markets_text": "상봉권·석계·장위권",
+      "market_type_labels": [
+        "주거생활형",
+        "공원·산책형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "PARK",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "산책객",
+        "통근객"
+      ],
+      "bakery_priority": "중",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGBUK-SUNGSHIN",
+      "city": "서울특별시",
+      "gu": "성북구",
+      "gu_code": "SEONGBUK",
+      "name": "성신여대권",
+      "submarkets_draft": [
+        "성신여대입구역",
+        "성신여대 로데오",
+        "돈암시장"
+      ],
+      "core_stations": [
+        "성신여대입구"
+      ],
+      "core_streets_nodes": [
+        "동소문로",
+        "보문로"
+      ],
+      "adjacent_markets_text": "한성대·성북동권·길음권",
+      "market_type_labels": [
+        "대학가형",
+        "쇼핑형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "MALL",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "20대 여성",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGBUK-ANAM-KOREAUNIV",
+      "city": "서울특별시",
+      "gu": "성북구",
+      "gu_code": "SEONGBUK",
+      "name": "안암·고대권",
+      "submarkets_draft": [
+        "고려대 정문",
+        "안암역",
+        "고대병원"
+      ],
+      "core_stations": [
+        "안암",
+        "고려대"
+      ],
+      "core_streets_nodes": [
+        "안암로",
+        "개운사길"
+      ],
+      "adjacent_markets_text": "제기·용두·신설권·성신여대권",
+      "market_type_labels": [
+        "대학가형",
+        "의료형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "MEDICAL",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "교직원",
+        "병원 방문객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGBUK-GIREUM",
+      "city": "서울특별시",
+      "gu": "성북구",
+      "gu_code": "SEONGBUK",
+      "name": "길음권",
+      "submarkets_draft": [
+        "길음역",
+        "길음뉴타운",
+        "미아사거리 남측"
+      ],
+      "core_stations": [
+        "길음"
+      ],
+      "core_streets_nodes": [
+        "동소문로",
+        "삼양로"
+      ],
+      "adjacent_markets_text": "미아사거리권·성신여대권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "가족형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "FAMILY",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "대단지 거주민",
+        "가족",
+        "학부모"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGBUK-HANSUNG-SEONGBUK",
+      "city": "서울특별시",
+      "gu": "성북구",
+      "gu_code": "SEONGBUK",
+      "name": "한성대·성북동권",
+      "submarkets_draft": [
+        "한성대입구역",
+        "성북동길",
+        "성곽길"
+      ],
+      "core_stations": [
+        "한성대입구"
+      ],
+      "core_streets_nodes": [
+        "성북로",
+        "동소문로"
+      ],
+      "adjacent_markets_text": "대학로권·성신여대권",
+      "market_type_labels": [
+        "대학가형",
+        "문화형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "CULTURE",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "문화 목적 방문객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGBUK-SEOKGYE-JANGWI",
+      "city": "서울특별시",
+      "gu": "성북구",
+      "gu_code": "SEONGBUK",
+      "name": "석계·장위권",
+      "submarkets_draft": [
+        "석계역",
+        "장위뉴타운",
+        "돌곶이역"
+      ],
+      "core_stations": [
+        "석계",
+        "돌곶이"
+      ],
+      "core_streets_nodes": [
+        "화랑로",
+        "한천로"
+      ],
+      "adjacent_markets_text": "월계·광운대권·외대앞·이문권",
+      "market_type_labels": [
+        "환승거점형",
+        "대단지 주거형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "APARTMENT"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "대단지 거주민",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEONGBUK-JEONGNEUNG",
+      "city": "서울특별시",
+      "gu": "성북구",
+      "gu_code": "SEONGBUK",
+      "name": "정릉권",
+      "submarkets_draft": [
+        "정릉시장",
+        "국민대",
+        "북한산 입구"
+      ],
+      "core_stations": [
+        "정릉"
+      ],
+      "core_streets_nodes": [
+        "정릉로",
+        "보국문로"
+      ],
+      "adjacent_markets_text": "길음권·부암·평창권",
+      "market_type_labels": [
+        "주거생활형",
+        "대학가형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "UNIVERSITY",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "대학생",
+        "등산객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGBUK-SUYU",
+      "city": "서울특별시",
+      "gu": "강북구",
+      "gu_code": "GANGBUK",
+      "name": "수유권",
+      "submarkets_draft": [
+        "수유역",
+        "수유 먹자골목",
+        "강북구청"
+      ],
+      "core_stations": [
+        "수유"
+      ],
+      "core_streets_nodes": [
+        "도봉로",
+        "노해로"
+      ],
+      "adjacent_markets_text": "미아권·쌍문권",
+      "market_type_labels": [
+        "역세권형",
+        "먹자골목형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "DINING_CLUSTER",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "직장인",
+        "야간 방문객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGBUK-MIASAGEORI",
+      "city": "서울특별시",
+      "gu": "강북구",
+      "gu_code": "GANGBUK",
+      "name": "미아사거리권",
+      "submarkets_draft": [
+        "미아사거리역",
+        "롯데백화점",
+        "도봉로 교차축"
+      ],
+      "core_stations": [
+        "미아사거리"
+      ],
+      "core_streets_nodes": [
+        "도봉로",
+        "월계로"
+      ],
+      "adjacent_markets_text": "길음권·미아권",
+      "market_type_labels": [
+        "쇼핑형",
+        "역세권형",
+        "대단지 주거형"
+      ],
+      "market_type_codes": [
+        "MALL",
+        "TRANSIT",
+        "APARTMENT"
+      ],
+      "core_consumers_hypothesis": [
+        "쇼핑객",
+        "대단지 거주민",
+        "환승객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGBUK-MIA-BEON",
+      "city": "서울특별시",
+      "gu": "강북구",
+      "gu_code": "GANGBUK",
+      "name": "미아·번동권",
+      "submarkets_draft": [
+        "미아역",
+        "번동사거리",
+        "북서울꿈의숲 서측"
+      ],
+      "core_stations": [
+        "미아"
+      ],
+      "core_streets_nodes": [
+        "도봉로",
+        "오현로"
+      ],
+      "adjacent_markets_text": "수유권·미아사거리권",
+      "market_type_labels": [
+        "주거생활형",
+        "가족형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "FAMILY",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "가족",
+        "통근객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGBUK-UI-BUKHANSAN",
+      "city": "서울특별시",
+      "gu": "강북구",
+      "gu_code": "GANGBUK",
+      "name": "우이·북한산권",
+      "submarkets_draft": [
+        "북한산우이역",
+        "우이동 계곡",
+        "솔밭공원"
+      ],
+      "core_stations": [
+        "북한산우이",
+        "솔밭공원"
+      ],
+      "core_streets_nodes": [
+        "삼양로",
+        "우이동길"
+      ],
+      "adjacent_markets_text": "수유권·도봉산권",
+      "market_type_labels": [
+        "공원·산책형",
+        "관광형",
+        "목적방문형"
+      ],
+      "market_type_codes": [
+        "PARK",
+        "TOURISM",
+        "DESTINATION"
+      ],
+      "core_consumers_hypothesis": [
+        "등산객",
+        "관광객",
+        "가족",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DOBONG-CHANGDONG",
+      "city": "서울특별시",
+      "gu": "도봉구",
+      "gu_code": "DOBONG",
+      "name": "창동권",
+      "submarkets_draft": [
+        "창동역",
+        "창동민자역사 예정권",
+        "하나로마트축"
+      ],
+      "core_stations": [
+        "창동"
+      ],
+      "core_streets_nodes": [
+        "도봉로",
+        "노해로"
+      ],
+      "adjacent_markets_text": "노원역권·쌍문권",
+      "market_type_labels": [
+        "환승거점형",
+        "대단지 주거형",
+        "개발거점형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "APARTMENT",
+        "DEVELOPMENT"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "거주민",
+        "공연 방문객 잠재수요"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DOBONG-SSANGMUN",
+      "city": "서울특별시",
+      "gu": "도봉구",
+      "gu_code": "DOBONG",
+      "name": "쌍문권",
+      "submarkets_draft": [
+        "쌍문역",
+        "쌍리단길",
+        "도봉보건소 남측"
+      ],
+      "core_stations": [
+        "쌍문"
+      ],
+      "core_streets_nodes": [
+        "도봉로",
+        "노해로"
+      ],
+      "adjacent_markets_text": "수유권·창동권",
+      "market_type_labels": [
+        "주거생활형",
+        "골목상권형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "ALLEY",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "청년층",
+        "통근객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DOBONG-BANGHAK",
+      "city": "서울특별시",
+      "gu": "도봉구",
+      "gu_code": "DOBONG",
+      "name": "방학권",
+      "submarkets_draft": [
+        "방학역",
+        "도깨비시장",
+        "도봉구청"
+      ],
+      "core_stations": [
+        "방학"
+      ],
+      "core_streets_nodes": [
+        "도봉로",
+        "방학로"
+      ],
+      "adjacent_markets_text": "창동권·도봉권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "가족"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DOBONG-DOBONGSAN",
+      "city": "서울특별시",
+      "gu": "도봉구",
+      "gu_code": "DOBONG",
+      "name": "도봉산권",
+      "submarkets_draft": [
+        "도봉산역",
+        "도봉산 등산로 입구"
+      ],
+      "core_stations": [
+        "도봉산"
+      ],
+      "core_streets_nodes": [
+        "도봉산길",
+        "도봉로"
+      ],
+      "adjacent_markets_text": "우이·북한산권·방학권",
+      "market_type_labels": [
+        "공원·산책형",
+        "관광형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "PARK",
+        "TOURISM",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "등산객",
+        "주말 방문객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-NOWON-NOWONSTN",
+      "city": "서울특별시",
+      "gu": "노원구",
+      "gu_code": "NOWON",
+      "name": "노원역권",
+      "submarkets_draft": [
+        "노원역",
+        "롯데백화점",
+        "문화의거리"
+      ],
+      "core_stations": [
+        "노원"
+      ],
+      "core_streets_nodes": [
+        "동일로",
+        "노해로"
+      ],
+      "adjacent_markets_text": "상계권·창동권",
+      "market_type_labels": [
+        "대형 역세권형",
+        "쇼핑형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "쇼핑객",
+        "청년층",
+        "거주민",
+        "야간 방문객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-NOWON-GONGNEUNG",
+      "city": "서울특별시",
+      "gu": "노원구",
+      "gu_code": "NOWON",
+      "name": "공릉권",
+      "submarkets_draft": [
+        "공릉역",
+        "공리단길",
+        "서울과기대"
+      ],
+      "core_stations": [
+        "공릉"
+      ],
+      "core_streets_nodes": [
+        "동일로",
+        "공릉로"
+      ],
+      "adjacent_markets_text": "태릉입구권·월계·광운대권",
+      "market_type_labels": [
+        "대학가형",
+        "골목상권형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "ALLEY",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "청년 거주민",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-NOWON-JUNGGYE-ACADEMY",
+      "city": "서울특별시",
+      "gu": "노원구",
+      "gu_code": "NOWON",
+      "name": "중계은행사거리권",
+      "submarkets_draft": [
+        "은행사거리 학원가",
+        "중계동 아파트단지"
+      ],
+      "core_stations": [
+        "중계"
+      ],
+      "core_streets_nodes": [
+        "한글비석로",
+        "덕릉로"
+      ],
+      "adjacent_markets_text": "노원역권·상계권",
+      "market_type_labels": [
+        "학원가형",
+        "대단지 주거형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "ACADEMY",
+        "APARTMENT",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "학생",
+        "학부모",
+        "가족"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-NOWON-TAEREUNG",
+      "city": "서울특별시",
+      "gu": "노원구",
+      "gu_code": "NOWON",
+      "name": "태릉입구권",
+      "submarkets_draft": [
+        "태릉입구역",
+        "먹골역",
+        "묵동 생활축"
+      ],
+      "core_stations": [
+        "태릉입구",
+        "먹골"
+      ],
+      "core_streets_nodes": [
+        "동일로",
+        "화랑로"
+      ],
+      "adjacent_markets_text": "공릉권·중화권",
+      "market_type_labels": [
+        "환승거점형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "거주민",
+        "직장인"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-NOWON-SANGGYE",
+      "city": "서울특별시",
+      "gu": "노원구",
+      "gu_code": "NOWON",
+      "name": "상계권",
+      "submarkets_draft": [
+        "상계역",
+        "상계중앙시장",
+        "수락산 남측"
+      ],
+      "core_stations": [
+        "상계"
+      ],
+      "core_streets_nodes": [
+        "한글비석로",
+        "덕릉로"
+      ],
+      "adjacent_markets_text": "노원역권·중계은행사거리권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "가족",
+        "등산객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-NOWON-WOLGYE-KWANGWOON",
+      "city": "서울특별시",
+      "gu": "노원구",
+      "gu_code": "NOWON",
+      "name": "월계·광운대권",
+      "submarkets_draft": [
+        "광운대역",
+        "월계동 아파트",
+        "석계역 북측"
+      ],
+      "core_stations": [
+        "광운대",
+        "월계"
+      ],
+      "core_streets_nodes": [
+        "광운로",
+        "석계로"
+      ],
+      "adjacent_markets_text": "석계·장위권·공릉권",
+      "market_type_labels": [
+        "대학가형",
+        "주거생활형",
+        "개발거점형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "RESIDENTIAL",
+        "DEVELOPMENT"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "거주민",
+        "환승객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-EUNPYEONG-YEONSINNAE",
+      "city": "서울특별시",
+      "gu": "은평구",
+      "gu_code": "EUNPYEONG",
+      "name": "연신내권",
+      "submarkets_draft": [
+        "연신내역",
+        "로데오거리",
+        "연서시장"
+      ],
+      "core_stations": [
+        "연신내"
+      ],
+      "core_streets_nodes": [
+        "통일로",
+        "연서로"
+      ],
+      "adjacent_markets_text": "불광권·구파발권",
+      "market_type_labels": [
+        "환승거점형",
+        "먹자골목형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "DINING_CLUSTER",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "거주민",
+        "야간 방문객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-EUNPYEONG-BULGWANG",
+      "city": "서울특별시",
+      "gu": "은평구",
+      "gu_code": "EUNPYEONG",
+      "name": "불광권",
+      "submarkets_draft": [
+        "불광역",
+        "NC백화점",
+        "불광천 북측"
+      ],
+      "core_stations": [
+        "불광"
+      ],
+      "core_streets_nodes": [
+        "통일로",
+        "불광로"
+      ],
+      "adjacent_markets_text": "연신내권·녹번권",
+      "market_type_labels": [
+        "환승거점형",
+        "주거생활형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "RESIDENTIAL",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "환승객",
+        "등산객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-EUNPYEONG-EUNGAM-SAEJEOL",
+      "city": "서울특별시",
+      "gu": "은평구",
+      "gu_code": "EUNPYEONG",
+      "name": "응암·새절권",
+      "submarkets_draft": [
+        "응암오거리",
+        "새절역",
+        "불광천 카페축"
+      ],
+      "core_stations": [
+        "새절",
+        "응암"
+      ],
+      "core_streets_nodes": [
+        "증산로",
+        "응암로"
+      ],
+      "adjacent_markets_text": "수색·DMC서측권·불광권",
+      "market_type_labels": [
+        "주거생활형",
+        "공원·산책형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "PARK",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "가족",
+        "산책객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-EUNPYEONG-GUPABAL-NEWTOWN",
+      "city": "서울특별시",
+      "gu": "은평구",
+      "gu_code": "EUNPYEONG",
+      "name": "구파발·은평뉴타운권",
+      "submarkets_draft": [
+        "구파발역",
+        "롯데몰",
+        "은평뉴타운"
+      ],
+      "core_stations": [
+        "구파발"
+      ],
+      "core_streets_nodes": [
+        "통일로",
+        "진관로"
+      ],
+      "adjacent_markets_text": "연신내권·북한산권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "쇼핑몰형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "MALL",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "대단지 거주민",
+        "가족",
+        "쇼핑객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-EUNPYEONG-NOKBEON-SUSAEK",
+      "city": "서울특별시",
+      "gu": "은평구",
+      "gu_code": "EUNPYEONG",
+      "name": "녹번·수색권",
+      "submarkets_draft": [
+        "녹번역",
+        "은평구청",
+        "수색역",
+        "DMC 서측"
+      ],
+      "core_stations": [
+        "녹번",
+        "수색"
+      ],
+      "core_streets_nodes": [
+        "통일로",
+        "수색로"
+      ],
+      "adjacent_markets_text": "홍제권·상암DMC권·응암·새절권",
+      "market_type_labels": [
+        "주거생활형",
+        "오피스 연계형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "OFFICE_MIXED",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "직장인",
+        "통근객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEODAEMUN-SINCHON",
+      "city": "서울특별시",
+      "gu": "서대문구",
+      "gu_code": "SEODAEMUN",
+      "name": "신촌권",
+      "submarkets_draft": [
+        "신촌역",
+        "연세로",
+        "신촌기차역 연결축"
+      ],
+      "core_stations": [
+        "신촌"
+      ],
+      "core_streets_nodes": [
+        "연세로",
+        "신촌로"
+      ],
+      "adjacent_markets_text": "이대권·홍대권·대흥·서강대권",
+      "market_type_labels": [
+        "대학가형",
+        "먹자골목형",
+        "의료형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "DINING_CLUSTER",
+        "MEDICAL"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "청년층",
+        "병원 방문객",
+        "야간 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEODAEMUN-EWHA",
+      "city": "서울특별시",
+      "gu": "서대문구",
+      "gu_code": "SEODAEMUN",
+      "name": "이대권",
+      "submarkets_draft": [
+        "이대역",
+        "이화여대 정문",
+        "대현문화공원"
+      ],
+      "core_stations": [
+        "이대"
+      ],
+      "core_streets_nodes": [
+        "이화여대길",
+        "신촌로"
+      ],
+      "adjacent_markets_text": "신촌권·아현권",
+      "market_type_labels": [
+        "대학가형",
+        "쇼핑형",
+        "관광형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "MALL",
+        "TOURISM"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "여성 고객",
+        "관광객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEODAEMUN-YEONHUI",
+      "city": "서울특별시",
+      "gu": "서대문구",
+      "gu_code": "SEODAEMUN",
+      "name": "연희권",
+      "submarkets_draft": [
+        "연희동 사러가 주변",
+        "연희맛로",
+        "연남 북측"
+      ],
+      "core_stations": [
+        "홍대입구(버스 연계)"
+      ],
+      "core_streets_nodes": [
+        "연희로",
+        "연희맛로"
+      ],
+      "adjacent_markets_text": "연남권·신촌권",
+      "market_type_labels": [
+        "프리미엄 주거형",
+        "골목상권형",
+        "목적방문형"
+      ],
+      "market_type_codes": [
+        "PREMIUM_RESIDENTIAL",
+        "ALLEY",
+        "DESTINATION"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "외식 목적 방문객",
+        "가족"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEODAEMUN-HONGJE",
+      "city": "서울특별시",
+      "gu": "서대문구",
+      "gu_code": "SEODAEMUN",
+      "name": "홍제권",
+      "submarkets_draft": [
+        "홍제역",
+        "인왕시장",
+        "유진상가"
+      ],
+      "core_stations": [
+        "홍제"
+      ],
+      "core_streets_nodes": [
+        "통일로",
+        "세검정로"
+      ],
+      "adjacent_markets_text": "녹번·수색권·서촌권",
+      "market_type_labels": [
+        "역세권형",
+        "전통시장형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MARKET",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "통근객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEODAEMUN-GAJWA-NAMGAJWA",
+      "city": "서울특별시",
+      "gu": "서대문구",
+      "gu_code": "SEODAEMUN",
+      "name": "가좌·남가좌권",
+      "submarkets_draft": [
+        "가좌역",
+        "명지대",
+        "DMC 북측 주거축"
+      ],
+      "core_stations": [
+        "가좌"
+      ],
+      "core_streets_nodes": [
+        "수색로",
+        "증가로"
+      ],
+      "adjacent_markets_text": "연희권·상암DMC권·응암·새절권",
+      "market_type_labels": [
+        "대학가형",
+        "주거생활형",
+        "오피스 연계형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "RESIDENTIAL",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "거주민",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEODAEMUN-DONGNIMUN-YEONGCHEON",
+      "city": "서울특별시",
+      "gu": "서대문구",
+      "gu_code": "SEODAEMUN",
+      "name": "독립문·영천시장권",
+      "submarkets_draft": [
+        "독립문역",
+        "서대문형무소",
+        "영천시장"
+      ],
+      "core_stations": [
+        "독립문"
+      ],
+      "core_streets_nodes": [
+        "통일로",
+        "영천시장길"
+      ],
+      "adjacent_markets_text": "서촌권·아현권",
+      "market_type_labels": [
+        "관광형",
+        "전통시장형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TOURISM",
+        "MARKET",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "거주민",
+        "시장 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-HONGDAE",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "홍대권",
+      "submarkets_draft": [
+        "홍대입구역",
+        "걷고싶은거리",
+        "서교동 클럽거리"
+      ],
+      "core_stations": [
+        "홍대입구"
+      ],
+      "core_streets_nodes": [
+        "양화로",
+        "홍익로",
+        "어울마당로"
+      ],
+      "adjacent_markets_text": "연남권·합정권·상수권·신촌권",
+      "market_type_labels": [
+        "외국인 관광형",
+        "대학가형",
+        "야간형",
+        "트렌드 목적형"
+      ],
+      "market_type_codes": [
+        "FOREIGN",
+        "UNIVERSITY",
+        "NIGHT",
+        "TREND"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "외국인",
+        "대학생",
+        "야간 방문객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-YEONNAM",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "연남권",
+      "submarkets_draft": [
+        "연트럴파크",
+        "연남동 골목",
+        "동진시장"
+      ],
+      "core_stations": [
+        "홍대입구"
+      ],
+      "core_streets_nodes": [
+        "동교로",
+        "성미산로"
+      ],
+      "adjacent_markets_text": "홍대권·연희권·망원권",
+      "market_type_labels": [
+        "관광형",
+        "골목상권형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "TOURISM",
+        "ALLEY",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "데이트 고객",
+        "청년 거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-HAPJEONG",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "합정권",
+      "submarkets_draft": [
+        "합정역",
+        "메세나폴리스",
+        "양화진"
+      ],
+      "core_stations": [
+        "합정"
+      ],
+      "core_streets_nodes": [
+        "양화로",
+        "독막로"
+      ],
+      "adjacent_markets_text": "홍대권·상수권·망원권",
+      "market_type_labels": [
+        "역세권형",
+        "쇼핑몰형",
+        "오피스형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "쇼핑객",
+        "공연 방문객",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-MANGWON",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "망원권",
+      "submarkets_draft": [
+        "망원시장",
+        "망리단길",
+        "한강공원 연결축"
+      ],
+      "core_stations": [
+        "망원"
+      ],
+      "core_streets_nodes": [
+        "포은로",
+        "망원로"
+      ],
+      "adjacent_markets_text": "연남권·합정권",
+      "market_type_labels": [
+        "전통시장형",
+        "골목상권형",
+        "한강·수변형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "ALLEY",
+        "WATERFRONT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "관광객",
+        "한강 이용객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-SANGSU",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "상수권",
+      "submarkets_draft": [
+        "상수역",
+        "홍대 서측",
+        "당인리 문화공간"
+      ],
+      "core_stations": [
+        "상수"
+      ],
+      "core_streets_nodes": [
+        "독막로",
+        "와우산로"
+      ],
+      "adjacent_markets_text": "홍대권·합정권",
+      "market_type_labels": [
+        "대학가형",
+        "골목상권형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "ALLEY",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "문화 목적 방문객",
+        "야간 고객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-GONGDEOK-MAPO",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "공덕·마포권",
+      "submarkets_draft": [
+        "공덕역",
+        "마포역",
+        "도화동 오피스축"
+      ],
+      "core_stations": [
+        "공덕",
+        "마포"
+      ],
+      "core_streets_nodes": [
+        "마포대로",
+        "백범로"
+      ],
+      "adjacent_markets_text": "효창권·대흥·서강대권·여의도권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "환승거점형",
+        "주거복합형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "TRANSIT",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "환승객",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-DAEHEUNG-SOGANG",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "대흥·서강대권",
+      "submarkets_draft": [
+        "대흥역",
+        "서강대",
+        "광흥창역"
+      ],
+      "core_stations": [
+        "대흥",
+        "광흥창"
+      ],
+      "core_streets_nodes": [
+        "백범로",
+        "서강로"
+      ],
+      "adjacent_markets_text": "신촌권·공덕권·상수권",
+      "market_type_labels": [
+        "대학가형",
+        "주거생활형",
+        "오피스 연계형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "RESIDENTIAL",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "직장인",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-MAPO-SANGAM-DMC",
+      "city": "서울특별시",
+      "gu": "마포구",
+      "gu_code": "MAPO",
+      "name": "상암DMC권",
+      "submarkets_draft": [
+        "디지털미디어시티",
+        "월드컵경기장",
+        "하늘공원"
+      ],
+      "core_stations": [
+        "디지털미디어시티",
+        "월드컵경기장"
+      ],
+      "core_streets_nodes": [
+        "월드컵북로",
+        "성암로"
+      ],
+      "adjacent_markets_text": "수색권·망원권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "경기장형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "EVENT_SPORTS",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "미디어 직장인",
+        "행사 방문객",
+        "가족"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YANGCHEON-MOKDONG-OGEORI",
+      "city": "서울특별시",
+      "gu": "양천구",
+      "gu_code": "YANGCHEON",
+      "name": "목동오거리권",
+      "submarkets_draft": [
+        "목동오거리",
+        "목동로데오",
+        "목동역"
+      ],
+      "core_stations": [
+        "목동"
+      ],
+      "core_streets_nodes": [
+        "목동로",
+        "신정중앙로"
+      ],
+      "adjacent_markets_text": "오목교권·신정네거리권",
+      "market_type_labels": [
+        "학원가형",
+        "주거생활형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "ACADEMY",
+        "RESIDENTIAL",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "학부모",
+        "학생",
+        "직장인"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YANGCHEON-OMOKGYO",
+      "city": "서울특별시",
+      "gu": "양천구",
+      "gu_code": "YANGCHEON",
+      "name": "오목교권",
+      "submarkets_draft": [
+        "오목교역",
+        "현대백화점",
+        "목동운동장 남측"
+      ],
+      "core_stations": [
+        "오목교"
+      ],
+      "core_streets_nodes": [
+        "목동동로",
+        "오목로"
+      ],
+      "adjacent_markets_text": "목동학원가권·목동오거리권",
+      "market_type_labels": [
+        "쇼핑몰형",
+        "오피스형",
+        "프리미엄 주거형"
+      ],
+      "market_type_codes": [
+        "MALL",
+        "OFFICE_MIXED",
+        "PREMIUM_RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "쇼핑객",
+        "직장인",
+        "고소득 거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YANGCHEON-MOKDONG-ACADEMY",
+      "city": "서울특별시",
+      "gu": "양천구",
+      "gu_code": "YANGCHEON",
+      "name": "목동학원가권",
+      "submarkets_draft": [
+        "목동 학원가",
+        "파리공원",
+        "아파트단지"
+      ],
+      "core_stations": [
+        "오목교(버스 연계)"
+      ],
+      "core_streets_nodes": [
+        "목동서로",
+        "목동동로"
+      ],
+      "adjacent_markets_text": "오목교권·목동오거리권",
+      "market_type_labels": [
+        "학원가형",
+        "대단지 주거형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "ACADEMY",
+        "APARTMENT",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "학생",
+        "학부모",
+        "가족"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YANGCHEON-SINJEONGNEGEORI",
+      "city": "서울특별시",
+      "gu": "양천구",
+      "gu_code": "YANGCHEON",
+      "name": "신정네거리권",
+      "submarkets_draft": [
+        "신정네거리역",
+        "신정시장",
+        "신정동 주거축"
+      ],
+      "core_stations": [
+        "신정네거리"
+      ],
+      "core_streets_nodes": [
+        "중앙로",
+        "신월로"
+      ],
+      "adjacent_markets_text": "목동오거리권·신월권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "가족"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YANGCHEON-SINWOL",
+      "city": "서울특별시",
+      "gu": "양천구",
+      "gu_code": "YANGCHEON",
+      "name": "신월권",
+      "submarkets_draft": [
+        "신월사거리",
+        "신영시장",
+        "서서울호수공원 연결축"
+      ],
+      "core_stations": [
+        "까치산(버스 연계)"
+      ],
+      "core_streets_nodes": [
+        "남부순환로",
+        "신월로"
+      ],
+      "adjacent_markets_text": "화곡권·신정네거리권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "가족",
+        "공원 이용객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGSEO-MAGOK",
+      "city": "서울특별시",
+      "gu": "강서구",
+      "gu_code": "GANGSEO",
+      "name": "마곡권",
+      "submarkets_draft": [
+        "마곡나루역",
+        "LG사이언스파크",
+        "서울식물원"
+      ],
+      "core_stations": [
+        "마곡나루",
+        "마곡"
+      ],
+      "core_streets_nodes": [
+        "마곡중앙로",
+        "공항대로"
+      ],
+      "adjacent_markets_text": "발산권·김포공항권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "공원·산책형",
+        "주거복합형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "PARK",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "전시 방문객",
+        "신규 거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGSEO-BALSAN",
+      "city": "서울특별시",
+      "gu": "강서구",
+      "gu_code": "GANGSEO",
+      "name": "발산권",
+      "submarkets_draft": [
+        "발산역",
+        "마곡 업무지구 동측",
+        "NC백화점"
+      ],
+      "core_stations": [
+        "발산"
+      ],
+      "core_streets_nodes": [
+        "공항대로",
+        "강서로"
+      ],
+      "adjacent_markets_text": "마곡권·등촌권",
+      "market_type_labels": [
+        "오피스형",
+        "쇼핑형",
+        "의료형"
+      ],
+      "market_type_codes": [
+        "OFFICE_MIXED",
+        "MALL",
+        "MEDICAL"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "쇼핑객",
+        "거주민",
+        "병원 방문객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGSEO-GIMPOAIRPORT",
+      "city": "서울특별시",
+      "gu": "강서구",
+      "gu_code": "GANGSEO",
+      "name": "김포공항·롯데몰권",
+      "submarkets_draft": [
+        "김포공항",
+        "롯데몰",
+        "공항시장"
+      ],
+      "core_stations": [
+        "김포공항",
+        "송정"
+      ],
+      "core_streets_nodes": [
+        "하늘길",
+        "공항대로"
+      ],
+      "adjacent_markets_text": "마곡권·방화권",
+      "market_type_labels": [
+        "환승거점형",
+        "쇼핑몰형",
+        "관광형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "TOURISM"
+      ],
+      "core_consumers_hypothesis": [
+        "항공 이용객",
+        "쇼핑객",
+        "관광객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGSEO-HWAGOK",
+      "city": "서울특별시",
+      "gu": "강서구",
+      "gu_code": "GANGSEO",
+      "name": "화곡권",
+      "submarkets_draft": [
+        "화곡역",
+        "화곡본동시장",
+        "강서구청 남측"
+      ],
+      "core_stations": [
+        "화곡"
+      ],
+      "core_streets_nodes": [
+        "화곡로",
+        "강서로"
+      ],
+      "adjacent_markets_text": "까치산권·발산권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "통근객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGSEO-KKACHISAN",
+      "city": "서울특별시",
+      "gu": "강서구",
+      "gu_code": "GANGSEO",
+      "name": "까치산권",
+      "submarkets_draft": [
+        "까치산역",
+        "화곡8동 생활축"
+      ],
+      "core_stations": [
+        "까치산"
+      ],
+      "core_streets_nodes": [
+        "강서로",
+        "곰달래로"
+      ],
+      "adjacent_markets_text": "화곡권·신월권",
+      "market_type_labels": [
+        "환승거점형",
+        "주거생활형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "RESIDENTIAL",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "거주민",
+        "야간 생활수요"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGSEO-DEUNGCHON-YEOMCHANG",
+      "city": "서울특별시",
+      "gu": "강서구",
+      "gu_code": "GANGSEO",
+      "name": "등촌·염창권",
+      "submarkets_draft": [
+        "등촌역",
+        "염창역",
+        "증미역 업무",
+        "주거축"
+      ],
+      "core_stations": [
+        "등촌",
+        "염창",
+        "증미"
+      ],
+      "core_streets_nodes": [
+        "공항대로",
+        "양천로"
+      ],
+      "adjacent_markets_text": "발산권·선유도·양평권",
+      "market_type_labels": [
+        "오피스형",
+        "주거생활형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "OFFICE_MIXED",
+        "RESIDENTIAL",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "거주민",
+        "통근객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGSEO-BANGHWA",
+      "city": "서울특별시",
+      "gu": "강서구",
+      "gu_code": "GANGSEO",
+      "name": "방화권",
+      "submarkets_draft": [
+        "방화역",
+        "개화산역",
+        "방신시장"
+      ],
+      "core_stations": [
+        "방화",
+        "개화산"
+      ],
+      "core_streets_nodes": [
+        "금낭화로",
+        "방화대로"
+      ],
+      "adjacent_markets_text": "김포공항권·마곡권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "공항 연계형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "AIRPORT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "공항 종사자",
+        "가족"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GURO-GURODIGITAL",
+      "city": "서울특별시",
+      "gu": "구로구",
+      "gu_code": "GURO",
+      "name": "구로디지털단지권",
+      "submarkets_draft": [
+        "구로디지털단지역",
+        "G밸리 동측",
+        "깔깔거리"
+      ],
+      "core_stations": [
+        "구로디지털단지"
+      ],
+      "core_streets_nodes": [
+        "디지털로",
+        "도림천로"
+      ],
+      "adjacent_markets_text": "가산디지털단지권·신대방·난곡권",
+      "market_type_labels": [
+        "산업·지식산업센터형",
+        "대형 오피스형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "INDUSTRIAL",
+        "OFFICE_LARGE",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "IT",
+        "산업 직장인",
+        "통근객",
+        "야간 회식수요"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GURO-SINDORIM",
+      "city": "서울특별시",
+      "gu": "구로구",
+      "gu_code": "GURO",
+      "name": "신도림권",
+      "submarkets_draft": [
+        "신도림역",
+        "디큐브시티",
+        "테크노마트"
+      ],
+      "core_stations": [
+        "신도림"
+      ],
+      "core_streets_nodes": [
+        "경인로",
+        "새말로"
+      ],
+      "adjacent_markets_text": "문래권·구로역권",
+      "market_type_labels": [
+        "환승거점형",
+        "쇼핑몰형",
+        "주거복합형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "쇼핑객",
+        "직장인",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GURO-GUROSTN",
+      "city": "서울특별시",
+      "gu": "구로구",
+      "gu_code": "GURO",
+      "name": "구로역권",
+      "submarkets_draft": [
+        "구로역",
+        "AK플라자",
+        "구로시장"
+      ],
+      "core_stations": [
+        "구로"
+      ],
+      "core_streets_nodes": [
+        "경인로",
+        "구로중앙로"
+      ],
+      "adjacent_markets_text": "신도림권·고척권",
+      "market_type_labels": [
+        "역세권형",
+        "쇼핑형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "쇼핑객",
+        "시장 이용객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GURO-GOCHEOK-GAEBONG",
+      "city": "서울특별시",
+      "gu": "구로구",
+      "gu_code": "GURO",
+      "name": "고척·개봉권",
+      "submarkets_draft": [
+        "고척스카이돔",
+        "개봉역",
+        "고척시장"
+      ],
+      "core_stations": [
+        "개봉"
+      ],
+      "core_streets_nodes": [
+        "경인로",
+        "고척로"
+      ],
+      "adjacent_markets_text": "구로역권·오류권",
+      "market_type_labels": [
+        "경기장형",
+        "주거생활형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "EVENT_SPORTS",
+        "RESIDENTIAL",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "경기 관람객",
+        "거주민",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GURO-ORYU-ONSU",
+      "city": "서울특별시",
+      "gu": "구로구",
+      "gu_code": "GURO",
+      "name": "오류·온수권",
+      "submarkets_draft": [
+        "오류동역",
+        "온수역",
+        "오류시장"
+      ],
+      "core_stations": [
+        "오류동",
+        "온수"
+      ],
+      "core_streets_nodes": [
+        "경인로",
+        "부일로"
+      ],
+      "adjacent_markets_text": "고척·개봉권·천왕권",
+      "market_type_labels": [
+        "주거생활형",
+        "환승거점형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "TRANSIT",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "환승객",
+        "시장 이용객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GURO-CHEONWANG",
+      "city": "서울특별시",
+      "gu": "구로구",
+      "gu_code": "GURO",
+      "name": "천왕권",
+      "submarkets_draft": [
+        "천왕역",
+        "천왕지구",
+        "항동지구 연결축"
+      ],
+      "core_stations": [
+        "천왕"
+      ],
+      "core_streets_nodes": [
+        "오리로",
+        "천왕로"
+      ],
+      "adjacent_markets_text": "오류·온수권·광명 연계권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "가족형",
+        "공원 연계형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "FAMILY",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "신규 대단지 거주민",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GEUMCHEON-GASANDIGITAL",
+      "city": "서울특별시",
+      "gu": "금천구",
+      "gu_code": "GEUMCHEON",
+      "name": "가산디지털단지권",
+      "submarkets_draft": [
+        "가산디지털단지역",
+        "G밸리 서측",
+        "아울렛단지"
+      ],
+      "core_stations": [
+        "가산디지털단지"
+      ],
+      "core_streets_nodes": [
+        "디지털로",
+        "벚꽃로"
+      ],
+      "adjacent_markets_text": "구로디지털단지권·독산권",
+      "market_type_labels": [
+        "산업·지식산업센터형",
+        "대형 오피스형",
+        "쇼핑형"
+      ],
+      "market_type_codes": [
+        "INDUSTRIAL",
+        "OFFICE_LARGE",
+        "MALL"
+      ],
+      "core_consumers_hypothesis": [
+        "IT",
+        "제조 직장인",
+        "쇼핑객",
+        "통근객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GEUMCHEON-DOKSAN",
+      "city": "서울특별시",
+      "gu": "금천구",
+      "gu_code": "GEUMCHEON",
+      "name": "독산권",
+      "submarkets_draft": [
+        "독산역",
+        "독산동 우시장",
+        "홈플러스축"
+      ],
+      "core_stations": [
+        "독산"
+      ],
+      "core_streets_nodes": [
+        "시흥대로",
+        "범안로"
+      ],
+      "adjacent_markets_text": "가산디지털단지권·시흥사거리권",
+      "market_type_labels": [
+        "산업형",
+        "주거생활형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "INDUSTRIAL",
+        "RESIDENTIAL",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "산업 종사자",
+        "시장 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GEUMCHEON-SIHEUNG-SAGEORI",
+      "city": "서울특별시",
+      "gu": "금천구",
+      "gu_code": "GEUMCHEON",
+      "name": "시흥사거리권",
+      "submarkets_draft": [
+        "시흥사거리",
+        "은행나무시장",
+        "금천구청 남측"
+      ],
+      "core_stations": [
+        "금천구청(버스 연계)"
+      ],
+      "core_streets_nodes": [
+        "시흥대로",
+        "금하로"
+      ],
+      "adjacent_markets_text": "독산권·석수 연계권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "생활거점형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "LOCAL_HUB"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GEUMCHEON-GEUMCHEONGU-OFFICE",
+      "city": "서울특별시",
+      "gu": "금천구",
+      "gu_code": "GEUMCHEON",
+      "name": "금천구청권",
+      "submarkets_draft": [
+        "금천구청역",
+        "롯데캐슬 주거복합",
+        "안양천"
+      ],
+      "core_stations": [
+        "금천구청"
+      ],
+      "core_streets_nodes": [
+        "시흥대로",
+        "벚꽃로"
+      ],
+      "adjacent_markets_text": "독산권·시흥사거리권",
+      "market_type_labels": [
+        "주거복합형",
+        "공공업무형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "OFFICE_MIXED",
+        "PUBLIC_OFFICE",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "대단지 거주민",
+        "공공기관 방문객",
+        "산책객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YEONGDEUNGPO-YEOUIDO",
+      "city": "서울특별시",
+      "gu": "영등포구",
+      "gu_code": "YEONGDEUNGPO",
+      "name": "여의도권",
+      "submarkets_draft": [
+        "여의도역",
+        "IFC",
+        "더현대서울",
+        "금융가",
+        "한강공원"
+      ],
+      "core_stations": [
+        "여의도",
+        "여의나루"
+      ],
+      "core_streets_nodes": [
+        "국제금융로",
+        "여의대로"
+      ],
+      "adjacent_markets_text": "공덕·마포권·영등포역권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "쇼핑몰형",
+        "한강·수변형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "MALL",
+        "WATERFRONT"
+      ],
+      "core_consumers_hypothesis": [
+        "금융 직장인",
+        "쇼핑객",
+        "관광객",
+        "한강 이용객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YEONGDEUNGPO-YEONGDEUNGPOSTN",
+      "city": "서울특별시",
+      "gu": "영등포구",
+      "gu_code": "YEONGDEUNGPO",
+      "name": "영등포역·타임스퀘어권",
+      "submarkets_draft": [
+        "영등포역",
+        "타임스퀘어",
+        "신세계백화점"
+      ],
+      "core_stations": [
+        "영등포"
+      ],
+      "core_streets_nodes": [
+        "영중로",
+        "경인로"
+      ],
+      "adjacent_markets_text": "영등포시장권·문래권",
+      "market_type_labels": [
+        "환승거점형",
+        "쇼핑몰형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "철도 이용객",
+        "쇼핑객",
+        "직장인",
+        "야간 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YEONGDEUNGPO-MULLAE",
+      "city": "서울특별시",
+      "gu": "영등포구",
+      "gu_code": "YEONGDEUNGPO",
+      "name": "문래권",
+      "submarkets_draft": [
+        "문래창작촌",
+        "문래역",
+        "철공소 골목"
+      ],
+      "core_stations": [
+        "문래"
+      ],
+      "core_streets_nodes": [
+        "도림로",
+        "문래로"
+      ],
+      "adjacent_markets_text": "신도림권·영등포역권",
+      "market_type_labels": [
+        "산업형",
+        "문화형",
+        "트렌드 목적형"
+      ],
+      "market_type_codes": [
+        "INDUSTRIAL",
+        "CULTURE",
+        "TREND"
+      ],
+      "core_consumers_hypothesis": [
+        "예술 목적 방문객",
+        "직장인",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YEONGDEUNGPO-DANGSAN",
+      "city": "서울특별시",
+      "gu": "영등포구",
+      "gu_code": "YEONGDEUNGPO",
+      "name": "당산권",
+      "submarkets_draft": [
+        "당산역",
+        "당산동 오피스",
+        "한강 연결축"
+      ],
+      "core_stations": [
+        "당산"
+      ],
+      "core_streets_nodes": [
+        "양평로",
+        "당산로"
+      ],
+      "adjacent_markets_text": "합정권·선유도·양평권",
+      "market_type_labels": [
+        "환승거점형",
+        "오피스형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "OFFICE_MIXED",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "직장인",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YEONGDEUNGPO-SEONYUDO-YANGPYEONG",
+      "city": "서울특별시",
+      "gu": "영등포구",
+      "gu_code": "YEONGDEUNGPO",
+      "name": "선유도·양평권",
+      "submarkets_draft": [
+        "선유도공원",
+        "선유도역",
+        "양평동 업무축"
+      ],
+      "core_stations": [
+        "선유도",
+        "양평"
+      ],
+      "core_streets_nodes": [
+        "양평로",
+        "선유로"
+      ],
+      "adjacent_markets_text": "당산권·등촌·염창권",
+      "market_type_labels": [
+        "공원·산책형",
+        "오피스형",
+        "한강·수변형"
+      ],
+      "market_type_codes": [
+        "PARK",
+        "OFFICE_MIXED",
+        "WATERFRONT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "산책객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YEONGDEUNGPO-SINGIL-DAERIM",
+      "city": "서울특별시",
+      "gu": "영등포구",
+      "gu_code": "YEONGDEUNGPO",
+      "name": "신길·대림권",
+      "submarkets_draft": [
+        "신길뉴타운",
+        "대림역",
+        "대림중앙시장"
+      ],
+      "core_stations": [
+        "신길",
+        "대림"
+      ],
+      "core_streets_nodes": [
+        "도신로",
+        "도림로"
+      ],
+      "adjacent_markets_text": "영등포역권·구로디지털단지권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "외국인 생활형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "FOREIGN",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "대단지 거주민",
+        "외국인 생활수요",
+        "시장 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-YEONGDEUNGPO-YEONGDEUNGPO-MARKET",
+      "city": "서울특별시",
+      "gu": "영등포구",
+      "gu_code": "YEONGDEUNGPO",
+      "name": "영등포시장권",
+      "submarkets_draft": [
+        "영등포시장",
+        "영등포로터리",
+        "국회대로 남측"
+      ],
+      "core_stations": [
+        "영등포시장"
+      ],
+      "core_streets_nodes": [
+        "영등포로",
+        "영중로"
+      ],
+      "adjacent_markets_text": "영등포역권·당산권",
+      "market_type_labels": [
+        "전통시장형",
+        "역세권형",
+        "생활거점형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "TRANSIT",
+        "LOCAL_HUB"
+      ],
+      "core_consumers_hypothesis": [
+        "시장 이용객",
+        "거주민",
+        "직장인"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGJAK-SADANG",
+      "city": "서울특별시",
+      "gu": "동작구",
+      "gu_code": "DONGJAK",
+      "name": "사당권",
+      "submarkets_draft": [
+        "사당역",
+        "남현동 먹자골목",
+        "관악산 북측"
+      ],
+      "core_stations": [
+        "사당"
+      ],
+      "core_streets_nodes": [
+        "남부순환로",
+        "동작대로"
+      ],
+      "adjacent_markets_text": "이수권·낙성대권",
+      "market_type_labels": [
+        "환승거점형",
+        "먹자골목형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "DINING_CLUSTER",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "환승객",
+        "직장인",
+        "등산객",
+        "야간 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGJAK-ISU",
+      "city": "서울특별시",
+      "gu": "동작구",
+      "gu_code": "DONGJAK",
+      "name": "이수권",
+      "submarkets_draft": [
+        "이수역",
+        "태평백화점",
+        "남성사계시장"
+      ],
+      "core_stations": [
+        "이수",
+        "총신대입구"
+      ],
+      "core_streets_nodes": [
+        "동작대로",
+        "사당로"
+      ],
+      "adjacent_markets_text": "사당권·방배권",
+      "market_type_labels": [
+        "환승거점형",
+        "주거생활형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "RESIDENTIAL",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "환승객",
+        "시장 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGJAK-NORYANGJIN",
+      "city": "서울특별시",
+      "gu": "동작구",
+      "gu_code": "DONGJAK",
+      "name": "노량진권",
+      "submarkets_draft": [
+        "노량진역",
+        "학원가",
+        "수산시장"
+      ],
+      "core_stations": [
+        "노량진"
+      ],
+      "core_streets_nodes": [
+        "노량진로",
+        "장승배기로"
+      ],
+      "adjacent_markets_text": "여의도권·상도권",
+      "market_type_labels": [
+        "학원가형",
+        "전통시장형",
+        "환승거점형"
+      ],
+      "market_type_codes": [
+        "ACADEMY",
+        "MARKET",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "공시생",
+        "학생",
+        "시장 방문객",
+        "환승객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGJAK-HEUKSEOK",
+      "city": "서울특별시",
+      "gu": "동작구",
+      "gu_code": "DONGJAK",
+      "name": "흑석권",
+      "submarkets_draft": [
+        "흑석역",
+        "중앙대",
+        "흑석시장"
+      ],
+      "core_stations": [
+        "흑석"
+      ],
+      "core_streets_nodes": [
+        "서달로",
+        "현충로"
+      ],
+      "adjacent_markets_text": "반포권·상도권",
+      "market_type_labels": [
+        "대학가형",
+        "의료형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "MEDICAL",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "병원 방문객",
+        "대단지 거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGJAK-SANGDO",
+      "city": "서울특별시",
+      "gu": "동작구",
+      "gu_code": "DONGJAK",
+      "name": "상도권",
+      "submarkets_draft": [
+        "상도역",
+        "장승배기역",
+        "숭실대"
+      ],
+      "core_stations": [
+        "상도",
+        "숭실대입구"
+      ],
+      "core_streets_nodes": [
+        "상도로",
+        "사당로"
+      ],
+      "adjacent_markets_text": "노량진권·흑석권",
+      "market_type_labels": [
+        "대학가형",
+        "주거생활형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "RESIDENTIAL",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "거주민",
+        "통근객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-DONGJAK-SINDAEBANG-BORAMAE",
+      "city": "서울특별시",
+      "gu": "동작구",
+      "gu_code": "DONGJAK",
+      "name": "신대방삼거리·보라매권",
+      "submarkets_draft": [
+        "신대방삼거리",
+        "보라매공원",
+        "병원업무축"
+      ],
+      "core_stations": [
+        "신대방삼거리",
+        "보라매"
+      ],
+      "core_streets_nodes": [
+        "보라매로",
+        "상도로"
+      ],
+      "adjacent_markets_text": "신림권·구로디지털단지권",
+      "market_type_labels": [
+        "의료형",
+        "오피스형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "MEDICAL",
+        "OFFICE_MIXED",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "병원 방문객",
+        "직장인",
+        "거주민",
+        "공원 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANAK-SILLIM",
+      "city": "서울특별시",
+      "gu": "관악구",
+      "gu_code": "GWANAK",
+      "name": "신림권",
+      "submarkets_draft": [
+        "신림역",
+        "별빛거리",
+        "순대타운"
+      ],
+      "core_stations": [
+        "신림"
+      ],
+      "core_streets_nodes": [
+        "신림로",
+        "남부순환로"
+      ],
+      "adjacent_markets_text": "신대방·난곡권·서울대입구권",
+      "market_type_labels": [
+        "대형 역세권형",
+        "먹자골목형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "DINING_CLUSTER",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "청년 거주민",
+        "직장인",
+        "야간 방문객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANAK-SNU-SHAROSU",
+      "city": "서울특별시",
+      "gu": "관악구",
+      "gu_code": "GWANAK",
+      "name": "서울대입구·샤로수길권",
+      "submarkets_draft": [
+        "서울대입구역",
+        "샤로수길",
+        "관악구청"
+      ],
+      "core_stations": [
+        "서울대입구"
+      ],
+      "core_streets_nodes": [
+        "관악로",
+        "남부순환로"
+      ],
+      "adjacent_markets_text": "낙성대권·봉천권",
+      "market_type_labels": [
+        "대학가형",
+        "골목상권형",
+        "트렌드 목적형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "ALLEY",
+        "TREND"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "청년 거주민",
+        "데이트 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANAK-NAKSEONGDAE",
+      "city": "서울특별시",
+      "gu": "관악구",
+      "gu_code": "GWANAK",
+      "name": "낙성대권",
+      "submarkets_draft": [
+        "낙성대역",
+        "인헌시장",
+        "낙성대공원"
+      ],
+      "core_stations": [
+        "낙성대"
+      ],
+      "core_streets_nodes": [
+        "남부순환로",
+        "낙성대로"
+      ],
+      "adjacent_markets_text": "사당권·서울대입구권",
+      "market_type_labels": [
+        "주거생활형",
+        "대학가형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "UNIVERSITY",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "대학생",
+        "거주민",
+        "공원 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANAK-BONGCHEON",
+      "city": "서울특별시",
+      "gu": "관악구",
+      "gu_code": "GWANAK",
+      "name": "봉천권",
+      "submarkets_draft": [
+        "봉천역",
+        "봉천제일시장",
+        "은천동 주거축"
+      ],
+      "core_stations": [
+        "봉천"
+      ],
+      "core_streets_nodes": [
+        "남부순환로",
+        "봉천로"
+      ],
+      "adjacent_markets_text": "서울대입구권·신림권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "통근객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANAK-DAEHAKDONG-GWANAKSAN",
+      "city": "서울특별시",
+      "gu": "관악구",
+      "gu_code": "GWANAK",
+      "name": "대학동·관악산입구권",
+      "submarkets_draft": [
+        "서울대 정문",
+        "대학동 고시촌",
+        "관악산 입구"
+      ],
+      "core_stations": [
+        "서울대벤처타운"
+      ],
+      "core_streets_nodes": [
+        "신림로",
+        "관악산나들길"
+      ],
+      "adjacent_markets_text": "서울대입구권·신림권",
+      "market_type_labels": [
+        "대학가형",
+        "학원가형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "UNIVERSITY",
+        "ACADEMY",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "학생",
+        "연구자",
+        "등산객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GWANAK-SINDAEBANG-NANGOK",
+      "city": "서울특별시",
+      "gu": "관악구",
+      "gu_code": "GWANAK",
+      "name": "신대방·난곡권",
+      "submarkets_draft": [
+        "신대방역",
+        "난곡사거리",
+        "도림천 남측"
+      ],
+      "core_stations": [
+        "신대방"
+      ],
+      "core_streets_nodes": [
+        "난곡로",
+        "신사로"
+      ],
+      "adjacent_markets_text": "구로디지털단지권·신림권",
+      "market_type_labels": [
+        "주거생활형",
+        "산업 연계형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "INDUSTRIAL",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "산업 직장인",
+        "통근객"
+      ],
+      "bakery_priority": "중상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-GANGNAMSTN-WEST",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "강남역 서초권",
+      "submarkets_draft": [
+        "강남역 서측",
+        "서초대로",
+        "강남대로 남단"
+      ],
+      "core_stations": [
+        "강남"
+      ],
+      "core_streets_nodes": [
+        "강남대로",
+        "서초대로"
+      ],
+      "adjacent_markets_text": "강남역권·교대권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "학원가형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "ACADEMY",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "학원 수요",
+        "쇼핑객",
+        "야간 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-GYODAE",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "교대권",
+      "submarkets_draft": [
+        "교대역",
+        "법조타운",
+        "먹자골목"
+      ],
+      "core_stations": [
+        "교대"
+      ],
+      "core_streets_nodes": [
+        "서초대로",
+        "반포대로"
+      ],
+      "adjacent_markets_text": "서초권·강남역 서초권",
+      "market_type_labels": [
+        "오피스형",
+        "학원가형",
+        "먹자골목형"
+      ],
+      "market_type_codes": [
+        "OFFICE_MIXED",
+        "ACADEMY",
+        "DINING_CLUSTER"
+      ],
+      "core_consumers_hypothesis": [
+        "법조 직장인",
+        "학원생",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-SEOCHO",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "서초권",
+      "submarkets_draft": [
+        "서초역",
+        "예술의전당",
+        "법원 남측"
+      ],
+      "core_stations": [
+        "서초"
+      ],
+      "core_streets_nodes": [
+        "반포대로",
+        "서초대로"
+      ],
+      "adjacent_markets_text": "교대권·방배권",
+      "market_type_labels": [
+        "오피스형",
+        "공연문화형",
+        "주거생활형"
+      ],
+      "market_type_codes": [
+        "OFFICE_MIXED",
+        "CULTURE",
+        "RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "법조 직장인",
+        "공연 관람객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-BANPO-EXPRESSTERMINAL",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "반포·고속터미널권",
+      "submarkets_draft": [
+        "고속터미널",
+        "센트럴시티",
+        "신세계강남",
+        "반포한강공원"
+      ],
+      "core_stations": [
+        "고속터미널",
+        "신반포"
+      ],
+      "core_streets_nodes": [
+        "신반포로",
+        "사평대로"
+      ],
+      "adjacent_markets_text": "잠원권·서래마을권·흑석권",
+      "market_type_labels": [
+        "환승거점형",
+        "백화점형",
+        "프리미엄 주거형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "PREMIUM_RESIDENTIAL"
+      ],
+      "core_consumers_hypothesis": [
+        "광역교통 이용객",
+        "쇼핑객",
+        "고소득 거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-JAMWON",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "잠원권",
+      "submarkets_draft": [
+        "잠원역",
+        "신사역 남측",
+        "한강공원"
+      ],
+      "core_stations": [
+        "잠원"
+      ],
+      "core_streets_nodes": [
+        "나루터로",
+        "신반포로"
+      ],
+      "adjacent_markets_text": "신사·가로수길권·반포권",
+      "market_type_labels": [
+        "프리미엄 주거형",
+        "한강·수변형",
+        "역세권형"
+      ],
+      "market_type_codes": [
+        "PREMIUM_RESIDENTIAL",
+        "WATERFRONT",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "고소득 거주민",
+        "한강 이용객",
+        "통근객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-BANGBAE-SEORAE",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "방배·서래마을권",
+      "submarkets_draft": [
+        "방배역",
+        "내방역",
+        "서래마을",
+        "카페골목"
+      ],
+      "core_stations": [
+        "방배",
+        "내방"
+      ],
+      "core_streets_nodes": [
+        "방배로",
+        "서래로"
+      ],
+      "adjacent_markets_text": "이수권·반포권",
+      "market_type_labels": [
+        "프리미엄 주거형",
+        "외국인 생활형",
+        "골목상권형"
+      ],
+      "market_type_codes": [
+        "PREMIUM_RESIDENTIAL",
+        "FOREIGN",
+        "ALLEY"
+      ],
+      "core_consumers_hypothesis": [
+        "고소득 거주민",
+        "가족",
+        "외국인 생활수요"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-YANGJAE",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "양재권",
+      "submarkets_draft": [
+        "양재역",
+        "양재시민의숲",
+        "AT센터",
+        "오피스축"
+      ],
+      "core_stations": [
+        "양재",
+        "양재시민의숲"
+      ],
+      "core_streets_nodes": [
+        "강남대로",
+        "양재천로"
+      ],
+      "adjacent_markets_text": "도곡권·내곡권",
+      "market_type_labels": [
+        "오피스형",
+        "공원·산책형",
+        "전시형"
+      ],
+      "market_type_codes": [
+        "OFFICE_MIXED",
+        "PARK",
+        "EVENT_EXHIBITION"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "전시 방문객",
+        "가족",
+        "산책객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SEOCHO-NAEGOK-CHEONGGYESAN",
+      "city": "서울특별시",
+      "gu": "서초구",
+      "gu_code": "SEOCHO",
+      "name": "내곡·청계산입구권",
+      "submarkets_draft": [
+        "청계산입구역",
+        "내곡지구",
+        "헌인릉"
+      ],
+      "core_stations": [
+        "청계산입구"
+      ],
+      "core_streets_nodes": [
+        "청계산로",
+        "헌릉로"
+      ],
+      "adjacent_markets_text": "양재권·세곡권",
+      "market_type_labels": [
+        "공원·산책형",
+        "대단지 주거형",
+        "목적방문형"
+      ],
+      "market_type_codes": [
+        "PARK",
+        "APARTMENT",
+        "DESTINATION"
+      ],
+      "core_consumers_hypothesis": [
+        "등산객",
+        "신규 거주민",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-GANGNAMSTN",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "강남역권",
+      "submarkets_draft": [
+        "강남역 동측",
+        "테헤란로 초입",
+        "역삼동 먹자축"
+      ],
+      "core_stations": [
+        "강남"
+      ],
+      "core_streets_nodes": [
+        "강남대로",
+        "테헤란로"
+      ],
+      "adjacent_markets_text": "강남역 서초권·역삼권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "대형 역세권형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "TRANSIT",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "쇼핑객",
+        "학원생",
+        "야간 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-YEOKSAM-TEHERAN",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "역삼·테헤란로권",
+      "submarkets_draft": [
+        "역삼역",
+        "테헤란로 오피스",
+        "강남파이낸스센터"
+      ],
+      "core_stations": [
+        "역삼"
+      ],
+      "core_streets_nodes": [
+        "테헤란로",
+        "논현로"
+      ],
+      "adjacent_markets_text": "강남역권·선릉권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "호텔형",
+        "업무거점형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "HOTEL",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "대형 오피스 직장인",
+        "출장객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-SEOLLEUNG",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "선릉권",
+      "submarkets_draft": [
+        "선릉역",
+        "테헤란로 중부",
+        "선정릉 서측"
+      ],
+      "core_stations": [
+        "선릉"
+      ],
+      "core_streets_nodes": [
+        "테헤란로",
+        "선릉로"
+      ],
+      "adjacent_markets_text": "역삼권·삼성·코엑스권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "역세권형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "TRANSIT",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "전문직",
+        "회식수요"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-SAMSUNG-COEX",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "삼성·코엑스권",
+      "submarkets_draft": [
+        "삼성역",
+        "코엑스",
+        "무역센터",
+        "봉은사"
+      ],
+      "core_stations": [
+        "삼성",
+        "봉은사"
+      ],
+      "core_streets_nodes": [
+        "영동대로",
+        "테헤란로"
+      ],
+      "adjacent_markets_text": "청담권·선릉권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "전시형",
+        "쇼핑몰형",
+        "외국인 관광형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "EVENT_EXHIBITION",
+        "MALL",
+        "FOREIGN"
+      ],
+      "core_consumers_hypothesis": [
+        "전시 방문객",
+        "외국인",
+        "직장인",
+        "쇼핑객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-CHEONGDAM",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "청담권",
+      "submarkets_draft": [
+        "청담사거리",
+        "명품거리",
+        "도산대로 동측"
+      ],
+      "core_stations": [
+        "청담"
+      ],
+      "core_streets_nodes": [
+        "도산대로",
+        "압구정로"
+      ],
+      "adjacent_markets_text": "압구정권·삼성·코엑스권",
+      "market_type_labels": [
+        "프리미엄 주거형",
+        "럭셔리 쇼핑형",
+        "목적방문형"
+      ],
+      "market_type_codes": [
+        "PREMIUM_RESIDENTIAL",
+        "LUXURY",
+        "DESTINATION"
+      ],
+      "core_consumers_hypothesis": [
+        "고소득 거주민",
+        "패션 목적 방문객",
+        "외국인"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-APGUJEONG",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "압구정권",
+      "submarkets_draft": [
+        "압구정역",
+        "로데오거리",
+        "갤러리아"
+      ],
+      "core_stations": [
+        "압구정",
+        "압구정로데오"
+      ],
+      "core_streets_nodes": [
+        "압구정로",
+        "선릉로"
+      ],
+      "adjacent_markets_text": "청담권·신사·가로수길권",
+      "market_type_labels": [
+        "프리미엄 주거형",
+        "트렌드 목적형",
+        "쇼핑형"
+      ],
+      "market_type_codes": [
+        "PREMIUM_RESIDENTIAL",
+        "TREND",
+        "MALL"
+      ],
+      "core_consumers_hypothesis": [
+        "고소득 거주민",
+        "쇼핑객",
+        "데이트 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-SINSA-GAROSU",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "신사·가로수길권",
+      "submarkets_draft": [
+        "신사역",
+        "가로수길",
+        "세로수길"
+      ],
+      "core_stations": [
+        "신사"
+      ],
+      "core_streets_nodes": [
+        "도산대로",
+        "압구정로",
+        "가로수길"
+      ],
+      "adjacent_markets_text": "압구정권·잠원권·논현권",
+      "market_type_labels": [
+        "트렌드 목적형",
+        "관광형",
+        "골목상권형"
+      ],
+      "market_type_codes": [
+        "TREND",
+        "TOURISM",
+        "ALLEY"
+      ],
+      "core_consumers_hypothesis": [
+        "관광객",
+        "패션 고객",
+        "데이트 고객",
+        "직장인"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-NONHYEON",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "논현권",
+      "submarkets_draft": [
+        "논현역",
+        "영동시장",
+        "학동역 가구거리"
+      ],
+      "core_stations": [
+        "논현",
+        "학동"
+      ],
+      "core_streets_nodes": [
+        "강남대로",
+        "학동로"
+      ],
+      "adjacent_markets_text": "신사·가로수길권·강남역권",
+      "market_type_labels": [
+        "오피스형",
+        "전통시장형",
+        "야간형"
+      ],
+      "market_type_codes": [
+        "OFFICE_MIXED",
+        "MARKET",
+        "NIGHT"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "시장 이용객",
+        "야간 고객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-DAECHI-DOGOK",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "대치·도곡권",
+      "submarkets_draft": [
+        "대치동 학원가",
+        "도곡동 주거축",
+        "한티역"
+      ],
+      "core_stations": [
+        "한티",
+        "대치"
+      ],
+      "core_streets_nodes": [
+        "도곡로",
+        "남부순환로"
+      ],
+      "adjacent_markets_text": "선릉권·양재권",
+      "market_type_labels": [
+        "학원가형",
+        "프리미엄 주거형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "ACADEMY",
+        "PREMIUM_RESIDENTIAL",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "학생",
+        "학부모",
+        "고소득 거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGNAM-SUSEO-SEGOK",
+      "city": "서울특별시",
+      "gu": "강남구",
+      "gu_code": "GANGNAM",
+      "name": "수서·세곡권",
+      "submarkets_draft": [
+        "수서역",
+        "SRT",
+        "세곡지구",
+        "대모산 남측"
+      ],
+      "core_stations": [
+        "수서"
+      ],
+      "core_streets_nodes": [
+        "광평로",
+        "밤고개로"
+      ],
+      "adjacent_markets_text": "문정권·내곡권",
+      "market_type_labels": [
+        "환승거점형",
+        "대단지 주거형",
+        "개발거점형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "APARTMENT",
+        "DEVELOPMENT"
+      ],
+      "core_consumers_hypothesis": [
+        "광역교통 이용객",
+        "신규 거주민",
+        "직장인"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-JAMSIL",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "잠실권",
+      "submarkets_draft": [
+        "잠실역",
+        "롯데월드몰",
+        "롯데월드",
+        "잠실종합운동장 연결축"
+      ],
+      "core_stations": [
+        "잠실"
+      ],
+      "core_streets_nodes": [
+        "올림픽로",
+        "송파대로"
+      ],
+      "adjacent_markets_text": "송리단길권·방이권",
+      "market_type_labels": [
+        "쇼핑몰형",
+        "관광형",
+        "경기장형",
+        "환승거점형"
+      ],
+      "market_type_codes": [
+        "MALL",
+        "TOURISM",
+        "EVENT_SPORTS",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "쇼핑객",
+        "관광객",
+        "가족",
+        "직장인"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-SONGRIDAN",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "송리단길권",
+      "submarkets_draft": [
+        "석촌호수 동호",
+        "송리단길",
+        "석촌역 북측"
+      ],
+      "core_stations": [
+        "석촌",
+        "송파나루"
+      ],
+      "core_streets_nodes": [
+        "백제고분로45길",
+        "오금로"
+      ],
+      "adjacent_markets_text": "잠실권·석촌권·방이권",
+      "market_type_labels": [
+        "골목상권형",
+        "공원·산책형",
+        "관광형"
+      ],
+      "market_type_codes": [
+        "ALLEY",
+        "PARK",
+        "TOURISM"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "데이트 고객",
+        "관광객",
+        "가족"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-BANGI",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "방이권",
+      "submarkets_draft": [
+        "방이먹자골목",
+        "몽촌토성역",
+        "올림픽공원 서측"
+      ],
+      "core_stations": [
+        "몽촌토성",
+        "한성백제"
+      ],
+      "core_streets_nodes": [
+        "오금로",
+        "위례성대로"
+      ],
+      "adjacent_markets_text": "잠실권·올림픽공원권",
+      "market_type_labels": [
+        "먹자골목형",
+        "야간형",
+        "공원·산책형"
+      ],
+      "market_type_codes": [
+        "DINING_CLUSTER",
+        "NIGHT",
+        "PARK"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "야간 방문객",
+        "공원 관람객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-MUNJEONG",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "문정권",
+      "submarkets_draft": [
+        "문정법조단지",
+        "가든파이브",
+        "문정역"
+      ],
+      "core_stations": [
+        "문정"
+      ],
+      "core_streets_nodes": [
+        "송파대로",
+        "법원로"
+      ],
+      "adjacent_markets_text": "가락권·수서권",
+      "market_type_labels": [
+        "대형 오피스형",
+        "쇼핑몰형",
+        "주거복합형"
+      ],
+      "market_type_codes": [
+        "OFFICE_LARGE",
+        "MALL",
+        "OFFICE_MIXED"
+      ],
+      "core_consumers_hypothesis": [
+        "법조 직장인",
+        "쇼핑객",
+        "거주민"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-GARAKMARKET",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "가락시장권",
+      "submarkets_draft": [
+        "가락시장",
+        "가락몰",
+        "가락시장역"
+      ],
+      "core_stations": [
+        "가락시장"
+      ],
+      "core_streets_nodes": [
+        "송파대로",
+        "양재대로"
+      ],
+      "adjacent_markets_text": "문정권·석촌권",
+      "market_type_labels": [
+        "대형 전통시장형",
+        "유통형",
+        "환승거점형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "RETAIL_LOGISTICS",
+        "TRANSIT"
+      ],
+      "core_consumers_hypothesis": [
+        "시장 종사자",
+        "외식 방문객",
+        "거주민"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-SEOKCHON-SAMJEON",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "석촌·삼전권",
+      "submarkets_draft": [
+        "석촌역",
+        "삼전역",
+        "백제고분로 생활축"
+      ],
+      "core_stations": [
+        "석촌",
+        "삼전"
+      ],
+      "core_streets_nodes": [
+        "백제고분로",
+        "삼학사로"
+      ],
+      "adjacent_markets_text": "송리단길권·잠실권",
+      "market_type_labels": [
+        "주거생활형",
+        "역세권형",
+        "골목상권형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "TRANSIT",
+        "ALLEY"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "직장인",
+        "데이트 고객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-OLYMPICPARK",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "올림픽공원권",
+      "submarkets_draft": [
+        "올림픽공원",
+        "KSPO DOME",
+        "한성백제박물관"
+      ],
+      "core_stations": [
+        "올림픽공원",
+        "한성백제"
+      ],
+      "core_streets_nodes": [
+        "위례성대로",
+        "올림픽로"
+      ],
+      "adjacent_markets_text": "방이권·강동역권",
+      "market_type_labels": [
+        "공원·산책형",
+        "공연문화형",
+        "관광형"
+      ],
+      "market_type_codes": [
+        "PARK",
+        "CULTURE",
+        "TOURISM"
+      ],
+      "core_consumers_hypothesis": [
+        "공연 관람객",
+        "가족",
+        "운동객",
+        "관광객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-WIRYE-SONGPA",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "위례송파권",
+      "submarkets_draft": [
+        "위례신도시 송파권",
+        "장지천",
+        "위례광장"
+      ],
+      "core_stations": [
+        "장지(버스 연계)"
+      ],
+      "core_streets_nodes": [
+        "위례광장로",
+        "위례순환로"
+      ],
+      "adjacent_markets_text": "문정권·거여·마천권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "가족형",
+        "신도시형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "FAMILY",
+        "NEWTOWN"
+      ],
+      "core_consumers_hypothesis": [
+        "대단지 거주민",
+        "가족",
+        "학부모"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-SONGPA-GEOYEO-MACHEON",
+      "city": "서울특별시",
+      "gu": "송파구",
+      "gu_code": "SONGPA",
+      "name": "거여·마천권",
+      "submarkets_draft": [
+        "거여역",
+        "마천중앙시장",
+        "위례 북측"
+      ],
+      "core_stations": [
+        "거여",
+        "마천"
+      ],
+      "core_streets_nodes": [
+        "오금로",
+        "마천로"
+      ],
+      "adjacent_markets_text": "위례송파권·고덕권",
+      "market_type_labels": [
+        "주거생활형",
+        "전통시장형",
+        "대단지 주거형"
+      ],
+      "market_type_codes": [
+        "RESIDENTIAL",
+        "MARKET",
+        "APARTMENT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "가족"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGDONG-CHEONHO",
+      "city": "서울특별시",
+      "gu": "강동구",
+      "gu_code": "GANGDONG",
+      "name": "천호권",
+      "submarkets_draft": [
+        "천호역",
+        "현대백화점",
+        "로데오거리",
+        "한강공원 남측"
+      ],
+      "core_stations": [
+        "천호"
+      ],
+      "core_streets_nodes": [
+        "천호대로",
+        "구천면로"
+      ],
+      "adjacent_markets_text": "암사권·강동·길동권",
+      "market_type_labels": [
+        "대형 역세권형",
+        "쇼핑형",
+        "야간형",
+        "한강·수변형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "MALL",
+        "NIGHT",
+        "WATERFRONT"
+      ],
+      "core_consumers_hypothesis": [
+        "쇼핑객",
+        "환승객",
+        "거주민",
+        "야간 고객"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGDONG-GANGDONG-GILDONG",
+      "city": "서울특별시",
+      "gu": "강동구",
+      "gu_code": "GANGDONG",
+      "name": "강동·길동권",
+      "submarkets_draft": [
+        "강동역",
+        "길동사거리",
+        "길동복조리시장"
+      ],
+      "core_stations": [
+        "강동",
+        "길동"
+      ],
+      "core_streets_nodes": [
+        "천호대로",
+        "양재대로"
+      ],
+      "adjacent_markets_text": "천호권·둔촌권",
+      "market_type_labels": [
+        "역세권형",
+        "주거생활형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "TRANSIT",
+        "RESIDENTIAL",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "직장인",
+        "거주민",
+        "시장 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGDONG-AMSA",
+      "city": "서울특별시",
+      "gu": "강동구",
+      "gu_code": "GANGDONG",
+      "name": "암사권",
+      "submarkets_draft": [
+        "암사역",
+        "암사종합시장",
+        "선사유적지",
+        "한강"
+      ],
+      "core_stations": [
+        "암사"
+      ],
+      "core_streets_nodes": [
+        "올림픽로",
+        "고덕로"
+      ],
+      "adjacent_markets_text": "천호권·명일권",
+      "market_type_labels": [
+        "전통시장형",
+        "주거생활형",
+        "한강·수변형"
+      ],
+      "market_type_codes": [
+        "MARKET",
+        "RESIDENTIAL",
+        "WATERFRONT"
+      ],
+      "core_consumers_hypothesis": [
+        "거주민",
+        "시장 이용객",
+        "가족",
+        "산책객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGDONG-GODEOK-SANGIL",
+      "city": "서울특별시",
+      "gu": "강동구",
+      "gu_code": "GANGDONG",
+      "name": "고덕·상일권",
+      "submarkets_draft": [
+        "고덕역",
+        "상일동역",
+        "고덕비즈밸리",
+        "대단지 아파트"
+      ],
+      "core_stations": [
+        "고덕",
+        "상일동"
+      ],
+      "core_streets_nodes": [
+        "고덕로",
+        "상일로"
+      ],
+      "adjacent_markets_text": "명일권·하남 미사 연계권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "오피스형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "OFFICE_MIXED",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "대단지 거주민",
+        "직장인",
+        "가족"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGDONG-DUNCHON",
+      "city": "서울특별시",
+      "gu": "강동구",
+      "gu_code": "GANGDONG",
+      "name": "둔촌권",
+      "submarkets_draft": [
+        "둔촌동역",
+        "올림픽파크포레온",
+        "보훈병원"
+      ],
+      "core_stations": [
+        "둔촌동",
+        "중앙보훈병원"
+      ],
+      "core_streets_nodes": [
+        "양재대로",
+        "명일로"
+      ],
+      "adjacent_markets_text": "강동·길동권·올림픽공원권",
+      "market_type_labels": [
+        "대단지 주거형",
+        "의료형",
+        "가족형"
+      ],
+      "market_type_codes": [
+        "APARTMENT",
+        "MEDICAL",
+        "FAMILY"
+      ],
+      "core_consumers_hypothesis": [
+        "대단지 거주민",
+        "병원 방문객",
+        "가족"
+      ],
+      "bakery_priority": "최상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    },
+    {
+      "market_id": "SEOUL-GANGDONG-MYEONGIL",
+      "city": "서울특별시",
+      "gu": "강동구",
+      "gu_code": "GANGDONG",
+      "name": "명일권",
+      "submarkets_draft": [
+        "명일역",
+        "고덕전통시장",
+        "명일동 학원가"
+      ],
+      "core_stations": [
+        "명일"
+      ],
+      "core_streets_nodes": [
+        "고덕로",
+        "구천면로"
+      ],
+      "adjacent_markets_text": "암사권·고덕권",
+      "market_type_labels": [
+        "학원가형",
+        "주거생활형",
+        "전통시장형"
+      ],
+      "market_type_codes": [
+        "ACADEMY",
+        "RESIDENTIAL",
+        "MARKET"
+      ],
+      "core_consumers_hypothesis": [
+        "학생",
+        "학부모",
+        "거주민",
+        "시장 이용객"
+      ],
+      "bakery_priority": "상",
+      "boundary_type": "프레임원 분석권역",
+      "boundary_confidence": "D",
+      "official_area_codes": [],
+      "geometry_status": "확인 필요",
+      "numeric_data_status": "미수집",
+      "field_survey_required": true,
+      "fact_status": "프레임원 분석 의견",
+      "checked_at": "2026-08-26"
+    }
+  ]
+}
