@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.1.0",
+  "source_id": "SRC-SEOUL-STORES",
+  "original_filename": "서울시 상권분석서비스(점포-상권)_2025년.zip",
+  "raw_path": "raw/SRC-SEOUL-STORES/서울시 상권분석서비스(점포-상권)_2025년.zip",
+  "extension": ".zip",
+  "file_size": 2119809,
+  "sha256": "133bfc6ce79e13ee5b289490e4667dfba46a0af5d0d71df360a0d324e030a4e6",
+  "last_modified_at": "2026-08-28T08:17:12.694Z",
+  "retrieved_at": null,
+  "source_date": "2025-Q1..2025-Q4",
+  "source_version": "2025_EN_HEADER",
+  "is_zip": true,
+  "inner_files": [
+    {
+      "original_filename": "서울시 상권분석서비스(점포-상권)_2025년.csv",
+      "extension": ".csv",
+      "compressed_size": 2119455,
+      "uncompressed_size": 31051537,
+      "compression_method": "DEFLATE",
+      "crc32": "f615ce96",
+      "filename_encoding": "CP949",
+      "last_modified_local": "2026-05-21T13:48:30"
+    }
+  ],
+  "encoding": "CP949",
+  "header": [
+    "stdr_yyqu_cd",
+    "trdar_se_cd",
+    "trdar_se_cd_nm",
+    "trdar_cd",
+    "trdar_cd_nm",
+    "svc_induty_cd",
+    "svc_induty_cd_nm",
+    "stor_co",
+    "similr_induty_stor_co",
+    "opbiz_rt",
+    "opbiz_stor_co",
+    "clsbiz_rt",
+    "clsbiz_stor_co",
+    "frc_stor_co"
+  ],
+  "row_count": 304775,
+  "key_field": "trdar_cd",
+  "key_count": 1650,
+  "row_key_fields": [
+    "stdr_yyqu_cd",
+    "trdar_se_cd",
+    "trdar_cd",
+    "svc_induty_cd"
+  ],
+  "null_key_count": 0,
+  "duplicate_key_count": 0,
+  "content_validation_status": "VALIDATED",
+  "validation_status": "NEEDS_REVIEW",
+  "compatibility_status": "CODE_LEVEL_MATCH",
+  "normalized_output": null,
+  "notes": "Raw bytes preserved. Header·row key·상권코드 집합만 검증했으며 경쟁·개폐업 분석은 수행하지 않았다."
+}

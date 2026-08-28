@@ -5,20 +5,38 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "schema_version",
     "source_id",
     "original_filename",
+    "raw_path",
+    "extension",
+    "file_size",
     "sha256",
+    "last_modified_at",
     "retrieved_at",
     "source_date",
     "source_version",
+    "is_zip",
+    "inner_files",
+    "encoding",
+    "header",
     "row_count",
+    "key_field",
     "key_count",
+    "row_key_fields",
+    "null_key_count",
+    "duplicate_key_count",
+    "content_validation_status",
     "validation_status",
     "compatibility_status",
     "normalized_output",
     "notes"
   ],
   "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
     "source_id": {
       "type": "string",
       "pattern": "^SRC-[A-Z0-9-]+$"
@@ -28,21 +46,52 @@
       "minLength": 1,
       "pattern": "^[^/\\\\]+$"
     },
+    "raw_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "extension": {
+      "type": "string",
+      "pattern": "^\\.[a-z0-9]+$"
+    },
+    "file_size": {
+      "type": "integer",
+      "minimum": 0
+    },
     "sha256": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
     },
-    "retrieved_at": {
+    "last_modified_at": {
       "type": "string",
       "minLength": 1
+    },
+    "retrieved_at": {
+      "type": ["string", "null"]
     },
     "source_date": {
-      "type": "string",
-      "minLength": 1
+      "type": ["string", "null"]
     },
     "source_version": {
-      "type": "string",
-      "minLength": 1
+      "type": ["string", "null"]
+    },
+    "is_zip": {
+      "type": "boolean"
+    },
+    "inner_files": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "encoding": {
+      "type": ["string", "null"]
+    },
+    "header": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "row_count": {
       "type": ["integer", "null"],
@@ -52,11 +101,31 @@
       "type": ["integer", "null"],
       "minimum": 0
     },
+    "key_field": {
+      "type": ["string", "null"]
+    },
+    "row_key_fields": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "null_key_count": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "duplicate_key_count": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "content_validation_status": {
+      "enum": ["VALIDATED", "NEEDS_REVIEW", "FAIL", "ENCODING_ADAPTER_REQUIRED"]
+    },
     "validation_status": {
-      "enum": ["PASS", "FAIL", "NEEDS_REVIEW", "NOT_RUN", "SOURCE_MISSING"]
+      "enum": ["VALIDATED", "PASS", "FAIL", "NEEDS_REVIEW", "NOT_RUN", "SOURCE_MISSING", "ENCODING_ADAPTER_REQUIRED"]
     },
     "compatibility_status": {
-      "enum": ["PASS", "BLOCKED", "NEEDS_REVIEW", "NOT_RUN", "SOURCE_MISSING"]
+      "enum": ["PASS", "CODE_LEVEL_MATCH", "BLOCKED", "NEEDS_REVIEW", "NOT_RUN", "SOURCE_MISSING"]
     },
     "normalized_output": {
       "type": ["string", "null"]

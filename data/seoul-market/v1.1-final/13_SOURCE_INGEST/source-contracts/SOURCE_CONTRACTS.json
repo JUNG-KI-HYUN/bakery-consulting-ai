@@ -19,9 +19,9 @@
       "source_version": null,
       "source_date": null,
       "retrieved_at": null,
-      "file_format": "UNKNOWN",
-      "allowed_extensions": [],
-      "encoding": null,
+      "file_format": "ZIP_CSV",
+      "allowed_extensions": [".zip"],
+      "encoding": "CP949",
       "key_field": "cell_id",
       "code_system": "NATIONAL_STANDARD_GRID_250M_CELL_ID",
       "spatial_unit": "250m_grid",
@@ -29,6 +29,7 @@
       "required_columns": [
         "base_date",
         "hour_code",
+        "administrative_dong_code",
         "cell_id",
         "total_living_population"
       ],
@@ -48,23 +49,29 @@
         "female_living_population",
         "age_band_living_population"
       ],
-      "unique_key": ["base_date", "hour_code", "cell_id"],
+      "unique_key": [
+        "base_date",
+        "hour_code",
+        "administrative_dong_code",
+        "cell_id"
+      ],
       "source_column_map": {
-        "base_date": null,
-        "hour_code": null,
-        "cell_id": "CELL_ID",
-        "total_living_population": null,
+        "base_date": "일자",
+        "hour_code": "시간",
+        "administrative_dong_code": "행정동코드",
+        "cell_id": "250M격자",
+        "total_living_population": "생활인구합계",
         "male_living_population": null,
         "female_living_population": null,
         "age_band_living_population": null
       },
-      "supported_versions": [],
+      "supported_versions": ["20260823_KO_HEADER"],
       "compatibility_requirement": {
         "gate_id": "LIVING_GRID_CELL_ID_COVERAGE",
-        "status": "BLOCKED",
+        "status": "NEEDS_REVIEW",
         "join_allowed": false,
         "requirements": [
-          "OA-22784 원문 CELL_ID 확보",
+          "OA-22784 원문 250M격자 key 확보",
           "LIVING_GRID_250M.geojson grid_id 10,125개와 key coverage 검증",
           "누락·추가·중복 CELL_ID 목록 검토",
           "source_date와 source_version 기록"
@@ -72,8 +79,8 @@
         "step4a_evidence": "../../12_VALIDATION/LIVING_GRID_KEY_COVERAGE.json"
       },
       "license_status": "NEEDS_REVIEW",
-      "usage_note": "실제 CELL_ID coverage 검증과 FRAMEONE Polygon 승인이 끝나기 전 Market 집계 및 자동 Join을 금지한다.",
-      "status": "SOURCE_MISSING"
+      "usage_note": "실제 250M격자 coverage는 확인했지만 geometry 누락·추가 key 검토와 FRAMEONE Polygon 승인이 끝나기 전 Market 집계 및 자동 Join을 금지한다.",
+      "status": "NEEDS_REVIEW"
     },
     {
       "source_id": "SRC-SEOUL-AREA",
@@ -139,19 +146,21 @@
       "source_version": null,
       "source_date": null,
       "retrieved_at": null,
-      "file_format": "UNKNOWN",
-      "allowed_extensions": [],
-      "encoding": null,
+      "file_format": "ZIP_CSV",
+      "allowed_extensions": [".zip"],
+      "encoding": "CP949",
       "key_field": "official_area_code",
       "code_system": "SEOUL_MARKET_ANALYSIS_AREA_CODE",
       "spatial_unit": "official_market_by_quarter_and_industry",
       "coordinate_system": null,
       "required_columns": [
-        "base_year_code",
-        "base_quarter_code",
+        "base_year_quarter_code",
         "official_area_type_code",
+        "official_area_type_name",
         "official_area_code",
+        "official_area_name",
         "service_industry_code",
+        "service_industry_name",
         "store_count"
       ],
       "optional_columns": [
@@ -167,27 +176,56 @@
         "franchise_store_count"
       ],
       "unique_key": [
-        "base_year_code",
-        "base_quarter_code",
+        "base_year_quarter_code",
         "official_area_type_code",
         "official_area_code",
         "service_industry_code"
       ],
       "source_column_map": {
-        "base_year_code": null,
-        "base_quarter_code": null,
+        "base_year_quarter_code": null,
         "official_area_type_code": null,
+        "official_area_type_name": null,
         "official_area_code": null,
+        "official_area_name": null,
         "service_industry_code": null,
+        "service_industry_name": null,
         "store_count": null,
         "opening_store_count": null,
         "closure_store_count": null,
         "franchise_store_count": null
       },
-      "supported_versions": [],
+      "source_column_maps_by_version": {
+        "2024_KO_HEADER": {
+          "base_year_quarter_code": "기준_년분기_코드",
+          "official_area_type_code": "상권_구분_코드",
+          "official_area_type_name": "상권_구분_코드_명",
+          "official_area_code": "상권_코드",
+          "official_area_name": "상권_코드_명",
+          "service_industry_code": "서비스_업종_코드",
+          "service_industry_name": "서비스_업종_코드_명",
+          "store_count": "점포_수",
+          "opening_store_count": "개업_점포_수",
+          "closure_store_count": "폐업_점포_수",
+          "franchise_store_count": "프랜차이즈_점포_수"
+        },
+        "2025_EN_HEADER": {
+          "base_year_quarter_code": "stdr_yyqu_cd",
+          "official_area_type_code": "trdar_se_cd",
+          "official_area_type_name": "trdar_se_cd_nm",
+          "official_area_code": "trdar_cd",
+          "official_area_name": "trdar_cd_nm",
+          "service_industry_code": "svc_induty_cd",
+          "service_industry_name": "svc_induty_cd_nm",
+          "store_count": "stor_co",
+          "opening_store_count": "opbiz_stor_co",
+          "closure_store_count": "clsbiz_stor_co",
+          "franchise_store_count": "frc_stor_co"
+        }
+      },
+      "supported_versions": ["2024_KO_HEADER", "2025_EN_HEADER"],
       "compatibility_requirement": {
         "gate_id": "OFFICIAL_MARKET_METRIC_TO_GEOMETRY_COMPATIBILITY",
-        "status": "BLOCKED",
+        "status": "NEEDS_REVIEW",
         "join_allowed": false,
         "requirements": [
           "실제 2024+ 상권코드와 2023-10 geometry 코드 비교",
@@ -197,8 +235,8 @@
         "step4a_evidence": "../../12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json"
       },
       "license_status": "NEEDS_REVIEW",
-      "usage_note": "실제 raw 헤더와 제공기준 변경사항을 확인하기 전 점포·개폐업 수치를 적재하지 않는다.",
-      "status": "SOURCE_MISSING"
+      "usage_note": "2024 한국어 헤더와 2025 영문 헤더를 별도 schema version으로 검증했다. 코드 수준 비교만 완료했으며 경쟁·개폐업 분석과 geometry Join은 금지한다.",
+      "status": "NEEDS_REVIEW"
     },
     {
       "source_id": "SRC-SEOUL-SALES",
@@ -208,19 +246,21 @@
       "source_version": null,
       "source_date": null,
       "retrieved_at": null,
-      "file_format": "UNKNOWN",
-      "allowed_extensions": [],
-      "encoding": null,
+      "file_format": "ZIP_CSV",
+      "allowed_extensions": [".zip"],
+      "encoding": "CP949",
       "key_field": "official_area_code",
       "code_system": "SEOUL_MARKET_ANALYSIS_AREA_CODE",
       "spatial_unit": "official_market_by_quarter_and_industry",
       "coordinate_system": null,
       "required_columns": [
-        "base_year_code",
-        "base_quarter_code",
+        "base_year_quarter_code",
         "official_area_type_code",
+        "official_area_type_name",
         "official_area_code",
+        "official_area_name",
         "service_industry_code",
+        "service_industry_name",
         "estimated_sales_amount"
       ],
       "optional_columns": [
@@ -238,28 +278,29 @@
         "age_band_sales_amount"
       ],
       "unique_key": [
-        "base_year_code",
-        "base_quarter_code",
+        "base_year_quarter_code",
         "official_area_type_code",
         "official_area_code",
         "service_industry_code"
       ],
       "source_column_map": {
-        "base_year_code": null,
-        "base_quarter_code": null,
-        "official_area_type_code": null,
-        "official_area_code": null,
-        "service_industry_code": null,
-        "estimated_sales_amount": null,
-        "weekday_sales_amount": null,
-        "weekend_sales_amount": null,
+        "base_year_quarter_code": "기준_년분기_코드",
+        "official_area_type_code": "상권_구분_코드",
+        "official_area_type_name": "상권_구분_코드_명",
+        "official_area_code": "상권_코드",
+        "official_area_name": "상권_코드_명",
+        "service_industry_code": "서비스_업종_코드",
+        "service_industry_name": "서비스_업종_코드_명",
+        "estimated_sales_amount": "당월_매출_금액",
+        "weekday_sales_amount": "주중_매출_금액",
+        "weekend_sales_amount": "주말_매출_금액",
         "time_band_sales_amount": null,
         "age_band_sales_amount": null
       },
-      "supported_versions": [],
+      "supported_versions": ["2024_KO_HEADER", "2025_KO_HEADER"],
       "compatibility_requirement": {
         "gate_id": "OFFICIAL_MARKET_METRIC_TO_GEOMETRY_COMPATIBILITY",
-        "status": "BLOCKED",
+        "status": "NEEDS_REVIEW",
         "join_allowed": false,
         "requirements": [
           "실제 2024+ 상권코드와 2023-10 geometry 코드 비교",
@@ -269,8 +310,8 @@
         "step4a_evidence": "../../12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json"
       },
       "license_status": "NEEDS_REVIEW",
-      "usage_note": "추정매출은 실매출이 아니며 실제 raw 헤더·기간·단위를 확인하기 전 계산에 사용하지 않는다.",
-      "status": "SOURCE_MISSING"
+      "usage_note": "2024/2025 실제 raw 헤더와 코드 집합을 검증했다. 추정매출은 실매출이 아니며 금액 합계·평균 분석과 geometry Join은 수행하지 않는다.",
+      "status": "NEEDS_REVIEW"
     },
     {
       "source_id": "SRC-SEOUL-FOOT",

@@ -1,45 +1,55 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "checked_at": "2026-08-28",
-  "step": "STEP_4B_0",
-  "step_status": "CONTRACT_READY",
-  "ingest_status": "SOURCE_MISSING",
+  "step": "STEP_4B_1",
+  "step_status": "RAW_INTAKE_VALIDATED_WITH_REVIEW_ITEMS",
+  "ingest_status": "PARTIAL_SOURCE_PRESENT",
   "analysis_use_allowed": false,
   "source_contract_count": 7,
-  "directory_roles": {
-    "raw": "원본 그대로 보존; 수정·정규화·분석 사용 금지",
-    "normalized": "validation PASS와 compatibility PASS를 모두 충족한 파생 데이터만 허용",
-    "quarantine": "버전·컬럼·key·numeric·compatibility 문제가 있는 원천과 검증 결과를 격리"
-  },
-  "missing_value_policy": {
-    "source_missing_row_count": null,
-    "source_missing_key_count": null,
-    "source_missing_coverage": null,
-    "actual_observed_zero": 0,
-    "zero_substitution_for_unknown_allowed": false
-  },
-  "validation_support": {
-    "source_identification": true,
-    "file_existence": true,
-    "file_extension": true,
-    "required_columns": true,
-    "null_key": true,
-    "duplicate_key": true,
-    "numeric_parse": true,
-    "source_date": true,
-    "source_version": true,
-    "code_system": true,
-    "spatial_unit": true,
-    "coordinate_system_when_geometry_required": true,
-    "compatibility_requirement": true
-  },
   "compatibility_gates": {
-    "official_market_2023_geometry_to_2024_metrics": {
-      "status": "BLOCKED",
+    "official_market_2023_geometry_to_2024_plus_metrics": {
+      "status": "NEEDS_REVIEW",
+      "stores_code_level_status": "CODE_LEVEL_MATCH",
+      "sales_code_level_status": "PARTIAL_CODE_MATCH",
+      "geometry_compatibility_status": "NEEDS_REVIEW",
       "join_allowed": false
     },
-    "living_grid_geometry_to_oa_22784_cell_id": {
-      "status": "BLOCKED",
+    "living_grid_geometry_to_metric_grid_key": {
+      "status": "NEEDS_REVIEW",
+      "coverage": {
+        "geometry_grid_count": 10125,
+        "metric_unique_grid_count": 8564,
+        "matched_grid_count": 8563,
+        "geometry_only_count": 1562,
+        "metric_only_count": 1,
+        "geometry_coverage_ratio": 0.8457283950617284,
+        "metric_coverage_ratio": 0.9998832321345166,
+        "geometry_only_sample": [
+          "다사35005050",
+          "다사35255025",
+          "다사35505000",
+          "다사35505025",
+          "다사35505050",
+          "다사35505100",
+          "다사35505125",
+          "다사35755000",
+          "다사35755025",
+          "다사35755225",
+          "다사36004975",
+          "다사36005000",
+          "다사36005025",
+          "다사36005150",
+          "다사36005225",
+          "다사36254975",
+          "다사36255000",
+          "다사36255200",
+          "다사36255225",
+          "다사36255250"
+        ],
+        "metric_only_keys": [
+          "다사47256125"
+        ]
+      },
       "join_allowed": false
     },
     "administrative_dong_attribute_enrichment": {
@@ -50,29 +60,48 @@
   "source_results": [
     {
       "source_id": "SRC-SEOUL-LIVING",
-      "status": "SOURCE_MISSING",
-      "raw_file_count": 0,
-      "manifest_count": 0,
-      "row_count": null,
-      "key_count": null,
-      "coverage": null,
-      "validation_status": "NOT_RUN",
-      "compatibility_status": "BLOCKED",
-      "join_allowed": false,
-      "unresolved_source_columns": [
-        "age_band_living_population",
-        "base_date",
-        "female_living_population",
-        "hour_code",
-        "male_living_population",
-        "total_living_population"
-      ],
-      "unresolved_contract_metadata": [
-        "allowed_extensions",
-        "encoding",
-        "file_format",
-        "supported_versions"
-      ]
+      "status": "SOURCE_PRESENT",
+      "raw_file_count": 1,
+      "manifest_count": 1,
+      "row_count": 253686,
+      "key_count": 8564,
+      "coverage": {
+        "geometry_grid_count": 10125,
+        "metric_unique_grid_count": 8564,
+        "matched_grid_count": 8563,
+        "geometry_only_count": 1562,
+        "metric_only_count": 1,
+        "geometry_coverage_ratio": 0.8457283950617284,
+        "metric_coverage_ratio": 0.9998832321345166,
+        "geometry_only_sample": [
+          "다사35005050",
+          "다사35255025",
+          "다사35505000",
+          "다사35505025",
+          "다사35505050",
+          "다사35505100",
+          "다사35505125",
+          "다사35755000",
+          "다사35755025",
+          "다사35755225",
+          "다사36004975",
+          "다사36005000",
+          "다사36005025",
+          "다사36005150",
+          "다사36005225",
+          "다사36254975",
+          "다사36255000",
+          "다사36255200",
+          "다사36255225",
+          "다사36255250"
+        ],
+        "metric_only_keys": [
+          "다사47256125"
+        ]
+      },
+      "validation_status": "NEEDS_REVIEW",
+      "compatibility_status": "NEEDS_REVIEW",
+      "join_allowed": false
     },
     {
       "source_id": "SRC-SEOUL-AREA",
@@ -84,79 +113,31 @@
       "coverage": null,
       "validation_status": "NOT_RUN",
       "compatibility_status": "BLOCKED",
-      "join_allowed": false,
-      "unresolved_source_columns": [
-        "administrative_dong_code",
-        "administrative_dong_name",
-        "geometry",
-        "gu_code",
-        "gu_name",
-        "official_area_code",
-        "official_area_name",
-        "official_area_type"
-      ],
-      "unresolved_contract_metadata": [
-        "supported_versions"
-      ]
+      "join_allowed": false
     },
     {
       "source_id": "SRC-SEOUL-STORES",
-      "status": "SOURCE_MISSING",
-      "raw_file_count": 0,
-      "manifest_count": 0,
-      "row_count": null,
-      "key_count": null,
+      "status": "SOURCE_PRESENT",
+      "raw_file_count": 2,
+      "manifest_count": 2,
+      "row_count": 611664,
+      "key_count": 1650,
       "coverage": null,
-      "validation_status": "NOT_RUN",
-      "compatibility_status": "BLOCKED",
-      "join_allowed": false,
-      "unresolved_source_columns": [
-        "base_quarter_code",
-        "base_year_code",
-        "closure_store_count",
-        "franchise_store_count",
-        "official_area_code",
-        "official_area_type_code",
-        "opening_store_count",
-        "service_industry_code",
-        "store_count"
-      ],
-      "unresolved_contract_metadata": [
-        "allowed_extensions",
-        "encoding",
-        "file_format",
-        "supported_versions"
-      ]
+      "validation_status": "VALIDATED",
+      "compatibility_status": "CODE_LEVEL_MATCH",
+      "join_allowed": false
     },
     {
       "source_id": "SRC-SEOUL-SALES",
-      "status": "SOURCE_MISSING",
-      "raw_file_count": 0,
-      "manifest_count": 0,
-      "row_count": null,
-      "key_count": null,
+      "status": "SOURCE_PRESENT",
+      "raw_file_count": 2,
+      "manifest_count": 2,
+      "row_count": 172911,
+      "key_count": 1583,
       "coverage": null,
-      "validation_status": "NOT_RUN",
-      "compatibility_status": "BLOCKED",
-      "join_allowed": false,
-      "unresolved_source_columns": [
-        "age_band_sales_amount",
-        "base_quarter_code",
-        "base_year_code",
-        "estimated_sales_amount",
-        "official_area_code",
-        "official_area_type_code",
-        "service_industry_code",
-        "time_band_sales_amount",
-        "weekday_sales_amount",
-        "weekend_sales_amount"
-      ],
-      "unresolved_contract_metadata": [
-        "allowed_extensions",
-        "encoding",
-        "file_format",
-        "supported_versions"
-      ]
+      "validation_status": "VALIDATED",
+      "compatibility_status": "NEEDS_REVIEW",
+      "join_allowed": false
     },
     {
       "source_id": "SRC-SEOUL-FOOT",
@@ -168,24 +149,7 @@
       "coverage": null,
       "validation_status": "NOT_RUN",
       "compatibility_status": "BLOCKED",
-      "join_allowed": false,
-      "unresolved_source_columns": [
-        "age_band_foot_population",
-        "base_quarter_code",
-        "base_year_code",
-        "official_area_code",
-        "official_area_type_code",
-        "time_band_foot_population",
-        "total_foot_population",
-        "weekday_foot_population",
-        "weekend_foot_population"
-      ],
-      "unresolved_contract_metadata": [
-        "allowed_extensions",
-        "encoding",
-        "file_format",
-        "supported_versions"
-      ]
+      "join_allowed": false
     },
     {
       "source_id": "SRC-SEOUL-WORK",
@@ -197,23 +161,7 @@
       "coverage": null,
       "validation_status": "NOT_RUN",
       "compatibility_status": "BLOCKED",
-      "join_allowed": false,
-      "unresolved_source_columns": [
-        "age_band_worker_population",
-        "base_quarter_code",
-        "base_year_code",
-        "female_worker_population",
-        "male_worker_population",
-        "official_area_code",
-        "official_area_type_code",
-        "total_worker_population"
-      ],
-      "unresolved_contract_metadata": [
-        "allowed_extensions",
-        "encoding",
-        "file_format",
-        "supported_versions"
-      ]
+      "join_allowed": false
     },
     {
       "source_id": "SRC-SGIS",
@@ -225,57 +173,90 @@
       "coverage": null,
       "validation_status": "NOT_RUN",
       "compatibility_status": "BLOCKED",
-      "join_allowed": false,
-      "unresolved_source_columns": [],
-      "unresolved_contract_metadata": [
-        "supported_versions"
-      ]
+      "join_allowed": false
     }
   ],
-  "manifest_results": [],
+  "manifest_results": [
+    {
+      "manifest": "manifests/SRC-SEOUL-LIVING/250_LOCAL_RESD_20260823.zip.manifest.json",
+      "source_id": "SRC-SEOUL-LIVING",
+      "raw_path": "raw/SRC-SEOUL-LIVING/250_LOCAL_RESD_20260823.zip",
+      "sha256": "f8040e04b1da4bcf68eaac6171cd8ab242e88ca8a579370ff0a5e962ace8f362",
+      "validation_status": "NEEDS_REVIEW",
+      "content_validation_status": "NEEDS_REVIEW",
+      "compatibility_status": "NEEDS_REVIEW",
+      "row_count": 253686,
+      "key_count": 8564,
+      "join_allowed": false
+    },
+    {
+      "manifest": "manifests/SRC-SEOUL-SALES/서울시 상권분석서비스(추정매출-상권)_2024년.zip.manifest.json",
+      "source_id": "SRC-SEOUL-SALES",
+      "raw_path": "raw/SRC-SEOUL-SALES/서울시 상권분석서비스(추정매출-상권)_2024년.zip",
+      "sha256": "97e7cde3a3291a8fd623f7b5268ea4b01a666027ae20da2ddf804ddae22288c5",
+      "validation_status": "NEEDS_REVIEW",
+      "content_validation_status": "VALIDATED",
+      "compatibility_status": "NEEDS_REVIEW",
+      "row_count": 87179,
+      "key_count": 1581,
+      "join_allowed": false
+    },
+    {
+      "manifest": "manifests/SRC-SEOUL-SALES/서울시 상권분석서비스(추정매출-상권)_2025년.zip.manifest.json",
+      "source_id": "SRC-SEOUL-SALES",
+      "raw_path": "raw/SRC-SEOUL-SALES/서울시 상권분석서비스(추정매출-상권)_2025년.zip",
+      "sha256": "c907f3d386d62b89f45781e6e6172328ee91b1b8dd2c621e4171e437bee1c6b2",
+      "validation_status": "NEEDS_REVIEW",
+      "content_validation_status": "VALIDATED",
+      "compatibility_status": "NEEDS_REVIEW",
+      "row_count": 85732,
+      "key_count": 1577,
+      "join_allowed": false
+    },
+    {
+      "manifest": "manifests/SRC-SEOUL-STORES/서울시 상권분석서비스(점포-상권)_2024년.zip.manifest.json",
+      "source_id": "SRC-SEOUL-STORES",
+      "raw_path": "raw/SRC-SEOUL-STORES/서울시 상권분석서비스(점포-상권)_2024년.zip",
+      "sha256": "969b7c38e5f3cc8630970e4ca8b85ef1c20d485982f64a90de990b13b38ca5ff",
+      "validation_status": "NEEDS_REVIEW",
+      "content_validation_status": "VALIDATED",
+      "compatibility_status": "CODE_LEVEL_MATCH",
+      "row_count": 306889,
+      "key_count": 1650,
+      "join_allowed": false
+    },
+    {
+      "manifest": "manifests/SRC-SEOUL-STORES/서울시 상권분석서비스(점포-상권)_2025년.zip.manifest.json",
+      "source_id": "SRC-SEOUL-STORES",
+      "raw_path": "raw/SRC-SEOUL-STORES/서울시 상권분석서비스(점포-상권)_2025년.zip",
+      "sha256": "133bfc6ce79e13ee5b289490e4667dfba46a0af5d0d71df360a0d324e030a4e6",
+      "validation_status": "NEEDS_REVIEW",
+      "content_validation_status": "VALIDATED",
+      "compatibility_status": "CODE_LEVEL_MATCH",
+      "row_count": 304775,
+      "key_count": 1650,
+      "join_allowed": false
+    }
+  ],
   "self_tests": [
     {
-      "name": "valid_rows_and_actual_zero",
+      "name": "csv_quoted_field",
       "status": "PASS"
     },
     {
-      "name": "missing_required_column",
+      "name": "unknown_is_not_zero",
       "status": "PASS"
     },
     {
-      "name": "duplicate_key",
+      "name": "code_match_does_not_confirm_geometry",
       "status": "PASS"
     },
     {
-      "name": "null_key",
+      "name": "raw_zip_extension_only",
       "status": "PASS"
     },
     {
-      "name": "invalid_numeric",
-      "status": "PASS"
-    },
-    {
-      "name": "unsupported_version",
-      "status": "PASS"
-    },
-    {
-      "name": "unsupported_file_extension",
-      "status": "PASS"
-    },
-    {
-      "name": "supported_file_extension",
-      "status": "PASS"
-    },
-    {
-      "name": "compatibility_gate_blocks_join",
-      "status": "PASS"
-    },
-    {
-      "name": "source_missing_counts_are_null",
-      "status": "PASS"
-    },
-    {
-      "name": "unresolved_column_mapping_needs_review",
+      "name": "cp949_decoder_available",
       "status": "PASS"
     }
   ],
@@ -288,21 +269,12 @@
     },
     "reference_geometry": {
       "official_market_count": 1650,
-      "administrative_dong_count": 425,
       "living_grid_count": 10125
     },
     "frameone_non_null_geometry": {
       "markets": 0,
       "submarkets": 0,
       "nodes": 0
-    },
-    "crosswalk": {
-      "official_market_rows": 863,
-      "official_market_manual_review_rows": 863,
-      "administrative_dong_rows": 458,
-      "administrative_dong_manual_review_rows": 458,
-      "living_grid_rows": 0,
-      "status_promotion_count": 0
     },
     "source_sha256": {
       "hierarchy": {
@@ -362,11 +334,13 @@
         "sha256": "60a9b50b8ae8391caeab316885ad2204977caf3669449f0999dda90d39d97504"
       }
     },
-    "raw_source_file_count": 0,
+    "protected_files_changed_during_validation": 0,
+    "raw_source_file_count": 5,
     "normalized_file_count": 0,
     "quarantine_data_file_count": 0,
-    "actual_manifest_count": 0,
+    "actual_manifest_count": 5,
     "numeric_aggregation_count": 0,
-    "geometry_creation_count": 0
+    "geometry_creation_count": 0,
+    "crosswalk_promotion_count": 0
   }
 }

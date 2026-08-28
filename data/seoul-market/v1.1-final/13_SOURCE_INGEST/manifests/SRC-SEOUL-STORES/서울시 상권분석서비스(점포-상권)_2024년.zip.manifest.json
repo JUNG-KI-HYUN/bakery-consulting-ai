@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.1.0",
+  "source_id": "SRC-SEOUL-STORES",
+  "original_filename": "서울시 상권분석서비스(점포-상권)_2024년.zip",
+  "raw_path": "raw/SRC-SEOUL-STORES/서울시 상권분석서비스(점포-상권)_2024년.zip",
+  "extension": ".zip",
+  "file_size": 2155369,
+  "sha256": "969b7c38e5f3cc8630970e4ca8b85ef1c20d485982f64a90de990b13b38ca5ff",
+  "last_modified_at": "2026-08-28T08:17:13.292Z",
+  "retrieved_at": null,
+  "source_date": "2024-Q1..2024-Q4",
+  "source_version": "2024_KO_HEADER",
+  "is_zip": true,
+  "inner_files": [
+    {
+      "original_filename": "서울시 상권분석서비스(점포-상권)_2024년.csv",
+      "extension": ".csv",
+      "compressed_size": 2155015,
+      "uncompressed_size": 30972314,
+      "compression_method": "DEFLATE",
+      "crc32": "975fa0f6",
+      "filename_encoding": "CP949",
+      "last_modified_local": "2025-06-04T16:08:26"
+    }
+  ],
+  "encoding": "CP949",
+  "header": [
+    "기준_년분기_코드",
+    "상권_구분_코드",
+    "상권_구분_코드_명",
+    "상권_코드",
+    "상권_코드_명",
+    "서비스_업종_코드",
+    "서비스_업종_코드_명",
+    "점포_수",
+    "유사_업종_점포_수",
+    "개업_율",
+    "개업_점포_수",
+    "폐업_률",
+    "폐업_점포_수",
+    "프랜차이즈_점포_수"
+  ],
+  "row_count": 306889,
+  "key_field": "상권_코드",
+  "key_count": 1650,
+  "row_key_fields": [
+    "기준_년분기_코드",
+    "상권_구분_코드",
+    "상권_코드",
+    "서비스_업종_코드"
+  ],
+  "null_key_count": 0,
+  "duplicate_key_count": 0,
+  "content_validation_status": "VALIDATED",
+  "validation_status": "NEEDS_REVIEW",
+  "compatibility_status": "CODE_LEVEL_MATCH",
+  "normalized_output": null,
+  "notes": "Raw bytes preserved. Header·row key·상권코드 집합만 검증했으며 경쟁·개폐업 분석은 수행하지 않았다."
+}

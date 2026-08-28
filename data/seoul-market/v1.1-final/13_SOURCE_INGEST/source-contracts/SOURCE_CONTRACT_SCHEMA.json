@@ -106,6 +106,15 @@
         "type": ["string", "null"]
       }
     },
+    "source_column_maps_by_version": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": ["string", "null"]
+        }
+      }
+    },
     "supported_versions": {
       "type": "array",
       "items": {

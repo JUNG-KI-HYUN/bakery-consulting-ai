@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   readdirSync,
@@ -28,6 +29,8 @@ const manifestSchemaPath = join(
   "MANIFEST_SCHEMA.json",
 );
 const summaryPath = join(ingestDirectory, "VALIDATION_SUMMARY.json");
+const rawIntakeValidationPath = join(ingestDirectory, "RAW_INTAKE_VALIDATION.json");
+const rawIntakeValidatorPath = join(ingestDirectory, "validate-raw-intake.mjs");
 const rawDirectory = join(ingestDirectory, "raw");
 const normalizedDirectory = join(ingestDirectory, "normalized");
 const quarantineDirectory = join(ingestDirectory, "quarantine");
@@ -1001,6 +1004,15 @@ if (manifestArgument) {
   );
   const manifestPath = join(process.cwd(), manifestArgument);
   console.log(JSON.stringify(validateManifest(manifestPath, contractsById), null, 2));
+} else if (existsSync(rawIntakeValidationPath)) {
+  assert(
+    !process.argv.includes("--write-summary"),
+    "STEP 4B-1 이후 summary는 validate-raw-intake.mjs --write로만 갱신하십시오.",
+  );
+  const result = spawnSync(process.execPath, [rawIntakeValidatorPath], {
+    stdio: "inherit",
+  });
+  process.exit(result.status ?? 1);
 } else {
   const summary = buildSummary();
   const result = writeOrVerifySummary(summary);

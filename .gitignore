@@ -21,6 +21,10 @@
 /build
 /docs/market-data/archive/*.zip
 
+# official source intake raw snapshots (keep the tracked directory placeholder)
+/data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/*
+!/data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/.gitkeep
+
 # misc
 .DS_Store
 *.pem
