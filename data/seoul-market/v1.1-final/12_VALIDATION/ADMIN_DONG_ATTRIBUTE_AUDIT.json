@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "1.0.0",
+  "auditedAt": "2026-08-28",
+  "status": "NEEDS_REVIEW",
+  "geometry": {
+    "path": "data/seoul-market/v1.1-final/09_GEO/ADMIN_DONG.geojson",
+    "featureCount": 425,
+    "key": {
+      "keyField": "adm_cd",
+      "nonNullCount": 425,
+      "nullCount": 0,
+      "uniqueCount": 425,
+      "duplicateCount": 0,
+      "duplicateValues": []
+    },
+    "geometry": {
+      "geometryPresentCount": 425,
+      "geometryMissingCount": 0,
+      "geometryTypes": {
+        "Polygon": 425
+      },
+      "coordinatePairCount": 205626,
+      "invalidCoordinatePairCount": 0,
+      "outputBounds": {
+        "minimumLongitude": 126.764484,
+        "minimumLatitude": 37.4282975,
+        "maximumLongitude": 127.1837949,
+        "maximumLatitude": 37.7014553
+      }
+    },
+    "version": {
+      "sourceIds": {
+        "SRC-SEOUL-OA-22160": 425
+      },
+      "sourceCrs": {
+        "EPSG:5181": 425
+      },
+      "outputCrs": {
+        "EPSG:4326": 425
+      },
+      "geometryVersions": {
+        "SEOUL_ADMIN_DONG_SHP_2023-10-20": 425
+      },
+      "statuses": {
+        "validated": 425
+      }
+    },
+    "sha256": "b533e780608b53b10b9e7912d7f6cb7ec4ce712285abffc13ff06e7c68a31d5c"
+  },
+  "attributes": {
+    "administrativeDongName": {
+      "field": "adm_nm",
+      "nonNullCount": 0,
+      "nullCount": 425
+    },
+    "guCode": {
+      "field": "gu_code",
+      "nonNullCount": 0,
+      "nullCount": 425
+    },
+    "guName": {
+      "field": "gu",
+      "nonNullCount": 0,
+      "nullCount": 425
+    },
+    "administrativeCodeLengths": {
+      "8": 425
+    },
+    "fiveDigitPrefixes": {
+      "uniqueCount": 25,
+      "interpretation": "구 코드 후보 구조만 확인했으며 공식 코드표 대조 전에는 속성으로 확정하지 않는다."
+    }
+  },
+  "internalOfficialReferenceCandidate": {
+    "candidateSource": "data/seoul-market/v1.1-final/09_GEO/OFFICIAL_SEOUL_MARKETS.geojson",
+    "candidateSourceRole": "같은 서울 공식상권 레이어의 adm_cd/adm_nm 속성을 이용한 보완 후보이며 ADMIN_DONG 원본을 자동 수정하지 않는다.",
+    "geometryCodeCount": 425,
+    "referenceCodeCount": 399,
+    "intersectingCodeCount": 399,
+    "geometryCodeMissingReferenceCount": 26,
+    "geometryCodesMissingReference": [
+      "11200570",
+      "11290580",
+      "11290590",
+      "11350580",
+      "11350612",
+      "11350621",
+      "11350700",
+      "11410655",
+      "11470550",
+      "11470670",
+      "11500604",
+      "11530520",
+      "11530800",
+      "11650531",
+      "11650570",
+      "11650580",
+      "11680720",
+      "11680740",
+      "11710520",
+      "11710566",
+      "11710647",
+      "11710670",
+      "11710680",
+      "11710720",
+      "11740590",
+      "11740690"
+    ],
+    "referenceCodeOutsideGeometryCount": 0,
+    "referenceCodesOutsideGeometry": [],
+    "nameConflictCodeCount": 0,
+    "nameConflictCodes": [],
+    "areaGuConflictCodeCount": 2,
+    "areaGuConflictCodes": [
+      "11410660",
+      "11680655"
+    ],
+    "note": "official_area의 gu/gu_code는 상권 자체의 자치구 속성이므로 행정동 자치구를 행 단위로 확정하는 데 직접 사용할 수 없다."
+  },
+  "officialReferenceCandidates": [
+    {
+      "source": "https://golmok.seoul.go.kr/introduce.do",
+      "expectedContent": "서울시 상권분석서비스 자치구-행정동 코드 PDF",
+      "accessStatus": "NEEDS_REVIEW"
+    },
+    {
+      "source": "https://sgis.mods.go.kr/developer/html/newOpenApi/api/dataApi/addressBoundary.html",
+      "expectedFields": [
+        "adm_cd",
+        "adm_nm",
+        "sgg_cd",
+        "sgg_nm",
+        "base_year"
+      ],
+      "accessStatus": "KEY_REQUIRED"
+    },
+    {
+      "source": "https://www.code.go.kr/indexFrame.do",
+      "expectedContent": "행정동 코드 및 법정동-행정동 매핑",
+      "accessStatus": "DOWNLOAD_OR_LINKAGE_REVIEW_REQUIRED"
+    }
+  ],
+  "automaticEnrichmentPerformed": false
+}

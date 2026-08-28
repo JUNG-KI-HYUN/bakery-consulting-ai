@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "1.0.0",
+  "auditedAt": "2026-08-28",
+  "status": "SOURCE_MISSING",
+  "compatibilityStatus": "NEEDS_REVIEW",
+  "directJoinAllowed": false,
+  "geometry": {
+    "path": "data/seoul-market/v1.1-final/09_GEO/OFFICIAL_SEOUL_MARKETS.geojson",
+    "featureCount": 1650,
+    "key": {
+      "keyField": "official_area_code",
+      "nonNullCount": 1650,
+      "nullCount": 0,
+      "uniqueCount": 1650,
+      "duplicateCount": 0,
+      "duplicateValues": []
+    },
+    "geometry": {
+      "geometryPresentCount": 1650,
+      "geometryMissingCount": 0,
+      "geometryTypes": {
+        "MultiPolygon": 89,
+        "Polygon": 1561
+      },
+      "coordinatePairCount": 221824,
+      "invalidCoordinatePairCount": 0,
+      "outputBounds": {
+        "minimumLongitude": 126.7971436,
+        "minimumLatitude": 37.4336985,
+        "maximumLongitude": 127.1751318,
+        "maximumLatitude": 37.6940312
+      }
+    },
+    "attributes": {
+      "officialAreaNameNonNullCount": 1650,
+      "officialAreaTypeNonNullCount": 1650,
+      "officialAreaTypeCounts": {
+        "골목상권": 1090,
+        "관광특구": 6,
+        "발달상권": 249,
+        "전통시장": 305
+      }
+    },
+    "version": {
+      "sourceIds": {
+        "SRC-SEOUL-OA-15560": 1650
+      },
+      "sourceCrs": {
+        "EPSG:5181": 1650
+      },
+      "outputCrs": {
+        "EPSG:4326": 1650
+      },
+      "geometryVersions": {
+        "SEOUL_MARKET_SHP_2023-10-20": 1650
+      },
+      "statuses": {
+        "validated": 1650
+      }
+    },
+    "sha256": "5793cced1936360ce93afd301d53ec4af30bac94844d969b75ad08038c407bb6"
+  },
+  "metricSource": {
+    "status": "SOURCE_MISSING",
+    "localSearchRoot": "data/seoul-market/v1.1-final",
+    "localCandidateFiles": [],
+    "requiredMinimumFields": [
+      "기준년코드",
+      "기준분기코드",
+      "상권구분코드",
+      "상권코드",
+      "상권코드명"
+    ],
+    "officialSourceCandidates": [
+      "https://data.seoul.go.kr/dataList/OA-15577/S/1/datasetView.do",
+      "https://data.seoul.go.kr/dataList/OA-15572/S/1/datasetView.do",
+      "https://data.seoul.go.kr/dataList/OA-15568/S/1/datasetView.do",
+      "https://data.seoul.go.kr/dataList/OA-15569/S/1/datasetView.do"
+    ]
+  },
+  "comparison": {
+    "geometryCodeCount": 1650,
+    "metricCodeCount": null,
+    "intersectingCodeCount": null,
+    "geometryOnlyCodeCount": null,
+    "metricOnlyCodeCount": null,
+    "nameMatchCount": null,
+    "nameMismatchCount": null,
+    "typeMatchCount": null,
+    "typeMismatchCount": null,
+    "reason": "2024+ 지표 원본이 저장소에 없어 교집합·차집합·명칭·유형 호환성을 계산하지 않았다."
+  },
+  "evidence": {
+    "geometrySource": "https://data.seoul.go.kr/dataList/OA-15560/S/1/datasetView.do",
+    "currentMethodology": "https://golmok.seoul.go.kr/introduce.do",
+    "localGeometryVersion": "SEOUL_MARKET_SHP_2023-10-20",
+    "methodologySpatialBasis": "2022 표준단위구역 기반"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "1.0.0",
+  "auditedAt": "2026-08-28",
+  "status": "SOURCE_MISSING",
+  "joinAllowed": false,
+  "geometry": {
+    "path": "data/seoul-market/v1.1-final/09_GEO/LIVING_GRID_250M.geojson",
+    "featureCount": 10125,
+    "key": {
+      "keyField": "grid_id",
+      "nonNullCount": 10125,
+      "nullCount": 0,
+      "uniqueCount": 10125,
+      "duplicateCount": 0,
+      "duplicateValues": []
+    },
+    "secondaryKey": {
+      "keyField": "gid",
+      "nonNullCount": 10125,
+      "nullCount": 0,
+      "uniqueCount": 10125,
+      "duplicateCount": 0,
+      "duplicateValues": []
+    },
+    "cellXNonNullCount": 10125,
+    "cellYNonNullCount": 10125,
+    "geometry": {
+      "geometryPresentCount": 10125,
+      "geometryMissingCount": 0,
+      "geometryTypes": {
+        "Polygon": 10125
+      },
+      "coordinatePairCount": 50625,
+      "invalidCoordinatePairCount": 0,
+      "outputBounds": {
+        "minimumLongitude": 126.7640559,
+        "minimumLatitude": 37.4267992,
+        "maximumLongitude": 127.185865,
+        "maximumLatitude": 37.701627
+      }
+    },
+    "version": {
+      "sourceIds": {
+        "SRC-SEOUL-LIVING-GRID": 10125
+      },
+      "sourceCrs": {
+        "EPSG:5179": 10125
+      },
+      "outputCrs": {
+        "EPSG:4326": 10125
+      },
+      "geometryVersions": {
+        "SEOUL_250M_GRID_SHP_2025-05-12": 10125
+      },
+      "statuses": {
+        "validated": 10125
+      }
+    },
+    "sha256": "b591c6e6379b7ba962d7d6ef5494ffd0dee519ddcae7ec69cbd8b7f86a07e8ad"
+  },
+  "metricSource": {
+    "status": "SOURCE_MISSING",
+    "localSearchRoot": "data/seoul-market/v1.1-final",
+    "localCandidateFiles": [],
+    "expectedJoinKey": "CELL_ID",
+    "officialSource": "https://data.seoul.go.kr/dataList/OA-22784/S/1/datasetView.do",
+    "transitionNotice": "https://data.seoul.go.kr/together/notice/boardView.do?seq=721010a1522630fbf7a78d381a8326ee"
+  },
+  "coverage": {
+    "geometryKeyCount": 10125,
+    "metricRowCount": null,
+    "metricKeyCount": null,
+    "matchedKeyCount": null,
+    "geometryOnlyKeyCount": null,
+    "metricOnlyKeyCount": null,
+    "coverageRatio": null,
+    "duplicateMetricKeyCount": null,
+    "nullMetricKeyCount": null,
+    "reason": "OA-22784 생활인구 수치 파일/API 응답이 저장소에 없어 coverage를 0으로 치환하지 않고 null로 유지했다."
+  },
+  "aggregationPerformed": false
+}
