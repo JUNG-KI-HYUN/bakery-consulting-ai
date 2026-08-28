@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "frameone://source-ingest/source-contract.schema.json",
+  "title": "FRAMEONE Official Source Ingest Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "institution",
+    "dataset_name",
+    "source_reference",
+    "source_version",
+    "source_date",
+    "retrieved_at",
+    "file_format",
+    "allowed_extensions",
+    "encoding",
+    "key_field",
+    "code_system",
+    "spatial_unit",
+    "coordinate_system",
+    "required_columns",
+    "optional_columns",
+    "nullable_columns",
+    "numeric_columns",
+    "unique_key",
+    "source_column_map",
+    "supported_versions",
+    "compatibility_requirement",
+    "license_status",
+    "usage_note",
+    "status"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "pattern": "^SRC-[A-Z0-9-]+$"
+    },
+    "institution": {
+      "type": "string",
+      "minLength": 1
+    },
+    "dataset_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_reference": {
+      "type": "string",
+      "format": "uri"
+    },
+    "source_version": {
+      "type": ["string", "null"]
+    },
+    "source_date": {
+      "type": ["string", "null"]
+    },
+    "retrieved_at": {
+      "type": ["string", "null"]
+    },
+    "file_format": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allowed_extensions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^\\.[a-z0-9]+$"
+      },
+      "uniqueItems": true
+    },
+    "encoding": {
+      "type": ["string", "null"]
+    },
+    "key_field": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code_system": {
+      "type": ["string", "null"]
+    },
+    "spatial_unit": {
+      "type": ["string", "null"]
+    },
+    "coordinate_system": {
+      "type": ["string", "null"]
+    },
+    "required_columns": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "optional_columns": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "nullable_columns": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "numeric_columns": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "unique_key": {
+      "$ref": "#/$defs/stringArray"
+    },
+    "source_column_map": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "null"]
+      }
+    },
+    "supported_versions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "compatibility_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "gate_id",
+        "status",
+        "join_allowed",
+        "requirements",
+        "step4a_evidence"
+      ],
+      "properties": {
+        "gate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": ["PASS", "BLOCKED", "NEEDS_REVIEW", "SOURCE_MISSING"]
+        },
+        "join_allowed": {
+          "type": "boolean"
+        },
+        "requirements": {
+          "$ref": "#/$defs/stringArray"
+        },
+        "step4a_evidence": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "license_status": {
+      "enum": ["CONFIRMED", "NEEDS_REVIEW", "UNKNOWN"]
+    },
+    "usage_note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": ["READY", "NEEDS_REVIEW", "SOURCE_MISSING"]
+    }
+  },
+  "$defs": {
+    "stringArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    }
+  }
+}

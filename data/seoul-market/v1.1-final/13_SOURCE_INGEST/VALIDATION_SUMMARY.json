@@ -1,0 +1,372 @@
+{
+  "schema_version": "1.0.0",
+  "checked_at": "2026-08-28",
+  "step": "STEP_4B_0",
+  "step_status": "CONTRACT_READY",
+  "ingest_status": "SOURCE_MISSING",
+  "analysis_use_allowed": false,
+  "source_contract_count": 7,
+  "directory_roles": {
+    "raw": "원본 그대로 보존; 수정·정규화·분석 사용 금지",
+    "normalized": "validation PASS와 compatibility PASS를 모두 충족한 파생 데이터만 허용",
+    "quarantine": "버전·컬럼·key·numeric·compatibility 문제가 있는 원천과 검증 결과를 격리"
+  },
+  "missing_value_policy": {
+    "source_missing_row_count": null,
+    "source_missing_key_count": null,
+    "source_missing_coverage": null,
+    "actual_observed_zero": 0,
+    "zero_substitution_for_unknown_allowed": false
+  },
+  "validation_support": {
+    "source_identification": true,
+    "file_existence": true,
+    "file_extension": true,
+    "required_columns": true,
+    "null_key": true,
+    "duplicate_key": true,
+    "numeric_parse": true,
+    "source_date": true,
+    "source_version": true,
+    "code_system": true,
+    "spatial_unit": true,
+    "coordinate_system_when_geometry_required": true,
+    "compatibility_requirement": true
+  },
+  "compatibility_gates": {
+    "official_market_2023_geometry_to_2024_metrics": {
+      "status": "BLOCKED",
+      "join_allowed": false
+    },
+    "living_grid_geometry_to_oa_22784_cell_id": {
+      "status": "BLOCKED",
+      "join_allowed": false
+    },
+    "administrative_dong_attribute_enrichment": {
+      "status": "BLOCKED",
+      "automatic_enrichment_allowed": false
+    }
+  },
+  "source_results": [
+    {
+      "source_id": "SRC-SEOUL-LIVING",
+      "status": "SOURCE_MISSING",
+      "raw_file_count": 0,
+      "manifest_count": 0,
+      "row_count": null,
+      "key_count": null,
+      "coverage": null,
+      "validation_status": "NOT_RUN",
+      "compatibility_status": "BLOCKED",
+      "join_allowed": false,
+      "unresolved_source_columns": [
+        "age_band_living_population",
+        "base_date",
+        "female_living_population",
+        "hour_code",
+        "male_living_population",
+        "total_living_population"
+      ],
+      "unresolved_contract_metadata": [
+        "allowed_extensions",
+        "encoding",
+        "file_format",
+        "supported_versions"
+      ]
+    },
+    {
+      "source_id": "SRC-SEOUL-AREA",
+      "status": "SOURCE_MISSING",
+      "raw_file_count": 0,
+      "manifest_count": 0,
+      "row_count": null,
+      "key_count": null,
+      "coverage": null,
+      "validation_status": "NOT_RUN",
+      "compatibility_status": "BLOCKED",
+      "join_allowed": false,
+      "unresolved_source_columns": [
+        "administrative_dong_code",
+        "administrative_dong_name",
+        "geometry",
+        "gu_code",
+        "gu_name",
+        "official_area_code",
+        "official_area_name",
+        "official_area_type"
+      ],
+      "unresolved_contract_metadata": [
+        "supported_versions"
+      ]
+    },
+    {
+      "source_id": "SRC-SEOUL-STORES",
+      "status": "SOURCE_MISSING",
+      "raw_file_count": 0,
+      "manifest_count": 0,
+      "row_count": null,
+      "key_count": null,
+      "coverage": null,
+      "validation_status": "NOT_RUN",
+      "compatibility_status": "BLOCKED",
+      "join_allowed": false,
+      "unresolved_source_columns": [
+        "base_quarter_code",
+        "base_year_code",
+        "closure_store_count",
+        "franchise_store_count",
+        "official_area_code",
+        "official_area_type_code",
+        "opening_store_count",
+        "service_industry_code",
+        "store_count"
+      ],
+      "unresolved_contract_metadata": [
+        "allowed_extensions",
+        "encoding",
+        "file_format",
+        "supported_versions"
+      ]
+    },
+    {
+      "source_id": "SRC-SEOUL-SALES",
+      "status": "SOURCE_MISSING",
+      "raw_file_count": 0,
+      "manifest_count": 0,
+      "row_count": null,
+      "key_count": null,
+      "coverage": null,
+      "validation_status": "NOT_RUN",
+      "compatibility_status": "BLOCKED",
+      "join_allowed": false,
+      "unresolved_source_columns": [
+        "age_band_sales_amount",
+        "base_quarter_code",
+        "base_year_code",
+        "estimated_sales_amount",
+        "official_area_code",
+        "official_area_type_code",
+        "service_industry_code",
+        "time_band_sales_amount",
+        "weekday_sales_amount",
+        "weekend_sales_amount"
+      ],
+      "unresolved_contract_metadata": [
+        "allowed_extensions",
+        "encoding",
+        "file_format",
+        "supported_versions"
+      ]
+    },
+    {
+      "source_id": "SRC-SEOUL-FOOT",
+      "status": "SOURCE_MISSING",
+      "raw_file_count": 0,
+      "manifest_count": 0,
+      "row_count": null,
+      "key_count": null,
+      "coverage": null,
+      "validation_status": "NOT_RUN",
+      "compatibility_status": "BLOCKED",
+      "join_allowed": false,
+      "unresolved_source_columns": [
+        "age_band_foot_population",
+        "base_quarter_code",
+        "base_year_code",
+        "official_area_code",
+        "official_area_type_code",
+        "time_band_foot_population",
+        "total_foot_population",
+        "weekday_foot_population",
+        "weekend_foot_population"
+      ],
+      "unresolved_contract_metadata": [
+        "allowed_extensions",
+        "encoding",
+        "file_format",
+        "supported_versions"
+      ]
+    },
+    {
+      "source_id": "SRC-SEOUL-WORK",
+      "status": "SOURCE_MISSING",
+      "raw_file_count": 0,
+      "manifest_count": 0,
+      "row_count": null,
+      "key_count": null,
+      "coverage": null,
+      "validation_status": "NOT_RUN",
+      "compatibility_status": "BLOCKED",
+      "join_allowed": false,
+      "unresolved_source_columns": [
+        "age_band_worker_population",
+        "base_quarter_code",
+        "base_year_code",
+        "female_worker_population",
+        "male_worker_population",
+        "official_area_code",
+        "official_area_type_code",
+        "total_worker_population"
+      ],
+      "unresolved_contract_metadata": [
+        "allowed_extensions",
+        "encoding",
+        "file_format",
+        "supported_versions"
+      ]
+    },
+    {
+      "source_id": "SRC-SGIS",
+      "status": "SOURCE_MISSING",
+      "raw_file_count": 0,
+      "manifest_count": 0,
+      "row_count": null,
+      "key_count": null,
+      "coverage": null,
+      "validation_status": "NOT_RUN",
+      "compatibility_status": "BLOCKED",
+      "join_allowed": false,
+      "unresolved_source_columns": [],
+      "unresolved_contract_metadata": [
+        "supported_versions"
+      ]
+    }
+  ],
+  "manifest_results": [],
+  "self_tests": [
+    {
+      "name": "valid_rows_and_actual_zero",
+      "status": "PASS"
+    },
+    {
+      "name": "missing_required_column",
+      "status": "PASS"
+    },
+    {
+      "name": "duplicate_key",
+      "status": "PASS"
+    },
+    {
+      "name": "null_key",
+      "status": "PASS"
+    },
+    {
+      "name": "invalid_numeric",
+      "status": "PASS"
+    },
+    {
+      "name": "unsupported_version",
+      "status": "PASS"
+    },
+    {
+      "name": "unsupported_file_extension",
+      "status": "PASS"
+    },
+    {
+      "name": "supported_file_extension",
+      "status": "PASS"
+    },
+    {
+      "name": "compatibility_gate_blocks_join",
+      "status": "PASS"
+    },
+    {
+      "name": "source_missing_counts_are_null",
+      "status": "PASS"
+    },
+    {
+      "name": "unresolved_column_mapping_needs_review",
+      "status": "PASS"
+    }
+  ],
+  "integrity": {
+    "hierarchy": {
+      "district_count": 25,
+      "market_count": 156,
+      "submarket_count": 382,
+      "node_count": 763
+    },
+    "reference_geometry": {
+      "official_market_count": 1650,
+      "administrative_dong_count": 425,
+      "living_grid_count": 10125
+    },
+    "frameone_non_null_geometry": {
+      "markets": 0,
+      "submarkets": 0,
+      "nodes": 0
+    },
+    "crosswalk": {
+      "official_market_rows": 863,
+      "official_market_manual_review_rows": 863,
+      "administrative_dong_rows": 458,
+      "administrative_dong_manual_review_rows": 458,
+      "living_grid_rows": 0,
+      "status_promotion_count": 0
+    },
+    "source_sha256": {
+      "hierarchy": {
+        "path": "MARKET_HIERARCHY.json",
+        "sha256": "67ac5a5237b3893fc78e4fd67a7b97b4cd2774a69b5c6a7eb1bf2a6f8266e102"
+      },
+      "officialMarkets": {
+        "path": "09_GEO/OFFICIAL_SEOUL_MARKETS.geojson",
+        "sha256": "5793cced1936360ce93afd301d53ec4af30bac94844d969b75ad08038c407bb6"
+      },
+      "administrativeDongs": {
+        "path": "09_GEO/ADMIN_DONG.geojson",
+        "sha256": "b533e780608b53b10b9e7912d7f6cb7ec4ce712285abffc13ff06e7c68a31d5c"
+      },
+      "livingGrid": {
+        "path": "09_GEO/LIVING_GRID_250M.geojson",
+        "sha256": "b591c6e6379b7ba962d7d6ef5494ffd0dee519ddcae7ec69cbd8b7f86a07e8ad"
+      },
+      "frameoneMarkets": {
+        "path": "09_GEO/FRAMEONE_MARKETS.geojson",
+        "sha256": "f0ad94078846b31e5cc5817bcf635115e30e6e1b7d293916063aa616fe79f172"
+      },
+      "frameoneSubmarkets": {
+        "path": "09_GEO/FRAMEONE_SUBMARKETS.geojson",
+        "sha256": "2f98a6771d86dc57d52599d383990cbc0dce7ba23fc9e6e1f944567c5fc2f7ef"
+      },
+      "nodes": {
+        "path": "09_GEO/NODES.geojson",
+        "sha256": "ee625a6dd697cc7cbdf18d3cb6f747b21c9ef918cc31ee27b71e7eda8e309095"
+      },
+      "officialCrosswalk": {
+        "path": "09_GEO/MARKET_OFFICIAL_CROSSWALK.csv",
+        "sha256": "a2cb9107f51fc1522943544f9c2194a54bf859b99d2cab402ac842577d1fe546"
+      },
+      "administrativeCrosswalk": {
+        "path": "09_GEO/MARKET_ADMIN_DONG_CROSSWALK.csv",
+        "sha256": "1d00d368457c85999316116a2c3a1ead4cc12b81af9ac8259103f7a57c369884"
+      },
+      "livingGridCrosswalk": {
+        "path": "09_GEO/MARKET_LIVING_GRID_CROSSWALK.csv",
+        "sha256": "5637ffe2139895e5ad3d7db029402314a6c83db9d30d33a3d8f530b2d2dd08b3"
+      },
+      "step4aReport": {
+        "path": "12_VALIDATION/STEP4A_DATA_COMPATIBILITY_REPORT.md",
+        "sha256": "eb069a67fc7c898c911e18505011483b0e7898a63312889acfad2161c8a00c3a"
+      },
+      "step4aOfficial": {
+        "path": "12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json",
+        "sha256": "c03d4d7e0fd18b915521a2806cd861b86753f786cf5d57b62368058284526038"
+      },
+      "step4aLiving": {
+        "path": "12_VALIDATION/LIVING_GRID_KEY_COVERAGE.json",
+        "sha256": "955a543eee4bd6c7d7ac40458d3238426dba569fda922c0723979a9aaf16992c"
+      },
+      "step4aAdministrative": {
+        "path": "12_VALIDATION/ADMIN_DONG_ATTRIBUTE_AUDIT.json",
+        "sha256": "60a9b50b8ae8391caeab316885ad2204977caf3669449f0999dda90d39d97504"
+      }
+    },
+    "raw_source_file_count": 0,
+    "normalized_file_count": 0,
+    "quarantine_data_file_count": 0,
+    "actual_manifest_count": 0,
+    "numeric_aggregation_count": 0,
+    "geometry_creation_count": 0
+  }
+}

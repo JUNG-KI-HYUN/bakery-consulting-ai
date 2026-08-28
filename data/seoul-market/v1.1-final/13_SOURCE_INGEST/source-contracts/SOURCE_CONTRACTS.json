@@ -1,0 +1,461 @@
+{
+  "schema_version": "1.0.0",
+  "checked_at": "2026-08-28",
+  "contract_schema": "SOURCE_CONTRACT_SCHEMA.json",
+  "status": "NEEDS_REVIEW",
+  "principles": [
+    "원본 파일은 raw에 그대로 보존하고 직접 수정하지 않는다.",
+    "검증되지 않은 raw 파일은 normalized로 이동하거나 프로그램 분석에 사용하지 않는다.",
+    "미수집·검증불가는 null이며 실제 관측값 0과 구분한다.",
+    "source_version, source_date, key, code_system, spatial_unit, compatibility gate가 확인되기 전 Join을 금지한다.",
+    "실제 원천 헤더가 확인되지 않은 source_column_map 값은 null로 유지하고 계약을 자동 통과시키지 않는다."
+  ],
+  "contracts": [
+    {
+      "source_id": "SRC-SEOUL-LIVING",
+      "institution": "서울특별시",
+      "dataset_name": "[내국인] 서울 생활인구(250m) OA-22784",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-22784/S/1/datasetView.do",
+      "source_version": null,
+      "source_date": null,
+      "retrieved_at": null,
+      "file_format": "UNKNOWN",
+      "allowed_extensions": [],
+      "encoding": null,
+      "key_field": "cell_id",
+      "code_system": "NATIONAL_STANDARD_GRID_250M_CELL_ID",
+      "spatial_unit": "250m_grid",
+      "coordinate_system": null,
+      "required_columns": [
+        "base_date",
+        "hour_code",
+        "cell_id",
+        "total_living_population"
+      ],
+      "optional_columns": [
+        "male_living_population",
+        "female_living_population",
+        "age_band_living_population"
+      ],
+      "nullable_columns": [
+        "male_living_population",
+        "female_living_population",
+        "age_band_living_population"
+      ],
+      "numeric_columns": [
+        "total_living_population",
+        "male_living_population",
+        "female_living_population",
+        "age_band_living_population"
+      ],
+      "unique_key": ["base_date", "hour_code", "cell_id"],
+      "source_column_map": {
+        "base_date": null,
+        "hour_code": null,
+        "cell_id": "CELL_ID",
+        "total_living_population": null,
+        "male_living_population": null,
+        "female_living_population": null,
+        "age_band_living_population": null
+      },
+      "supported_versions": [],
+      "compatibility_requirement": {
+        "gate_id": "LIVING_GRID_CELL_ID_COVERAGE",
+        "status": "BLOCKED",
+        "join_allowed": false,
+        "requirements": [
+          "OA-22784 원문 CELL_ID 확보",
+          "LIVING_GRID_250M.geojson grid_id 10,125개와 key coverage 검증",
+          "누락·추가·중복 CELL_ID 목록 검토",
+          "source_date와 source_version 기록"
+        ],
+        "step4a_evidence": "../../12_VALIDATION/LIVING_GRID_KEY_COVERAGE.json"
+      },
+      "license_status": "NEEDS_REVIEW",
+      "usage_note": "실제 CELL_ID coverage 검증과 FRAMEONE Polygon 승인이 끝나기 전 Market 집계 및 자동 Join을 금지한다.",
+      "status": "SOURCE_MISSING"
+    },
+    {
+      "source_id": "SRC-SEOUL-AREA",
+      "institution": "서울신용보증재단",
+      "dataset_name": "서울시 상권분석서비스(영역-상권)",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-15560/S/1/datasetView.do",
+      "source_version": null,
+      "source_date": null,
+      "retrieved_at": null,
+      "file_format": "SHP_OR_ZIP",
+      "allowed_extensions": [".shp", ".zip"],
+      "encoding": null,
+      "key_field": "official_area_code",
+      "code_system": "SEOUL_MARKET_ANALYSIS_AREA_CODE",
+      "spatial_unit": "official_market",
+      "coordinate_system": "EPSG:5181",
+      "required_columns": [
+        "official_area_code",
+        "official_area_name",
+        "official_area_type",
+        "geometry"
+      ],
+      "optional_columns": [
+        "administrative_dong_code",
+        "administrative_dong_name",
+        "gu_code",
+        "gu_name"
+      ],
+      "nullable_columns": [],
+      "numeric_columns": [],
+      "unique_key": ["official_area_code"],
+      "source_column_map": {
+        "official_area_code": null,
+        "official_area_name": null,
+        "official_area_type": null,
+        "geometry": null,
+        "administrative_dong_code": null,
+        "administrative_dong_name": null,
+        "gu_code": null,
+        "gu_name": null
+      },
+      "supported_versions": [],
+      "compatibility_requirement": {
+        "gate_id": "OFFICIAL_MARKET_GEOMETRY_VERSION_COMPATIBILITY",
+        "status": "BLOCKED",
+        "join_allowed": false,
+        "requirements": [
+          "2023-10 geometry와 실제 지표 코드 체계 비교",
+          "공식상권 코드·명칭·유형 교집합과 차집합 검토",
+          "동일 기준의 source_version과 source_date 기록"
+        ],
+        "step4a_evidence": "../../12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json"
+      },
+      "license_status": "NEEDS_REVIEW",
+      "usage_note": "기존 OFFICIAL_SEOUL_MARKETS.geojson은 공식 참조 레이어이며 FRAMEONE Market 경계가 아니다. SHP 컬럼 검증은 실제 압축 해제 어댑터 요구사항이다.",
+      "status": "SOURCE_MISSING"
+    },
+    {
+      "source_id": "SRC-SEOUL-STORES",
+      "institution": "서울신용보증재단",
+      "dataset_name": "서울시 상권분석서비스(점포-상권)",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-15577/S/1/datasetView.do",
+      "source_version": null,
+      "source_date": null,
+      "retrieved_at": null,
+      "file_format": "UNKNOWN",
+      "allowed_extensions": [],
+      "encoding": null,
+      "key_field": "official_area_code",
+      "code_system": "SEOUL_MARKET_ANALYSIS_AREA_CODE",
+      "spatial_unit": "official_market_by_quarter_and_industry",
+      "coordinate_system": null,
+      "required_columns": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code",
+        "service_industry_code",
+        "store_count"
+      ],
+      "optional_columns": [
+        "opening_store_count",
+        "closure_store_count",
+        "franchise_store_count"
+      ],
+      "nullable_columns": [],
+      "numeric_columns": [
+        "store_count",
+        "opening_store_count",
+        "closure_store_count",
+        "franchise_store_count"
+      ],
+      "unique_key": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code",
+        "service_industry_code"
+      ],
+      "source_column_map": {
+        "base_year_code": null,
+        "base_quarter_code": null,
+        "official_area_type_code": null,
+        "official_area_code": null,
+        "service_industry_code": null,
+        "store_count": null,
+        "opening_store_count": null,
+        "closure_store_count": null,
+        "franchise_store_count": null
+      },
+      "supported_versions": [],
+      "compatibility_requirement": {
+        "gate_id": "OFFICIAL_MARKET_METRIC_TO_GEOMETRY_COMPATIBILITY",
+        "status": "BLOCKED",
+        "join_allowed": false,
+        "requirements": [
+          "실제 2024+ 상권코드와 2023-10 geometry 코드 비교",
+          "상권구분코드·상권명·기준분기 검증",
+          "서비스업종 코드 버전 기록"
+        ],
+        "step4a_evidence": "../../12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json"
+      },
+      "license_status": "NEEDS_REVIEW",
+      "usage_note": "실제 raw 헤더와 제공기준 변경사항을 확인하기 전 점포·개폐업 수치를 적재하지 않는다.",
+      "status": "SOURCE_MISSING"
+    },
+    {
+      "source_id": "SRC-SEOUL-SALES",
+      "institution": "서울신용보증재단",
+      "dataset_name": "서울시 상권분석서비스(추정매출-상권)",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-15572/S/1/datasetView.do",
+      "source_version": null,
+      "source_date": null,
+      "retrieved_at": null,
+      "file_format": "UNKNOWN",
+      "allowed_extensions": [],
+      "encoding": null,
+      "key_field": "official_area_code",
+      "code_system": "SEOUL_MARKET_ANALYSIS_AREA_CODE",
+      "spatial_unit": "official_market_by_quarter_and_industry",
+      "coordinate_system": null,
+      "required_columns": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code",
+        "service_industry_code",
+        "estimated_sales_amount"
+      ],
+      "optional_columns": [
+        "weekday_sales_amount",
+        "weekend_sales_amount",
+        "time_band_sales_amount",
+        "age_band_sales_amount"
+      ],
+      "nullable_columns": [],
+      "numeric_columns": [
+        "estimated_sales_amount",
+        "weekday_sales_amount",
+        "weekend_sales_amount",
+        "time_band_sales_amount",
+        "age_band_sales_amount"
+      ],
+      "unique_key": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code",
+        "service_industry_code"
+      ],
+      "source_column_map": {
+        "base_year_code": null,
+        "base_quarter_code": null,
+        "official_area_type_code": null,
+        "official_area_code": null,
+        "service_industry_code": null,
+        "estimated_sales_amount": null,
+        "weekday_sales_amount": null,
+        "weekend_sales_amount": null,
+        "time_band_sales_amount": null,
+        "age_band_sales_amount": null
+      },
+      "supported_versions": [],
+      "compatibility_requirement": {
+        "gate_id": "OFFICIAL_MARKET_METRIC_TO_GEOMETRY_COMPATIBILITY",
+        "status": "BLOCKED",
+        "join_allowed": false,
+        "requirements": [
+          "실제 2024+ 상권코드와 2023-10 geometry 코드 비교",
+          "상권구분코드·상권명·기준분기 검증",
+          "추정매출 원천 정의와 제공기간 기록"
+        ],
+        "step4a_evidence": "../../12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json"
+      },
+      "license_status": "NEEDS_REVIEW",
+      "usage_note": "추정매출은 실매출이 아니며 실제 raw 헤더·기간·단위를 확인하기 전 계산에 사용하지 않는다.",
+      "status": "SOURCE_MISSING"
+    },
+    {
+      "source_id": "SRC-SEOUL-FOOT",
+      "institution": "서울신용보증재단",
+      "dataset_name": "서울시 상권분석서비스(길단위인구-상권)",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-15568/S/1/datasetView.do",
+      "source_version": null,
+      "source_date": null,
+      "retrieved_at": null,
+      "file_format": "UNKNOWN",
+      "allowed_extensions": [],
+      "encoding": null,
+      "key_field": "official_area_code",
+      "code_system": "SEOUL_MARKET_ANALYSIS_AREA_CODE",
+      "spatial_unit": "official_market_by_quarter",
+      "coordinate_system": null,
+      "required_columns": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code",
+        "total_foot_population"
+      ],
+      "optional_columns": [
+        "weekday_foot_population",
+        "weekend_foot_population",
+        "time_band_foot_population",
+        "age_band_foot_population"
+      ],
+      "nullable_columns": [],
+      "numeric_columns": [
+        "total_foot_population",
+        "weekday_foot_population",
+        "weekend_foot_population",
+        "time_band_foot_population",
+        "age_band_foot_population"
+      ],
+      "unique_key": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code"
+      ],
+      "source_column_map": {
+        "base_year_code": null,
+        "base_quarter_code": null,
+        "official_area_type_code": null,
+        "official_area_code": null,
+        "total_foot_population": null,
+        "weekday_foot_population": null,
+        "weekend_foot_population": null,
+        "time_band_foot_population": null,
+        "age_band_foot_population": null
+      },
+      "supported_versions": [],
+      "compatibility_requirement": {
+        "gate_id": "OFFICIAL_MARKET_METRIC_TO_GEOMETRY_COMPATIBILITY",
+        "status": "BLOCKED",
+        "join_allowed": false,
+        "requirements": [
+          "실제 2024+ 상권코드와 2023-10 geometry 코드 비교",
+          "길단위인구와 OA-22784 생활인구 정의 차이 기록",
+          "상권구분코드·기준분기 검증"
+        ],
+        "step4a_evidence": "../../12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json"
+      },
+      "license_status": "NEEDS_REVIEW",
+      "usage_note": "생활인구와 정의·공간단위가 다르므로 혼합하지 않고 실제 원천 메타데이터를 별도로 보존한다.",
+      "status": "SOURCE_MISSING"
+    },
+    {
+      "source_id": "SRC-SEOUL-WORK",
+      "institution": "서울신용보증재단",
+      "dataset_name": "서울시 상권분석서비스(직장인구-상권)",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-15569/S/1/datasetView.do",
+      "source_version": null,
+      "source_date": null,
+      "retrieved_at": null,
+      "file_format": "UNKNOWN",
+      "allowed_extensions": [],
+      "encoding": null,
+      "key_field": "official_area_code",
+      "code_system": "SEOUL_MARKET_ANALYSIS_AREA_CODE",
+      "spatial_unit": "official_market_by_quarter",
+      "coordinate_system": null,
+      "required_columns": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code",
+        "total_worker_population"
+      ],
+      "optional_columns": [
+        "male_worker_population",
+        "female_worker_population",
+        "age_band_worker_population"
+      ],
+      "nullable_columns": [],
+      "numeric_columns": [
+        "total_worker_population",
+        "male_worker_population",
+        "female_worker_population",
+        "age_band_worker_population"
+      ],
+      "unique_key": [
+        "base_year_code",
+        "base_quarter_code",
+        "official_area_type_code",
+        "official_area_code"
+      ],
+      "source_column_map": {
+        "base_year_code": null,
+        "base_quarter_code": null,
+        "official_area_type_code": null,
+        "official_area_code": null,
+        "total_worker_population": null,
+        "male_worker_population": null,
+        "female_worker_population": null,
+        "age_band_worker_population": null
+      },
+      "supported_versions": [],
+      "compatibility_requirement": {
+        "gate_id": "OFFICIAL_MARKET_METRIC_TO_GEOMETRY_COMPATIBILITY",
+        "status": "BLOCKED",
+        "join_allowed": false,
+        "requirements": [
+          "실제 2024+ 상권코드와 2023-10 geometry 코드 비교",
+          "상권구분코드·기준분기 검증",
+          "4분기 갱신 후 반복분기 정책 기록"
+        ],
+        "step4a_evidence": "../../12_VALIDATION/OFFICIAL_MARKET_CODE_COMPATIBILITY.json"
+      },
+      "license_status": "NEEDS_REVIEW",
+      "usage_note": "기준분기 반복 특성을 보존하고 실제 원천 확인 전 오피스 수요 계산에 사용하지 않는다.",
+      "status": "SOURCE_MISSING"
+    },
+    {
+      "source_id": "SRC-SGIS",
+      "institution": "국가데이터처",
+      "dataset_name": "SGIS 행정구역경계 및 행정동 코드·명칭",
+      "source_reference": "https://sgis.mods.go.kr/developer/html/newOpenApi/api/dataApi/addressBoundary.html",
+      "source_version": null,
+      "source_date": null,
+      "retrieved_at": null,
+      "file_format": "JSON",
+      "allowed_extensions": [".json"],
+      "encoding": "UTF-8",
+      "key_field": "administrative_dong_code",
+      "code_system": "SGIS_ADMINISTRATIVE_AREA_CODE",
+      "spatial_unit": "administrative_dong",
+      "coordinate_system": null,
+      "required_columns": [
+        "base_year",
+        "administrative_dong_code",
+        "administrative_dong_name",
+        "gu_code",
+        "gu_name"
+      ],
+      "optional_columns": ["geometry"],
+      "nullable_columns": [],
+      "numeric_columns": [],
+      "unique_key": ["base_year", "administrative_dong_code"],
+      "source_column_map": {
+        "base_year": "base_year",
+        "administrative_dong_code": "adm_cd",
+        "administrative_dong_name": "adm_nm",
+        "gu_code": "sgg_cd",
+        "gu_name": "sgg_nm",
+        "geometry": "geometry"
+      },
+      "supported_versions": [],
+      "compatibility_requirement": {
+        "gate_id": "ADMIN_DONG_OFFICIAL_MAPPING_COMPLETENESS",
+        "status": "BLOCKED",
+        "join_allowed": false,
+        "requirements": [
+          "ADMIN_DONG.geojson adm_cd 425개 전체 코드 대조",
+          "adm_nm·gu_code·gu 공식 매핑 누락 0 확인",
+          "기준연도와 코드개편 여부 기록"
+        ],
+        "step4a_evidence": "../../12_VALIDATION/ADMIN_DONG_ATTRIBUTE_AUDIT.json"
+      },
+      "license_status": "NEEDS_REVIEW",
+      "usage_note": "공식 425개 전체 매핑과 기준연도가 검증되기 전 ADMIN_DONG.geojson 속성을 자동 보강하지 않는다.",
+      "status": "SOURCE_MISSING"
+    }
+  ]
+}

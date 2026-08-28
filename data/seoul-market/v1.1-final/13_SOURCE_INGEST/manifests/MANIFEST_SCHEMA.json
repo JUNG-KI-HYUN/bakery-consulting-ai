@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "frameone://source-ingest/manifest.schema.json",
+  "title": "FRAMEONE Raw Source Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "original_filename",
+    "sha256",
+    "retrieved_at",
+    "source_date",
+    "source_version",
+    "row_count",
+    "key_count",
+    "validation_status",
+    "compatibility_status",
+    "normalized_output",
+    "notes"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "pattern": "^SRC-[A-Z0-9-]+$"
+    },
+    "original_filename": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^/\\\\]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "retrieved_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_date": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "row_count": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "key_count": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "validation_status": {
+      "enum": ["PASS", "FAIL", "NEEDS_REVIEW", "NOT_RUN", "SOURCE_MISSING"]
+    },
+    "compatibility_status": {
+      "enum": ["PASS", "BLOCKED", "NEEDS_REVIEW", "NOT_RUN", "SOURCE_MISSING"]
+    },
+    "normalized_output": {
+      "type": ["string", "null"]
+    },
+    "notes": {
+      "type": ["string", "null"]
+    }
+  }
+}
