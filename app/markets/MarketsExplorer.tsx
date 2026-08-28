@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import MarketSpatialViewer from "./MarketSpatialViewer";
 
 export interface MarketNode {
   nodeId: string;
@@ -564,6 +565,31 @@ export default function MarketsExplorer({
           )}
         </section>
       </div>
+
+      <MarketSpatialViewer
+        selectedMarket={
+          selectedMarket
+            ? {
+                marketId: selectedMarket.marketId,
+                marketName: selectedMarket.name,
+                geometryStatus: selectedMarket.geometryStatus,
+                submarketCount: selectedMarket.submarkets.length,
+                nodeCount: selectedMarket.submarkets.flatMap(
+                  (submarket) => submarket.nodes,
+                ).length,
+              }
+            : null
+        }
+        selectedSubmarket={
+          selectedSubmarket
+            ? {
+                submarketId: selectedSubmarket.submarketId,
+                submarketName: selectedSubmarket.name,
+                geometryStatus: selectedSubmarket.status,
+              }
+            : null
+        }
+      />
     </div>
   );
 }
