@@ -572,7 +572,12 @@ export default function MarketsExplorer({
             ? {
                 marketId: selectedMarket.marketId,
                 marketName: selectedMarket.name,
+                district: selectedMarket.gu,
                 geometryStatus: selectedMarket.geometryStatus,
+                geometryAvailability:
+                  selectedMarket.geometryStatus === "text_only" ? "none" : null,
+                verificationStage: selectedMarket.geometryStatus,
+                reviewStatus: null,
                 submarketCount: selectedMarket.submarkets.length,
                 nodeCount: selectedMarket.submarkets.flatMap(
                   (submarket) => submarket.nodes,

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type MouseEvent as ReactMouseEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -30,13 +31,16 @@ interface MultiPolygonGeometry {
 
 type ViewerGeometry = PolygonGeometry | MultiPolygonGeometry;
 
+interface ViewerFeature {
+  type: "Feature";
+  id?: string | number;
+  geometry: ViewerGeometry;
+  properties: Record<string, unknown>;
+}
+
 interface ViewerFeatureCollection {
   type: "FeatureCollection";
-  features: Array<{
-    type: "Feature";
-    geometry: ViewerGeometry;
-    properties: Record<string, unknown>;
-  }>;
+  features: ViewerFeature[];
 }
 
 interface Bounds {
@@ -54,10 +58,47 @@ interface LoadedSpatialLayer {
 
 type LoadedLayerMap = Partial<Record<SpatialLayerId, LoadedSpatialLayer>>;
 
+interface HitTestFeature {
+  layerId: SpatialLayerId;
+  featureIndex: number;
+  feature: ViewerFeature;
+  path: Path2D;
+  minimumX: number;
+  minimumY: number;
+  maximumX: number;
+  maximumY: number;
+}
+
+interface CrosswalkCandidate {
+  referenceId: string;
+  referenceName: string | null;
+  referenceType: string | null;
+  relationType: string;
+  confidence: string | null;
+  sourceId: string | null;
+  geometryVersion: string | null;
+  sourceDate: string | null;
+  matchBasis: string | null;
+  spatialOverlapValidated: boolean;
+}
+
+interface MarketCrosswalkResponse {
+  marketId: string;
+  verificationStatus: "candidate";
+  manualReviewRequired: true;
+  officialMarketCandidates: CrosswalkCandidate[];
+  administrativeDongCandidates: CrosswalkCandidate[];
+  livingGridCandidates: [];
+}
+
 export interface SelectedMarketSpatialSummary {
   marketId: string;
   marketName: string;
+  district: string;
   geometryStatus: string;
+  geometryAvailability: string | null;
+  verificationStage: string | null;
+  reviewStatus: string | null;
   submarketCount: number;
   nodeCount: number;
 }
@@ -219,6 +260,98 @@ function formatMilliseconds(value: number | null) {
   return value >= 1000 ? `${(value / 1000).toFixed(2)}초` : `${value.toFixed(1)}ms`;
 }
 
+function propertyText(
+  properties: Record<string, unknown>,
+  key: string,
+): string | null {
+  const value = properties[key];
+  if (typeof value === "string" && value.trim()) {
+    return value.trim();
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+  return null;
+}
+
+function referenceIdForFeature(
+  layerId: SpatialLayerId,
+  feature: ViewerFeature,
+) {
+  const propertyKeys: Partial<Record<SpatialLayerId, string[]>> = {
+    "seoul-official-markets": ["official_area_code"],
+    "seoul-admin-dongs": ["adm_cd"],
+    "seoul-living-grid-250m": ["grid_id", "gid"],
+  };
+  for (const key of propertyKeys[layerId] ?? []) {
+    const value = propertyText(feature.properties, key);
+    if (value) {
+      return value;
+    }
+  }
+  return feature.id === undefined ? "정보 없음" : String(feature.id);
+}
+
+function referenceNameForFeature(
+  layerId: SpatialLayerId,
+  feature: ViewerFeature,
+) {
+  if (layerId === "seoul-official-markets") {
+    return propertyText(feature.properties, "official_area_name") ?? "정보 없음";
+  }
+  if (layerId === "seoul-admin-dongs") {
+    return propertyText(feature.properties, "adm_nm") ?? "행정동명 확인 필요";
+  }
+  return "정보 없음";
+}
+
+function reviewNoteForLayer(layerId: SpatialLayerId) {
+  if (layerId === "seoul-admin-dongs") {
+    return "행정동명·자치구명 속성 보강 필요";
+  }
+  if (layerId === "seoul-living-grid-250m") {
+    return "geometry 참조 전용 · 생활인구 수치 미적재";
+  }
+  return "FRAMEONE 경계가 아닌 공식 참조 geometry · 2024+ 지표 결합 전 버전 확인 필요";
+}
+
+function parseMarketCrosswalk(
+  value: unknown,
+  expectedMarketId: string,
+): MarketCrosswalkResponse {
+  if (!value || typeof value !== "object") {
+    throw new Error("Crosswalk 응답이 객체가 아닙니다.");
+  }
+  const candidate = value as Partial<MarketCrosswalkResponse>;
+  if (
+    candidate.marketId !== expectedMarketId ||
+    candidate.verificationStatus !== "candidate" ||
+    candidate.manualReviewRequired !== true ||
+    !Array.isArray(candidate.officialMarketCandidates) ||
+    !Array.isArray(candidate.administrativeDongCandidates) ||
+    !Array.isArray(candidate.livingGridCandidates)
+  ) {
+    throw new Error("Crosswalk 후보 응답 형식이 올바르지 않습니다.");
+  }
+  return candidate as MarketCrosswalkResponse;
+}
+
+function InspectorField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-b border-slate-100 py-2 last:border-b-0">
+      <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+        {label}
+      </dt>
+      <dd className="mt-0.5 break-words text-xs leading-5 text-slate-800">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
 export default function MarketSpatialViewer({
   selectedMarket,
   selectedSubmarket,
@@ -248,9 +381,25 @@ export default function MarketSpatialViewer({
   const [canvasSize, setCanvasSize] = useState({ width: 720, height: 440 });
   const [zoom, setZoom] = useState(1);
   const [renderDurationMs, setRenderDurationMs] = useState<number | null>(null);
+  const [hitTestDurationMs, setHitTestDurationMs] = useState<number | null>(null);
+  const [selectedReferences, setSelectedReferences] = useState<HitTestFeature[]>(
+    [],
+  );
+  const [selectedReferenceIndex, setSelectedReferenceIndex] = useState(0);
+  const [crosswalk, setCrosswalk] = useState<MarketCrosswalkResponse | null>(null);
+  const [crosswalkLoading, setCrosswalkLoading] = useState(false);
+  const [crosswalkError, setCrosswalkError] = useState<string | null>(null);
   const requestedLayerIdsRef = useRef(new Set<SpatialLayerId>());
+  const crosswalkCacheRef = useRef(
+    new Map<string, MarketCrosswalkResponse>(),
+  );
+  const hitTestFeaturesRef = useRef<HitTestFeature[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const selectionCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+
+  const selectedReference =
+    selectedReferences[selectedReferenceIndex] ?? null;
 
   const loadLayer = useCallback(async (layerId: SpatialLayerId) => {
     const layer = getSpatialLayerDefinition(layerId);
@@ -311,6 +460,61 @@ export default function MarketSpatialViewer({
       void loadLayer(layerId);
     }
   }, [defaultVisibleLayerIds, loadLayer]);
+
+  const selectedMarketId = selectedMarket?.marketId ?? null;
+
+  useEffect(() => {
+    if (!selectedMarketId) {
+      setCrosswalk(null);
+      setCrosswalkLoading(false);
+      setCrosswalkError(null);
+      return;
+    }
+
+    const marketId = selectedMarketId;
+    const cached = crosswalkCacheRef.current.get(marketId);
+    if (cached) {
+      setCrosswalk(cached);
+      setCrosswalkLoading(false);
+      setCrosswalkError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    setCrosswalk(null);
+    setCrosswalkLoading(true);
+    setCrosswalkError(null);
+
+    void fetch(`/api/markets/crosswalk?marketId=${encodeURIComponent(marketId)}`, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return parseMarketCrosswalk(await response.json(), marketId);
+      })
+      .then((result) => {
+        crosswalkCacheRef.current.set(marketId, result);
+        setCrosswalk(result);
+      })
+      .catch((error) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setCrosswalkError(
+          error instanceof Error ? error.message : "알 수 없는 Crosswalk 오류",
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setCrosswalkLoading(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [selectedMarketId]);
 
   useEffect(() => {
     const container = canvasContainerRef.current;
@@ -381,6 +585,7 @@ export default function MarketSpatialViewer({
     context.clearRect(0, 0, canvasSize.width, canvasSize.height);
     context.fillStyle = "#f8fafc";
     context.fillRect(0, 0, canvasSize.width, canvasSize.height);
+    hitTestFeaturesRef.current = [];
 
     context.strokeStyle = "rgba(148, 163, 184, 0.14)";
     context.lineWidth = 1;
@@ -423,23 +628,48 @@ export default function MarketSpatialViewer({
         canvasSize.height / 2 - (latitude - centerLatitude) * scale,
       ] as const;
 
+    const hitTestFeatures: HitTestFeature[] = [];
     for (const { definition, data } of renderableLayers) {
-      context.beginPath();
-      for (const feature of data.collection.features) {
+      const layerPath = new Path2D();
+      data.collection.features.forEach((feature, featureIndex) => {
+        const featurePath = new Path2D();
+        let minimumX = Number.POSITIVE_INFINITY;
+        let minimumY = Number.POSITIVE_INFINITY;
+        let maximumX = Number.NEGATIVE_INFINITY;
+        let maximumY = Number.NEGATIVE_INFINITY;
+
         for (const polygon of polygonsForGeometry(feature.geometry)) {
           for (const ring of polygon) {
             ring.forEach((position, index) => {
               const [x, y] = project(position);
+              minimumX = Math.min(minimumX, x);
+              minimumY = Math.min(minimumY, y);
+              maximumX = Math.max(maximumX, x);
+              maximumY = Math.max(maximumY, y);
               if (index === 0) {
-                context.moveTo(x, y);
+                featurePath.moveTo(x, y);
+                layerPath.moveTo(x, y);
               } else {
-                context.lineTo(x, y);
+                featurePath.lineTo(x, y);
+                layerPath.lineTo(x, y);
               }
             });
-            context.closePath();
+            featurePath.closePath();
+            layerPath.closePath();
           }
         }
-      }
+
+        hitTestFeatures.push({
+          layerId: definition.layerId,
+          featureIndex,
+          feature,
+          path: featurePath,
+          minimumX,
+          minimumY,
+          maximumX,
+          maximumY,
+        });
+      });
 
       context.fillStyle = definition.style.fill;
       context.strokeStyle = definition.style.stroke;
@@ -447,12 +677,85 @@ export default function MarketSpatialViewer({
         0.25,
         definition.style.lineWidth / Math.sqrt(zoom),
       );
-      context.fill("evenodd");
-      context.stroke();
+      context.fill(layerPath, "evenodd");
+      context.stroke(layerPath);
     }
 
+    hitTestFeaturesRef.current = hitTestFeatures;
     setRenderDurationMs(performance.now() - startedAt);
   }, [canvasSize, renderableLayers, zoom]);
+
+  useEffect(() => {
+    const selectionCanvas = selectionCanvasRef.current;
+    if (!selectionCanvas) {
+      return;
+    }
+
+    const context = selectionCanvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    selectionCanvas.width = Math.round(canvasSize.width * pixelRatio);
+    selectionCanvas.height = Math.round(canvasSize.height * pixelRatio);
+    selectionCanvas.style.width = `${canvasSize.width}px`;
+    selectionCanvas.style.height = `${canvasSize.height}px`;
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    context.clearRect(0, 0, canvasSize.width, canvasSize.height);
+
+    if (!selectedReference) {
+      return;
+    }
+
+    const cachedFeature = hitTestFeaturesRef.current.find(
+      (feature) =>
+        feature.layerId === selectedReference.layerId &&
+        feature.featureIndex === selectedReference.featureIndex,
+    );
+    if (!cachedFeature) {
+      return;
+    }
+
+    context.fillStyle = "rgba(251, 191, 36, 0.28)";
+    context.strokeStyle = "#0f172a";
+    context.lineWidth = 2.5;
+    context.fill(cachedFeature.path, "evenodd");
+    context.stroke(cachedFeature.path);
+  }, [canvasSize, renderDurationMs, selectedReference]);
+
+  function handleCanvasClick(event: ReactMouseEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    const startedAt = performance.now();
+    const rectangle = canvas.getBoundingClientRect();
+    const x =
+      ((event.clientX - rectangle.left) / rectangle.width) * canvasSize.width;
+    const y =
+      ((event.clientY - rectangle.top) / rectangle.height) * canvasSize.height;
+    const matches = hitTestFeaturesRef.current
+      .filter(
+        (feature) =>
+          x >= feature.minimumX &&
+          x <= feature.maximumX &&
+          y >= feature.minimumY &&
+          y <= feature.maximumY &&
+          context.isPointInPath(feature.path, x, y, "evenodd"),
+      )
+      .reverse();
+
+    setSelectedReferences(matches);
+    setSelectedReferenceIndex(0);
+    setHitTestDurationMs(performance.now() - startedAt);
+  }
 
   function toggleLayer(layer: SpatialLayerDefinition) {
     if (!layer.geometryAvailable) {
@@ -472,6 +775,11 @@ export default function MarketSpatialViewer({
 
     if (nextVisible) {
       void loadLayer(layer.layerId);
+    } else {
+      setSelectedReferences((current) =>
+        current.filter((feature) => feature.layerId !== layer.layerId),
+      );
+      setSelectedReferenceIndex(0);
     }
   }
 
@@ -480,6 +788,27 @@ export default function MarketSpatialViewer({
     0,
   );
   const gridData = loadedLayers["seoul-living-grid-250m"];
+  const selectedReferenceLayer = selectedReference
+    ? getSpatialLayerDefinition(selectedReference.layerId)
+    : null;
+  const selectedReferenceId = selectedReference
+    ? referenceIdForFeature(
+        selectedReference.layerId,
+        selectedReference.feature,
+      )
+    : null;
+  const selectedReferenceCrosswalkCandidate =
+    selectedReference && selectedReferenceId && crosswalk
+      ? selectedReference.layerId === "seoul-official-markets"
+        ? crosswalk.officialMarketCandidates.find(
+            (candidate) => candidate.referenceId === selectedReferenceId,
+          ) ?? null
+        : selectedReference.layerId === "seoul-admin-dongs"
+          ? crosswalk.administrativeDongCandidates.find(
+              (candidate) => candidate.referenceId === selectedReferenceId,
+            ) ?? null
+          : null
+      : null;
 
   return (
     <section className="panel-card overflow-hidden" aria-labelledby="spatial-viewer-title">
@@ -487,7 +816,7 @@ export default function MarketSpatialViewer({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
-              Spatial data viewer · STEP 3A
+              Spatial data viewer · STEP 3B
             </p>
             <h2 id="spatial-viewer-title" className="mt-2 text-xl font-bold md:text-2xl">
               공간데이터 Viewer
@@ -495,7 +824,7 @@ export default function MarketSpatialViewer({
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
               EPSG:4326으로 검증된 서울시 참조 geometry만 Canvas에 표시합니다.
               FRAMEONE 분석체계와 공식 참조레이어는 서로 다른 데이터이며,
-              확인되지 않은 좌표나 경계는 생성하지 않습니다.
+              geometry를 클릭하면 원천 속성과 검토 후보관계를 확인할 수 있습니다.
             </p>
           </div>
           <div className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-xs text-slate-300">
@@ -650,6 +979,57 @@ export default function MarketSpatialViewer({
                   : ""}
                 . geometry가 없어 지도에는 표시하지 않습니다.
               </p>
+              <dl className="mt-3 grid gap-x-4 gap-y-2 border-t border-amber-200 pt-3 text-[10px] sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <dt className="font-bold text-amber-700">자치구</dt>
+                  <dd className="mt-0.5 text-slate-800">{selectedMarket.district}</dd>
+                </div>
+                <div>
+                  <dt className="font-bold text-amber-700">geometry_availability</dt>
+                  <dd className="mt-0.5 font-mono text-slate-800">
+                    {selectedMarket.geometryAvailability ?? "확인 필요"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-bold text-amber-700">verification_stage</dt>
+                  <dd className="mt-0.5 font-mono text-slate-800">
+                    {selectedMarket.verificationStage ?? "확인 필요"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-bold text-amber-700">review_status</dt>
+                  <dd className="mt-0.5 font-mono text-slate-800">
+                    {selectedMarket.reviewStatus ?? "정보 없음"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
+                <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-amber-800">
+                  FRAMEONE 경계 미확정
+                </span>
+                <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-amber-800">
+                  공간데이터 없음
+                </span>
+                {crosswalkLoading ? (
+                  <span className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-slate-600">
+                    Crosswalk 후보 로딩 중…
+                  </span>
+                ) : crosswalk ? (
+                  <>
+                    <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-blue-800">
+                      공식상권 검토 후보 {crosswalk.officialMarketCandidates.length}개
+                    </span>
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-800">
+                      행정동 검토 후보 {crosswalk.administrativeDongCandidates.length}개
+                    </span>
+                  </>
+                ) : null}
+              </div>
+              {crosswalkError ? (
+                <p className="mt-2 text-[10px] font-semibold text-red-700">
+                  Crosswalk 후보 로드 실패: {crosswalkError}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
@@ -660,16 +1040,24 @@ export default function MarketSpatialViewer({
             <canvas
               ref={canvasRef}
               aria-label={`서울 공간 참조레이어 ${renderedFeatureCount.toLocaleString("ko-KR")}개 geometry 표시`}
-              className="block max-w-full"
+              onClick={handleCanvasClick}
+              className="block max-w-full cursor-crosshair"
+              title="공식 참조 geometry를 클릭해 Inspector에서 확인"
             >
               브라우저가 Canvas를 지원하지 않아 공간 참조레이어를 표시할 수 없습니다.
             </canvas>
+            <canvas
+              ref={selectionCanvasRef}
+              aria-hidden="true"
+              className="pointer-events-none absolute left-0 top-0 block max-w-full"
+            />
 
             <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-[10px] text-slate-600 shadow-sm">
               <p className="font-bold text-slate-900">공식 참조 geometry</p>
               <p className="mt-0.5">
                 {renderedFeatureCount.toLocaleString("ko-KR")}개 · Canvas {formatMilliseconds(renderDurationMs)}
               </p>
+              <p className="mt-0.5">geometry 클릭 → Inspector</p>
             </div>
 
             <div className="absolute right-3 top-3 flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -712,6 +1100,330 @@ export default function MarketSpatialViewer({
               </div>
             ) : null}
           </div>
+
+          <section
+            aria-label="Reference Inspector"
+            className="rounded-xl border border-slate-200 bg-white p-4"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                  Reference Inspector
+                </p>
+                <h3 className="mt-1 text-base font-bold text-slate-950">
+                  선택 객체 상세정보
+                </h3>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
+                <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                  후보 {selectedReferences.length}개
+                </span>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1">
+                  hit-test {formatMilliseconds(hitTestDurationMs)}
+                </span>
+              </div>
+            </div>
+
+            {selectedReferences.length === 0 ? (
+              <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center">
+                <p className="text-sm font-bold text-slate-700">
+                  공식 참조 geometry를 클릭하세요.
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  공식상권·행정동·Grid만 hit-test 대상이며 FRAMEONE 객체는 포함하지 않습니다.
+                </p>
+              </div>
+            ) : (
+              <>
+                {selectedReferences.length > 1 ? (
+                  <div className="mt-4">
+                    <p className="text-[10px] font-bold text-slate-500">
+                      겹친 geometry 후보 · 확정관계 아님
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selectedReferences.map((reference, index) => {
+                        const layer = getSpatialLayerDefinition(reference.layerId);
+                        const referenceId = referenceIdForFeature(
+                          reference.layerId,
+                          reference.feature,
+                        );
+                        return (
+                          <button
+                            key={`${reference.layerId}-${reference.featureIndex}`}
+                            type="button"
+                            onClick={() => setSelectedReferenceIndex(index)}
+                            className={`rounded-lg border px-3 py-2 text-left text-[10px] font-semibold ${
+                              index === selectedReferenceIndex
+                                ? "border-slate-900 bg-slate-900 text-white"
+                                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            <span className="block font-bold">
+                              {layer?.label ?? reference.layerId}
+                            </span>
+                            <span className="mt-0.5 block font-mono opacity-75">
+                              {referenceId}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
+                {selectedReference && selectedReferenceLayer ? (
+                  <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                    <article className="rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
+                            공식 참조
+                          </p>
+                          <h4 className="mt-1 text-sm font-bold text-slate-950">
+                            {referenceNameForFeature(
+                              selectedReference.layerId,
+                              selectedReference.feature,
+                            )}
+                          </h4>
+                        </div>
+                        <span className="rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[10px] font-bold text-blue-800">
+                          {selectedReferenceLayer.status}
+                        </span>
+                      </div>
+                      <dl className="mt-3">
+                        <InspectorField
+                          label="Layer"
+                          value={selectedReferenceLayer.label}
+                        />
+                        <InspectorField
+                          label="Reference ID"
+                          value={selectedReferenceId ?? "정보 없음"}
+                        />
+                        <InspectorField
+                          label="Feature name"
+                          value={referenceNameForFeature(
+                            selectedReference.layerId,
+                            selectedReference.feature,
+                          )}
+                        />
+                        <InspectorField
+                          label="Source"
+                          value={selectedReferenceLayer.source}
+                        />
+                        <InspectorField
+                          label="Source ID"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "source_id",
+                            ) ?? "정보 없음"
+                          }
+                        />
+                        <InspectorField
+                          label="Geometry version"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "geometry_version",
+                            ) ??
+                            selectedReferenceLayer.geometryVersion ??
+                            "정보 없음"
+                          }
+                        />
+                        <InspectorField
+                          label="Source date"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "source_date",
+                            ) ?? "정보 없음"
+                          }
+                        />
+                        <InspectorField
+                          label="Converted at"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "converted_at",
+                            ) ?? "정보 없음"
+                          }
+                        />
+                        <InspectorField
+                          label="CRS"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "output_crs",
+                            ) ?? "좌표계 확인 필요"
+                          }
+                        />
+                        <InspectorField
+                          label="Geometry type"
+                          value={selectedReference.feature.geometry.type}
+                        />
+                        <InspectorField
+                          label="Validation / status"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "status",
+                            ) ?? "확인 필요"
+                          }
+                        />
+                        <InspectorField
+                          label="Confidence"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "confidence",
+                            ) ?? "정보 없음"
+                          }
+                        />
+                        <InspectorField
+                          label="Stale"
+                          value={
+                            propertyText(
+                              selectedReference.feature.properties,
+                              "stale",
+                            ) ?? "확인 필요 (원천 속성 없음)"
+                          }
+                        />
+                        <InspectorField
+                          label="확인 필요사항"
+                          value={reviewNoteForLayer(selectedReference.layerId)}
+                        />
+                      </dl>
+                    </article>
+
+                    <article className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
+                        현재 Market과의 관계
+                      </p>
+                      <h4 className="mt-1 text-sm font-bold text-slate-950">
+                        {selectedMarket?.marketName ?? "선택 Market 없음"}
+                      </h4>
+                      <p className="mt-0.5 break-all font-mono text-[10px] text-slate-500">
+                        {selectedMarket?.marketId ?? "정보 없음"}
+                      </p>
+
+                      {selectedReference.layerId ===
+                      "seoul-living-grid-250m" ? (
+                        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
+                          <p className="text-xs font-bold text-slate-800">
+                            Market-Grid Crosswalk 미구축
+                          </p>
+                          <p className="mt-1 text-[10px] leading-4 text-slate-500">
+                            Grid ID만 확인하며 생활인구 값이나 관계를 계산하지 않습니다.
+                          </p>
+                        </div>
+                      ) : crosswalkLoading ? (
+                        <p className="mt-4 text-xs text-slate-500">
+                          Crosswalk 후보 확인 중…
+                        </p>
+                      ) : selectedReferenceCrosswalkCandidate ? (
+                        <div className="mt-4 rounded-lg border border-amber-200 bg-white p-3">
+                          <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-800">
+                              검토 후보
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                              {selectedReferenceCrosswalkCandidate.relationType}
+                            </span>
+                            <span className="rounded-full bg-red-50 px-2.5 py-1 text-red-700">
+                              공간중첩 미검증
+                            </span>
+                          </div>
+                          <dl className="mt-3">
+                            <InspectorField
+                              label="Confidence"
+                              value={
+                                selectedReferenceCrosswalkCandidate.confidence ??
+                                "정보 없음"
+                              }
+                            />
+                            <InspectorField
+                              label="Match basis"
+                              value={
+                                selectedReferenceCrosswalkCandidate.matchBasis ??
+                                "정보 없음"
+                              }
+                            />
+                            <InspectorField
+                              label="Relation source"
+                              value={
+                                selectedReferenceCrosswalkCandidate.sourceId ??
+                                "정보 없음"
+                              }
+                            />
+                          </dl>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
+                          <p className="text-xs font-bold text-slate-800">
+                            현재 선택 Market과 등록된 후보관계 없음
+                          </p>
+                          <p className="mt-1 text-[10px] leading-4 text-slate-500">
+                            새 Crosswalk를 생성하거나 공간관계를 추정하지 않습니다.
+                          </p>
+                        </div>
+                      )}
+                    </article>
+                  </div>
+                ) : null}
+              </>
+            )}
+
+            {selectedMarket && crosswalk ? (
+              <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 md:grid-cols-2">
+                <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-blue-700">
+                    공식상권 Crosswalk 검토 후보 · {crosswalk.officialMarketCandidates.length}개
+                  </p>
+                  <ul className="mt-2 max-h-36 space-y-1.5 overflow-auto pr-1 text-[10px]">
+                    {crosswalk.officialMarketCandidates.map((candidate) => (
+                      <li
+                        key={candidate.referenceId}
+                        className="rounded-lg border border-blue-100 bg-white px-2.5 py-2"
+                      >
+                        <span className="font-bold text-slate-800">
+                          {candidate.referenceName ?? "정보 없음"}
+                        </span>
+                        <span className="ml-2 font-mono text-slate-500">
+                          {candidate.referenceId}
+                        </span>
+                        <span className="mt-0.5 block text-amber-700">
+                          검토 후보 · {candidate.relationType} · 공간중첩 미검증
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700">
+                    행정동 Crosswalk 검토 후보 · {crosswalk.administrativeDongCandidates.length}개
+                  </p>
+                  <ul className="mt-2 max-h-36 space-y-1.5 overflow-auto pr-1 text-[10px]">
+                    {crosswalk.administrativeDongCandidates.map((candidate) => (
+                      <li
+                        key={candidate.referenceId}
+                        className="rounded-lg border border-emerald-100 bg-white px-2.5 py-2"
+                      >
+                        <span className="font-bold text-slate-800">
+                          {candidate.referenceName ?? "행정동명 확인 필요"}
+                        </span>
+                        <span className="ml-2 font-mono text-slate-500">
+                          {candidate.referenceId}
+                        </span>
+                        <span className="mt-0.5 block text-amber-700">
+                          검토 후보 · {candidate.relationType} · 공간중첩 미검증
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : null}
+          </section>
 
           <div className="grid gap-2 md:grid-cols-3">
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
