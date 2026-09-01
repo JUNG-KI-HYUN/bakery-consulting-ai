@@ -192,6 +192,29 @@ export default function MarketsExplorer({
       ? selectedSubmarket.nodes
       : selectedMarket.submarkets.flatMap((submarket) => submarket.nodes)
     : [];
+  const selectedMarketSpatialSummary = selectedMarket
+    ? {
+        marketId: selectedMarket.marketId,
+        marketName: selectedMarket.name,
+        district: selectedMarket.gu,
+        geometryStatus: selectedMarket.geometryStatus,
+        geometryAvailability:
+          selectedMarket.geometryStatus === "text_only" ? "none" : null,
+        verificationStage: selectedMarket.geometryStatus,
+        reviewStatus: null,
+        submarketCount: selectedMarket.submarkets.length,
+        nodeCount: selectedMarket.submarkets.flatMap(
+          (submarket) => submarket.nodes,
+        ).length,
+      }
+    : null;
+  const selectedSubmarketSpatialSummary = selectedSubmarket
+    ? {
+        submarketId: selectedSubmarket.submarketId,
+        submarketName: selectedSubmarket.name,
+        geometryStatus: selectedSubmarket.status,
+      }
+    : null;
 
   function toggleDistrict(districtId: string) {
     setOpenDistrictIds((current) => {
@@ -216,15 +239,15 @@ export default function MarketsExplorer({
         <div className="grid gap-6 p-6 lg:grid-cols-[1.35fr_1fr] lg:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F59E0B]">
-              Seoul market database · v{hierarchy.schemaVersion}
+              서울 상권 상담 자료 · v{hierarchy.schemaVersion}
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0B1220] md:text-3xl">
-              서울 상권 구조 탐색
+              서울 베이커리 상권 살펴보기
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              상담 전에 자치구부터 주요상권, 세부상권과 현장 확인 Node까지
-              한 흐름으로 살펴봅니다. 현재 단계에서는 확인된 계층 정보만
-              사용합니다.
+              주요상권을 선택한 뒤 지도에서 서울시 공식상권을 직접 클릭하면
+              해당 상권의 제과점 통계를 확인할 수 있습니다. 확인된 데이터만
+              상담 참고자료로 제공합니다.
             </p>
             <p className="mt-3 text-xs text-slate-500">
               기준일 {hierarchy.checkedAt} · {hierarchy.city}
@@ -234,8 +257,8 @@ export default function MarketsExplorer({
             {[
               ["자치구", totals.districts],
               ["주요상권", totals.markets],
-              ["Submarket", totals.submarkets],
-              ["Node", totals.nodes],
+              ["세부상권", totals.submarkets],
+              ["현장 확인 지점", totals.nodes],
             ].map(([label, value]) => (
               <div
                 key={label}
@@ -252,6 +275,11 @@ export default function MarketsExplorer({
           </dl>
         </div>
       </section>
+
+      <MarketSpatialViewer
+        selectedMarket={selectedMarketSpatialSummary}
+        selectedSubmarket={selectedSubmarketSpatialSummary}
+      />
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.4fr)]">
         <aside className="panel-card overflow-hidden lg:sticky lg:top-6">
@@ -403,7 +431,7 @@ export default function MarketsExplorer({
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2563EB]">
-                      Selected market
+                      선택한 FRAMEONE 주요상권
                     </p>
                     <h3 className="mt-2 text-2xl font-bold text-[#0B1220]">
                       {selectedMarket.name}
@@ -420,7 +448,7 @@ export default function MarketsExplorer({
                     ["자치구", selectedMarket.gu],
                     ["조사 우선순위", selectedMarket.researchPriority],
                     ["베이커리 중요도", selectedMarket.bakeryMarketImportance],
-                    ["Submarket", `${selectedMarket.submarkets.length}개`],
+                    ["세부상권", `${selectedMarket.submarkets.length}개`],
                   ].map(([label, value]) => (
                     <div key={label} className="rounded-xl bg-slate-50 p-3">
                       <dt className="text-[11px] font-semibold text-slate-500">
@@ -439,8 +467,8 @@ export default function MarketsExplorer({
                       경계 확인 필요
                     </p>
                     <p className="mt-1 text-xs leading-5 text-amber-800">
-                      현재 데이터 상태는 {selectedMarket.geometryStatus}입니다. 확인되지 않은
-                      Polygon이나 좌표는 이 화면에서 생성하거나 사용하지 않습니다.
+                      현재 지도 경계가 확인되지 않았습니다. 확인되지 않은 지도 경계나
+                      좌표는 이 화면에서 생성하거나 사용하지 않습니다.
                     </p>
                   </div>
                 ) : null}
@@ -450,7 +478,7 @@ export default function MarketsExplorer({
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                      Submarkets
+                      세부상권
                     </p>
                     <h3 className="mt-1 text-lg font-bold text-[#0B1220]">
                       세부상권 선택
@@ -465,7 +493,7 @@ export default function MarketsExplorer({
                         : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                     }`}
                   >
-                    Market 전체 Node
+                    주요상권 전체 지점
                   </button>
                 </div>
 
@@ -490,7 +518,7 @@ export default function MarketsExplorer({
                             {submarket.name}
                           </span>
                           <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-slate-600 shadow-sm">
-                            Node {submarket.nodes.length}
+                            지점 {submarket.nodes.length}
                           </span>
                         </span>
                         <span className="mt-1 block break-all font-mono text-[10px] text-slate-500">
@@ -509,12 +537,12 @@ export default function MarketsExplorer({
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                      Connected nodes
+                      현장 확인 지점
                     </p>
                     <h3 className="mt-1 text-lg font-bold text-[#0B1220]">
                       {selectedSubmarket
-                        ? `${selectedSubmarket.name} Node`
-                        : `${selectedMarket.name} 전체 Node`}
+                        ? `${selectedSubmarket.name} 현장 확인 지점`
+                        : `${selectedMarket.name} 전체 현장 확인 지점`}
                     </h3>
                   </div>
                   <p className="text-sm font-bold text-slate-700">
@@ -566,35 +594,6 @@ export default function MarketsExplorer({
         </section>
       </div>
 
-      <MarketSpatialViewer
-        selectedMarket={
-          selectedMarket
-            ? {
-                marketId: selectedMarket.marketId,
-                marketName: selectedMarket.name,
-                district: selectedMarket.gu,
-                geometryStatus: selectedMarket.geometryStatus,
-                geometryAvailability:
-                  selectedMarket.geometryStatus === "text_only" ? "none" : null,
-                verificationStage: selectedMarket.geometryStatus,
-                reviewStatus: null,
-                submarketCount: selectedMarket.submarkets.length,
-                nodeCount: selectedMarket.submarkets.flatMap(
-                  (submarket) => submarket.nodes,
-                ).length,
-              }
-            : null
-        }
-        selectedSubmarket={
-          selectedSubmarket
-            ? {
-                submarketId: selectedSubmarket.submarketId,
-                submarketName: selectedSubmarket.name,
-                geometryStatus: selectedSubmarket.status,
-              }
-            : null
-        }
-      />
     </div>
   );
 }

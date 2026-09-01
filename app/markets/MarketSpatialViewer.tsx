@@ -299,8 +299,8 @@ function mergeBounds(layers: LoadedSpatialLayer[]): Bounds | null {
 
 function layerStatusLabel(layer: SpatialLayerDefinition) {
   return layer.geometryAvailable
-    ? `${layer.status} · 공식 참조 geometry`
-    : `${layer.status} · 공간데이터 없음`;
+    ? "지도 경계 확인됨"
+    : "지도 경계 확인 필요";
 }
 
 function formatMilliseconds(value: number | null) {
@@ -363,9 +363,9 @@ function reviewNoteForLayer(layerId: SpatialLayerId) {
     return "행정동명·자치구명 속성 보강 필요";
   }
   if (layerId === "seoul-living-grid-250m") {
-    return "geometry 참조 전용 · 생활인구 수치 미적재";
+    return "지도 경계 확인용 · 생활인구 수치는 아직 연결되지 않음";
   }
-  return "FRAMEONE 경계가 아닌 공식 참조 geometry · 2024+ 지표 결합 전 버전 확인 필요";
+  return "FRAMEONE 주요상권 경계가 아닌 서울시 공식상권 지도 경계";
 }
 
 function parseMarketCrosswalk(
@@ -644,7 +644,7 @@ export default function MarketSpatialViewer({
 
     const updateSize = () => {
       const width = Math.max(280, Math.floor(container.clientWidth));
-      const height = Math.max(320, Math.min(560, Math.round(width * 0.6)));
+      const height = Math.max(380, Math.min(720, Math.round(width * 0.68)));
       setCanvasSize((current) =>
         current.width === width && current.height === height
           ? current
@@ -1206,32 +1206,32 @@ export default function MarketSpatialViewer({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
-              Spatial data viewer · STEP 3B
+              직원용 상권 지도
             </p>
             <h2 id="spatial-viewer-title" className="mt-2 text-xl font-bold md:text-2xl">
-              공간데이터 Viewer
+              서울시 공식상권 지도
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">
-              EPSG:4326으로 검증된 서울시 참조 geometry만 Canvas에 표시합니다.
-              FRAMEONE 분석체계와 공식 참조레이어는 서로 다른 데이터이며,
-              geometry를 클릭하면 원천 속성과 검토 후보관계를 확인할 수 있습니다.
+              지도에서 서울시 공식상권을 선택하면 해당 상권의 제과점 통계를
+              확인할 수 있습니다. FRAMEONE 주요상권과 서울시 공식상권은 서로
+              다른 체계이며 연결 검토 정보는 확정 관계가 아닙니다.
             </p>
           </div>
           <div className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-xs text-slate-300">
-            <p className="font-bold text-white">외부 지도 API 없음</p>
-            <p className="mt-1">Base map 없음 · API Key 없음 · 좌표변환 없음</p>
+            <p className="font-bold text-white">지도 사용 방법</p>
+            <p className="mt-1">드래그 이동 · 휠 확대/축소 · 클릭 상세보기</p>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-5 p-4 md:p-6 xl:grid-cols-[340px_minmax(0,1fr)]">
-        <aside aria-label="공간 레이어 목록">
+      <div className="grid gap-5 p-4 md:p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <aside aria-label="지도 표시 설정">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                Layer registry
+                지도 표시 설정
               </p>
-              <h3 className="mt-1 text-base font-bold text-slate-950">6개 레이어</h3>
+              <h3 className="mt-1 text-base font-bold text-slate-950">지도 항목 선택</h3>
             </div>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">
               표시 {renderableLayers.length}개
@@ -1279,50 +1279,68 @@ export default function MarketSpatialViewer({
                         />
                       </span>
                       <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">
-                        {layer.categoryLabel} · {layer.featureCount.toLocaleString("ko-KR")}개
+                        {layer.category === "frameone"
+                          ? "FRAMEONE 상권체계"
+                          : "서울시 제공 지도"} · {layer.featureCount.toLocaleString("ko-KR")}개
                       </span>
                     </span>
                   </label>
 
-                  <dl className="mt-2 space-y-1 border-t border-slate-200/70 pt-2 text-[10px] leading-4 text-slate-600">
-                    <div>
-                      <dt className="inline font-bold">상태 </dt>
-                      <dd className="inline">{layerStatusLabel(layer)}</dd>
-                    </div>
-                    <div>
-                      <dt className="inline font-bold">원천 </dt>
-                      <dd className="inline">{layer.source}</dd>
-                    </div>
-                    <div>
-                      <dt className="inline font-bold">CRS </dt>
-                      <dd className="inline">
-                        {layer.outputCrs ?? "geometry 없음"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="inline font-bold">버전 </dt>
-                      <dd className="inline">{layer.geometryVersion ?? "미확정"}</dd>
-                    </div>
-                  </dl>
+                  <p className="mt-2 border-t border-slate-200/70 pt-2 text-[10px] font-semibold text-slate-600">
+                    {layerStatusLabel(layer)}
+                  </p>
+
+                  <details className="mt-2 rounded-lg border border-slate-200/70 bg-white/70 px-2.5 py-2 text-[10px] text-slate-600">
+                    <summary className="cursor-pointer font-bold text-slate-700">
+                      데이터 상세정보
+                    </summary>
+                    <dl className="mt-2 space-y-1 leading-4">
+                      <div>
+                        <dt className="inline font-bold">내부 Layer ID </dt>
+                        <dd className="inline font-mono">{layer.layerId}</dd>
+                      </div>
+                      <div>
+                        <dt className="inline font-bold">원천 </dt>
+                        <dd className="inline">{layer.source}</dd>
+                      </div>
+                      <div>
+                        <dt className="inline font-bold">좌표계 </dt>
+                        <dd className="inline">
+                          {layer.outputCrs ?? "지도 경계 없음"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="inline font-bold">데이터 버전 </dt>
+                        <dd className="inline">
+                          {layer.geometryVersion ?? "미확정"}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="inline font-bold">내부 상태 </dt>
+                        <dd className="inline font-mono">{layer.status}</dd>
+                      </div>
+                      {layer.performanceNote ? (
+                        <div>
+                          <dt className="inline font-bold">참고 </dt>
+                          <dd className="inline">{layer.performanceNote}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  </details>
 
                   {!layer.geometryAvailable ? (
                     <p className="mt-2 rounded-lg bg-white/80 px-2.5 py-2 text-[10px] font-semibold text-amber-800">
                       경계 확인 필요 · 지도 렌더링 비활성
                     </p>
                   ) : null}
-                  {layer.performanceNote ? (
-                    <p className="mt-2 text-[10px] leading-4 text-slate-500">
-                      {layer.performanceNote}
-                    </p>
-                  ) : null}
                   {isLoading ? (
                     <p className="mt-2 text-[10px] font-semibold text-blue-700">
-                      GeoJSON 검증·로딩 중…
+                      지도 경계 확인 중…
                     </p>
                   ) : null}
                   {loaded ? (
                     <p className="mt-2 text-[10px] font-semibold text-emerald-700">
-                      {loaded.collection.features.length.toLocaleString("ko-KR")}개 로드 · {formatMilliseconds(loaded.loadedInMs)}
+                      지도 경계 {loaded.collection.features.length.toLocaleString("ko-KR")}개 준비됨
                     </p>
                   ) : null}
                   {error ? (
@@ -1349,60 +1367,67 @@ export default function MarketSpatialViewer({
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700">
-                    선택한 FRAMEONE 분석상권
+                    선택한 FRAMEONE 주요상권
                   </p>
                   <p className="mt-1 text-sm font-bold text-slate-950">
                     {selectedMarket.marketName}
                   </p>
-                  <p className="mt-0.5 break-all font-mono text-[10px] text-slate-500">
-                    {selectedMarket.marketId}
-                  </p>
                 </div>
                 <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[10px] font-bold text-amber-800">
-                  {selectedMarket.geometryStatus} · 경계 확인 필요
+                  지도 경계 확인 필요
                 </span>
               </div>
               <p className="mt-2 text-xs leading-5 text-amber-900">
-                Submarket {selectedMarket.submarketCount}개 · Node {selectedMarket.nodeCount}개
+                세부상권 {selectedMarket.submarketCount}개 · 현장 확인 지점 {selectedMarket.nodeCount}개
                 {selectedSubmarket
-                  ? ` · 선택 Submarket: ${selectedSubmarket.submarketName} (${selectedSubmarket.geometryStatus})`
+                  ? ` · 선택 세부상권: ${selectedSubmarket.submarketName}`
                   : ""}
-                . geometry가 없어 지도에는 표시하지 않습니다.
+                . FRAMEONE 지도 경계는 아직 확인되지 않아 지도에 표시하지 않습니다.
               </p>
-              <dl className="mt-3 grid gap-x-4 gap-y-2 border-t border-amber-200 pt-3 text-[10px] sm:grid-cols-2 lg:grid-cols-4">
-                <div>
-                  <dt className="font-bold text-amber-700">자치구</dt>
-                  <dd className="mt-0.5 text-slate-800">{selectedMarket.district}</dd>
-                </div>
-                <div>
-                  <dt className="font-bold text-amber-700">geometry_availability</dt>
-                  <dd className="mt-0.5 font-mono text-slate-800">
-                    {selectedMarket.geometryAvailability ?? "확인 필요"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-bold text-amber-700">verification_stage</dt>
-                  <dd className="mt-0.5 font-mono text-slate-800">
-                    {selectedMarket.verificationStage ?? "확인 필요"}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-bold text-amber-700">review_status</dt>
-                  <dd className="mt-0.5 font-mono text-slate-800">
-                    {selectedMarket.reviewStatus ?? "정보 없음"}
-                  </dd>
-                </div>
-              </dl>
+              <p className="mt-2 text-xs font-semibold text-amber-800">
+                자치구 {selectedMarket.district}
+              </p>
+              <details className="mt-3 rounded-lg border border-amber-200 bg-white/70 px-3 py-2 text-[10px] text-slate-600">
+                <summary className="cursor-pointer font-bold text-slate-700">
+                  데이터 상세정보
+                </summary>
+                <dl className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <div>
+                    <dt className="font-bold text-amber-700">Market ID</dt>
+                    <dd className="mt-0.5 break-all font-mono">
+                      {selectedMarket.marketId}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold text-amber-700">지도 경계 상태</dt>
+                    <dd className="mt-0.5 font-mono">
+                      {selectedMarket.geometryAvailability ?? "확인 필요"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold text-amber-700">데이터 확인 단계</dt>
+                    <dd className="mt-0.5 font-mono">
+                      {selectedMarket.verificationStage ?? "확인 필요"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="font-bold text-amber-700">검토 상태</dt>
+                    <dd className="mt-0.5 font-mono">
+                      {selectedMarket.reviewStatus ?? "정보 없음"}
+                    </dd>
+                  </div>
+                </dl>
+              </details>
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
                 <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-amber-800">
-                  FRAMEONE 경계 미확정
+                  FRAMEONE 지도 경계 미확정
                 </span>
                 <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-amber-800">
-                  공간데이터 없음
+                  지도 경계 없음
                 </span>
                 {crosswalkLoading ? (
                   <span className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-slate-600">
-                    Crosswalk 후보 로딩 중…
+                    연결 검토 후보 확인 중…
                   </span>
                 ) : crosswalk ? (
                   <>
@@ -1417,7 +1442,7 @@ export default function MarketSpatialViewer({
               </div>
               {crosswalkError ? (
                 <p className="mt-2 text-[10px] font-semibold text-red-700">
-                  Crosswalk 후보 로드 실패: {crosswalkError}
+                  연결 검토 정보를 불러오지 못했습니다: {crosswalkError}
                 </p>
               ) : null}
             </div>
@@ -1429,7 +1454,7 @@ export default function MarketSpatialViewer({
           >
             <canvas
               ref={canvasRef}
-              aria-label={`서울 공간 참조레이어 ${renderedFeatureCount.toLocaleString("ko-KR")}개 geometry 표시`}
+              aria-label={`서울 지도 경계 ${renderedFeatureCount.toLocaleString("ko-KR")}개 표시`}
               onPointerDown={handleCanvasPointerDown}
               onPointerMove={handleCanvasPointerMove}
               onPointerUp={handleCanvasPointerUp}
@@ -1448,9 +1473,9 @@ export default function MarketSpatialViewer({
             />
 
             <div className="pointer-events-none absolute left-3 top-3 rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-[10px] text-slate-600 shadow-sm">
-              <p className="font-bold text-slate-900">공식 참조 geometry</p>
+              <p className="font-bold text-slate-900">서울시 공식상권 지도</p>
               <p className="mt-0.5">
-                {renderedFeatureCount.toLocaleString("ko-KR")}개 · Canvas {formatMilliseconds(renderDurationMs)}
+                지도 경계 {renderedFeatureCount.toLocaleString("ko-KR")}개
               </p>
               <p className="mt-0.5">
                 확대 {zoom.toFixed(2)}× · 드래그 이동 · 휠 확대/축소 · 클릭 상세보기
@@ -1490,10 +1515,10 @@ export default function MarketSpatialViewer({
               <div className="absolute inset-0 flex items-center justify-center p-6 text-center">
                 <div className="rounded-xl border border-slate-200 bg-white/95 px-5 py-4 shadow-sm">
                   <p className="text-sm font-bold text-slate-800">
-                    표시 중인 공식 geometry가 없습니다.
+                    표시 중인 지도 경계가 없습니다.
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    공식 참조레이어를 켜면 검증 후 표시합니다.
+                    지도 표시 설정에서 서울시 지도 항목을 켜주세요.
                   </p>
                 </div>
               </div>
@@ -1501,35 +1526,38 @@ export default function MarketSpatialViewer({
           </div>
 
           <section
-            aria-label="Reference Inspector"
+            aria-label="선택 상권 정보"
             className="rounded-xl border border-slate-200 bg-white p-4"
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                  Reference Inspector
+                  선택 상권 정보
                 </p>
                 <h3 className="mt-1 text-base font-bold text-slate-950">
-                  선택 객체 상세정보
+                  지도에서 선택한 항목
                 </h3>
               </div>
               <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
                 <span className="rounded-full bg-slate-100 px-2.5 py-1">
                   후보 {selectedReferences.length}개
                 </span>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1">
-                  hit-test {formatMilliseconds(hitTestDurationMs)}
-                </span>
+                <details className="rounded-lg bg-slate-100 px-2.5 py-1">
+                  <summary className="cursor-pointer">데이터 상세정보</summary>
+                  <p className="mt-1 font-mono font-normal">
+                    선택 판정 시간 {formatMilliseconds(hitTestDurationMs)}
+                  </p>
+                </details>
               </div>
             </div>
 
             {selectedReferences.length === 0 ? (
               <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center">
                 <p className="text-sm font-bold text-slate-700">
-                  공식 참조 geometry를 클릭하세요.
+                  지도에서 서울시 공식상권을 클릭하세요.
                 </p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  공식상권·행정동·Grid만 hit-test 대상이며 FRAMEONE 객체는 포함하지 않습니다.
+                  서울시 공식상권을 선택하면 제과점 통계를 조회할 수 있습니다.
                 </p>
               </div>
             ) : (
@@ -1537,7 +1565,7 @@ export default function MarketSpatialViewer({
                 {selectedReferences.length > 1 ? (
                   <div className="mt-4">
                     <p className="text-[10px] font-bold text-slate-500">
-                      겹친 geometry 후보 · 확정관계 아님
+                      겹쳐 보이는 지도 항목 · 확정 연결 아님
                     </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {selectedReferences.map((reference, index) => {
@@ -1576,7 +1604,7 @@ export default function MarketSpatialViewer({
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
-                            공식 참조
+                            선택한 지도 정보
                           </p>
                           <h4 className="mt-1 text-sm font-bold text-slate-950">
                             {referenceNameForFeature(
@@ -1586,105 +1614,34 @@ export default function MarketSpatialViewer({
                           </h4>
                         </div>
                         <span className="rounded-full border border-blue-200 bg-white px-2.5 py-1 text-[10px] font-bold text-blue-800">
-                          {selectedReferenceLayer.status}
+                          {layerStatusLabel(selectedReferenceLayer)}
                         </span>
                       </div>
                       <dl className="mt-3">
                         <InspectorField
-                          label="Layer"
+                          label="지도 항목"
                           value={selectedReferenceLayer.label}
                         />
                         <InspectorField
-                          label="Reference ID"
+                          label="선택 코드"
                           value={selectedReferenceId ?? "정보 없음"}
                         />
                         <InspectorField
-                          label="Feature name"
+                          label="이름"
                           value={referenceNameForFeature(
                             selectedReference.layerId,
                             selectedReference.feature,
                           )}
                         />
                         <InspectorField
-                          label="Source"
-                          value={selectedReferenceLayer.source}
-                        />
-                        <InspectorField
-                          label="Source ID"
-                          value={
-                            propertyText(
-                              selectedReference.feature.properties,
-                              "source_id",
-                            ) ?? "정보 없음"
-                          }
-                        />
-                        <InspectorField
-                          label="Geometry version"
-                          value={
-                            propertyText(
-                              selectedReference.feature.properties,
-                              "geometry_version",
-                            ) ??
-                            selectedReferenceLayer.geometryVersion ??
-                            "정보 없음"
-                          }
-                        />
-                        <InspectorField
-                          label="Source date"
-                          value={
-                            propertyText(
-                              selectedReference.feature.properties,
-                              "source_date",
-                            ) ?? "정보 없음"
-                          }
-                        />
-                        <InspectorField
-                          label="Converted at"
-                          value={
-                            propertyText(
-                              selectedReference.feature.properties,
-                              "converted_at",
-                            ) ?? "정보 없음"
-                          }
-                        />
-                        <InspectorField
-                          label="CRS"
-                          value={
-                            propertyText(
-                              selectedReference.feature.properties,
-                              "output_crs",
-                            ) ?? "좌표계 확인 필요"
-                          }
-                        />
-                        <InspectorField
-                          label="Geometry type"
-                          value={selectedReference.feature.geometry.type}
-                        />
-                        <InspectorField
-                          label="Validation / status"
+                          label="데이터 확인 상태"
                           value={
                             propertyText(
                               selectedReference.feature.properties,
                               "status",
-                            ) ?? "확인 필요"
-                          }
-                        />
-                        <InspectorField
-                          label="Confidence"
-                          value={
-                            propertyText(
-                              selectedReference.feature.properties,
-                              "confidence",
-                            ) ?? "정보 없음"
-                          }
-                        />
-                        <InspectorField
-                          label="Stale"
-                          value={
-                            propertyText(
-                              selectedReference.feature.properties,
-                              "stale",
-                            ) ?? "확인 필요 (원천 속성 없음)"
+                            ) === "validated"
+                              ? "확인됨"
+                              : "확인 필요"
                           }
                         />
                         <InspectorField
@@ -1692,32 +1649,123 @@ export default function MarketSpatialViewer({
                           value={reviewNoteForLayer(selectedReference.layerId)}
                         />
                       </dl>
+                      <details className="mt-3 rounded-lg border border-blue-100 bg-white px-3 py-2 text-[10px] text-slate-600">
+                        <summary className="cursor-pointer font-bold text-slate-700">
+                          데이터 상세정보
+                        </summary>
+                        <dl className="mt-2">
+                          <InspectorField
+                            label="내부 Layer ID"
+                            value={selectedReference.layerId}
+                          />
+                          <InspectorField
+                            label="Source"
+                            value={selectedReferenceLayer.source}
+                          />
+                          <InspectorField
+                            label="Source ID"
+                            value={
+                              propertyText(
+                                selectedReference.feature.properties,
+                                "source_id",
+                              ) ?? "정보 없음"
+                            }
+                          />
+                          <InspectorField
+                            label="Geometry version"
+                            value={
+                              propertyText(
+                                selectedReference.feature.properties,
+                                "geometry_version",
+                              ) ??
+                              selectedReferenceLayer.geometryVersion ??
+                              "정보 없음"
+                            }
+                          />
+                          <InspectorField
+                            label="Source date"
+                            value={
+                              propertyText(
+                                selectedReference.feature.properties,
+                                "source_date",
+                              ) ?? "정보 없음"
+                            }
+                          />
+                          <InspectorField
+                            label="Converted at"
+                            value={
+                              propertyText(
+                                selectedReference.feature.properties,
+                                "converted_at",
+                              ) ?? "정보 없음"
+                            }
+                          />
+                          <InspectorField
+                            label="CRS"
+                            value={
+                              propertyText(
+                                selectedReference.feature.properties,
+                                "output_crs",
+                              ) ?? "좌표계 확인 필요"
+                            }
+                          />
+                          <InspectorField
+                            label="Geometry type"
+                            value={selectedReference.feature.geometry.type}
+                          />
+                          <InspectorField
+                            label="Confidence"
+                            value={
+                              propertyText(
+                                selectedReference.feature.properties,
+                                "confidence",
+                              ) ?? "정보 없음"
+                            }
+                          />
+                          <InspectorField
+                            label="Stale"
+                            value={
+                              propertyText(
+                                selectedReference.feature.properties,
+                                "stale",
+                              ) ?? "확인 필요 (원천 속성 없음)"
+                            }
+                          />
+                        </dl>
+                      </details>
                     </article>
 
                     <article className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
                       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
-                        현재 Market과의 관계
+                        선택한 FRAMEONE 주요상권과 연결 검토
                       </p>
                       <h4 className="mt-1 text-sm font-bold text-slate-950">
                         {selectedMarket?.marketName ?? "선택 Market 없음"}
                       </h4>
-                      <p className="mt-0.5 break-all font-mono text-[10px] text-slate-500">
-                        {selectedMarket?.marketId ?? "정보 없음"}
-                      </p>
+                      {selectedMarket ? (
+                        <details className="mt-2 text-[10px] text-slate-500">
+                          <summary className="cursor-pointer font-bold">
+                            데이터 상세정보
+                          </summary>
+                          <p className="mt-1 break-all font-mono">
+                            {selectedMarket.marketId}
+                          </p>
+                        </details>
+                      ) : null}
 
                       {selectedReference.layerId ===
                       "seoul-living-grid-250m" ? (
                         <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
                           <p className="text-xs font-bold text-slate-800">
-                            Market-Grid Crosswalk 미구축
+                            주요상권과 생활인구 격자 연결 미구축
                           </p>
                           <p className="mt-1 text-[10px] leading-4 text-slate-500">
-                            Grid ID만 확인하며 생활인구 값이나 관계를 계산하지 않습니다.
+                            격자 코드만 확인하며 생활인구 값이나 관계를 계산하지 않습니다.
                           </p>
                         </div>
                       ) : crosswalkLoading ? (
                         <p className="mt-4 text-xs text-slate-500">
-                          Crosswalk 후보 확인 중…
+                          연결 검토 후보 확인 중…
                         </p>
                       ) : selectedReferenceCrosswalkCandidate ? (
                         <div className="mt-4 rounded-lg border border-amber-200 bg-white p-3">
@@ -1732,7 +1780,11 @@ export default function MarketSpatialViewer({
                               공간중첩 미검증
                             </span>
                           </div>
-                          <dl className="mt-3">
+                          <details className="mt-3 text-[10px] text-slate-600">
+                            <summary className="cursor-pointer font-bold">
+                              데이터 상세정보
+                            </summary>
+                            <dl className="mt-2">
                             <InspectorField
                               label="Confidence"
                               value={
@@ -1754,7 +1806,8 @@ export default function MarketSpatialViewer({
                                 "정보 없음"
                               }
                             />
-                          </dl>
+                            </dl>
+                          </details>
                         </div>
                       ) : (
                         <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
@@ -1762,7 +1815,7 @@ export default function MarketSpatialViewer({
                             현재 선택 Market과 등록된 후보관계 없음
                           </p>
                           <p className="mt-1 text-[10px] leading-4 text-slate-500">
-                            새 Crosswalk를 생성하거나 공간관계를 추정하지 않습니다.
+                            새 연결 정보를 만들거나 공간관계를 추정하지 않습니다.
                           </p>
                         </div>
                       )}
@@ -1970,7 +2023,7 @@ export default function MarketSpatialViewer({
               <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 md:grid-cols-2">
                 <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-blue-700">
-                    공식상권 Crosswalk 검토 후보 · {crosswalk.officialMarketCandidates.length}개
+                    서울시 공식상권 연결 검토 후보 · {crosswalk.officialMarketCandidates.length}개
                   </p>
                   <ul className="mt-2 max-h-36 space-y-1.5 overflow-auto pr-1 text-[10px]">
                     {crosswalk.officialMarketCandidates.map((candidate) => (
@@ -1985,15 +2038,23 @@ export default function MarketSpatialViewer({
                           {candidate.referenceId}
                         </span>
                         <span className="mt-0.5 block text-amber-700">
-                          검토 후보 · {candidate.relationType} · 공간중첩 미검증
+                          연결 검토 후보 · 공간중첩 미확인
                         </span>
+                        <details className="mt-1 text-slate-500">
+                          <summary className="cursor-pointer font-bold">
+                            데이터 상세정보
+                          </summary>
+                          <span className="mt-1 block font-mono">
+                            relation_type: {candidate.relationType}
+                          </span>
+                        </details>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700">
-                    행정동 Crosswalk 검토 후보 · {crosswalk.administrativeDongCandidates.length}개
+                    행정동 연결 검토 후보 · {crosswalk.administrativeDongCandidates.length}개
                   </p>
                   <ul className="mt-2 max-h-36 space-y-1.5 overflow-auto pr-1 text-[10px]">
                     {crosswalk.administrativeDongCandidates.map((candidate) => (
@@ -2008,8 +2069,16 @@ export default function MarketSpatialViewer({
                           {candidate.referenceId}
                         </span>
                         <span className="mt-0.5 block text-amber-700">
-                          검토 후보 · {candidate.relationType} · 공간중첩 미검증
+                          연결 검토 후보 · 공간중첩 미확인
                         </span>
+                        <details className="mt-1 text-slate-500">
+                          <summary className="cursor-pointer font-bold">
+                            데이터 상세정보
+                          </summary>
+                          <span className="mt-1 block font-mono">
+                            relation_type: {candidate.relationType}
+                          </span>
+                        </details>
                       </li>
                     ))}
                   </ul>
@@ -2021,39 +2090,42 @@ export default function MarketSpatialViewer({
           <div className="grid gap-2 md:grid-cols-3">
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
-                서울시 공식 참조상권
+                서울시 공식상권
               </p>
               <p className="mt-1 text-xs leading-5 text-blue-950">
-                공식 Polygon 참조레이어이며 FRAMEONE Market 경계가 아닙니다.
+                서울시 제공 지도 경계이며 FRAMEONE 주요상권 경계가 아닙니다.
               </p>
             </div>
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
-                FRAMEONE 분석체계
+                FRAMEONE 주요상권
               </p>
               <p className="mt-1 text-xs leading-5 text-amber-950">
-                현재 text_only이며 검증점·Polygon을 임의 생성하지 않습니다.
+                현재 지도 경계가 확인되지 않아 임의 경계를 생성하지 않습니다.
               </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-600">
-                Crosswalk
+                연결 검토
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-700">
-                manual_review/candidate이며 확정 연결이나 overlap 계산에 사용하지 않습니다.
+                검토 후보이며 확정 연결이나 공간중첩 계산에 사용하지 않습니다.
               </p>
             </div>
           </div>
 
-          {gridData ? (
-            <p className="text-right text-[10px] text-slate-500">
-              Grid 10,125개 지연 로딩 {formatMilliseconds(gridData.loadedInMs)} · 최근 Canvas 렌더 {formatMilliseconds(renderDurationMs)}
-            </p>
-          ) : (
-            <p className="text-right text-[10px] text-slate-500">
-              Grid는 기본 OFF이며 초기 요청과 렌더링에서 제외됩니다.
-            </p>
-          )}
+          <details className="text-right text-[10px] text-slate-500">
+            <summary className="cursor-pointer font-bold">데이터 상세정보</summary>
+            {gridData ? (
+              <p className="mt-1">
+                생활인구 격자 10,125개 지연 로딩 {formatMilliseconds(gridData.loadedInMs)} · 최근 지도 렌더 {formatMilliseconds(renderDurationMs)}
+              </p>
+            ) : (
+              <p className="mt-1">
+                생활인구 격자는 기본 OFF이며 초기 요청과 렌더링에서 제외됩니다.
+              </p>
+            )}
+          </details>
         </div>
       </div>
     </section>
