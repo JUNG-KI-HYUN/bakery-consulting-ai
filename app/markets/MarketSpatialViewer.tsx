@@ -8,6 +8,11 @@ import {
   useRef,
   useState,
 } from "react";
+import type { BakeryOfficialMarketData } from "@/lib/market-data/services/bakery-official-market";
+import type {
+  MarketDataMetric,
+  MarketDataObservation,
+} from "@/lib/market-data/types";
 import {
   getSpatialLayerDefinition,
   SPATIAL_LAYER_REGISTRY,
@@ -90,6 +95,33 @@ interface MarketCrosswalkResponse {
   administrativeDongCandidates: CrosswalkCandidate[];
   livingGridCandidates: [];
 }
+
+type BakeryDataRequestStatus = "idle" | "loading" | "success" | "error";
+
+interface BakeryMetricDefinition {
+  metric: MarketDataMetric;
+  label: string;
+  suffix: "원" | "건" | "개" | "%";
+}
+
+const BAKERY_SALES_METRICS: readonly BakeryMetricDefinition[] = [
+  { metric: "monthly_sales_amount", label: "월 추정매출 금액", suffix: "원" },
+  { metric: "monthly_sales_count", label: "월 추정매출 건수", suffix: "건" },
+];
+
+const BAKERY_STORES_METRICS: readonly BakeryMetricDefinition[] = [
+  {
+    metric: "similar_industry_store_count",
+    label: "유사업종 점포 수",
+    suffix: "개",
+  },
+  { metric: "store_count", label: "점포 수", suffix: "개" },
+  { metric: "franchise_store_count", label: "프랜차이즈 점포 수", suffix: "개" },
+  { metric: "opening_rate", label: "개업률", suffix: "%" },
+  { metric: "opening_store_count", label: "개업 점포 수", suffix: "개" },
+  { metric: "closing_rate", label: "폐업률", suffix: "%" },
+  { metric: "closing_store_count", label: "폐업 점포 수", suffix: "개" },
+];
 
 export interface SelectedMarketSpatialSummary {
   marketId: string;
@@ -339,6 +371,60 @@ function parseMarketCrosswalk(
   return candidate as MarketCrosswalkResponse;
 }
 
+function parseBakeryDataResponse(
+  value: unknown,
+  expectedMarketCode: string,
+): BakeryOfficialMarketData {
+  if (!value || typeof value !== "object") {
+    throw new Error("제과점 데이터 응답이 객체가 아닙니다.");
+  }
+
+  const candidate = value as Partial<BakeryOfficialMarketData>;
+  if (
+    candidate.officialMarketCode !== expectedMarketCode ||
+    typeof candidate.industryCode !== "string" ||
+    typeof candidate.industryName !== "string" ||
+    typeof candidate.quarterCode !== "string" ||
+    typeof candidate.referencePeriod !== "string" ||
+    !Array.isArray(candidate.sales) ||
+    !Array.isArray(candidate.stores) ||
+    !["available", "partial", "missing"].includes(
+      candidate.dataStatus ?? "",
+    )
+  ) {
+    throw new Error("제과점 데이터 응답 형식이 올바르지 않습니다.");
+  }
+
+  return candidate as BakeryOfficialMarketData;
+}
+
+function formatBakeryMetric(
+  observation: MarketDataObservation | undefined,
+  suffix: BakeryMetricDefinition["suffix"],
+): string {
+  if (
+    !observation ||
+    observation.value === null ||
+    observation.dataStatus !== "available"
+  ) {
+    return "데이터 없음";
+  }
+
+  return `${observation.value.toLocaleString("ko-KR")}${suffix}`;
+}
+
+function bakeryDataStatusLabel(
+  status: BakeryOfficialMarketData["dataStatus"],
+): string {
+  if (status === "available") {
+    return "데이터 있음";
+  }
+  if (status === "partial") {
+    return "일부 데이터 없음";
+  }
+  return "데이터 없음";
+}
+
 function InspectorField({ label, value }: { label: string; value: string }) {
   return (
     <div className="border-b border-slate-100 py-2 last:border-b-0">
@@ -389,11 +475,17 @@ export default function MarketSpatialViewer({
   const [crosswalk, setCrosswalk] = useState<MarketCrosswalkResponse | null>(null);
   const [crosswalkLoading, setCrosswalkLoading] = useState(false);
   const [crosswalkError, setCrosswalkError] = useState<string | null>(null);
+  const [bakeryDataStatus, setBakeryDataStatus] =
+    useState<BakeryDataRequestStatus>("idle");
+  const [bakeryData, setBakeryData] =
+    useState<BakeryOfficialMarketData | null>(null);
+  const [bakeryDataError, setBakeryDataError] = useState<string | null>(null);
   const requestedLayerIdsRef = useRef(new Set<SpatialLayerId>());
   const crosswalkCacheRef = useRef(
     new Map<string, MarketCrosswalkResponse>(),
   );
   const hitTestFeaturesRef = useRef<HitTestFeature[]>([]);
+  const bakeryDataControllerRef = useRef<AbortController | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectionCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -797,6 +889,97 @@ export default function MarketSpatialViewer({
         selectedReference.feature,
       )
     : null;
+  const isOfficialMarketReference =
+    selectedReference?.layerId === "seoul-official-markets";
+  const selectedOfficialMarketCode =
+    isOfficialMarketReference &&
+    selectedReferenceId &&
+    /^\d+$/.test(selectedReferenceId)
+      ? selectedReferenceId
+      : null;
+
+  useEffect(() => {
+    bakeryDataControllerRef.current?.abort();
+    bakeryDataControllerRef.current = null;
+    setBakeryDataStatus("idle");
+    setBakeryData(null);
+    setBakeryDataError(null);
+  }, [selectedOfficialMarketCode]);
+
+  useEffect(
+    () => () => {
+      bakeryDataControllerRef.current?.abort();
+    },
+    [],
+  );
+
+  async function handleBakeryDataRequest() {
+    if (!selectedOfficialMarketCode || bakeryDataStatus === "loading") {
+      return;
+    }
+
+    bakeryDataControllerRef.current?.abort();
+    const controller = new AbortController();
+    bakeryDataControllerRef.current = controller;
+    setBakeryDataStatus("loading");
+    setBakeryData(null);
+    setBakeryDataError(null);
+
+    try {
+      const response = await fetch(
+        `/api/markets/bakery-data?marketCode=${encodeURIComponent(selectedOfficialMarketCode)}`,
+        {
+          headers: { Accept: "application/json" },
+          signal: controller.signal,
+        },
+      );
+      let payload: unknown;
+
+      try {
+        payload = await response.json();
+      } catch {
+        throw new Error("제과점 데이터 서버 응답을 확인할 수 없습니다.");
+      }
+
+      if (!response.ok) {
+        const message =
+          payload &&
+          typeof payload === "object" &&
+          "message" in payload &&
+          typeof payload.message === "string"
+            ? payload.message
+            : "제과점 실데이터 조회에 실패했습니다.";
+        throw new Error(message);
+      }
+
+      const result = parseBakeryDataResponse(
+        payload,
+        selectedOfficialMarketCode,
+      );
+      if (!controller.signal.aborted) {
+        setBakeryData(result);
+        setBakeryDataStatus("success");
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
+      if (!controller.signal.aborted) {
+        setBakeryDataError(
+          error instanceof Error
+            ? error.message
+            : "제과점 실데이터 조회에 실패했습니다.",
+        );
+        setBakeryDataStatus("error");
+      }
+    } finally {
+      if (bakeryDataControllerRef.current === controller) {
+        bakeryDataControllerRef.current = null;
+      }
+    }
+  }
+
   const selectedReferenceCrosswalkCandidate =
     selectedReference && selectedReferenceId && crosswalk
       ? selectedReference.layerId === "seoul-official-markets"
@@ -1368,6 +1551,200 @@ export default function MarketSpatialViewer({
                         </div>
                       )}
                     </article>
+
+                    {isOfficialMarketReference ? (
+                      <article
+                        aria-label="서울시 공식상권 제과점 실데이터"
+                        className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 lg:col-span-2"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
+                              서울시 공식상권 제과점 통계
+                            </p>
+                            <h4 className="mt-1 text-sm font-bold text-slate-950">
+                              {referenceNameForFeature(
+                                selectedReference.layerId,
+                                selectedReference.feature,
+                              )}
+                            </h4>
+                            <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                              공식상권 코드 {selectedReferenceId ?? "정보 없음"}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={
+                              !selectedOfficialMarketCode ||
+                              bakeryDataStatus === "loading"
+                            }
+                            onClick={() => void handleBakeryDataRequest()}
+                            className="rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {bakeryDataStatus === "loading"
+                              ? "제과점 데이터 조회 중..."
+                              : "제과점 실데이터 조회"}
+                          </button>
+                        </div>
+
+                        {!selectedOfficialMarketCode ? (
+                          <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                            숫자로 된 공식상권 코드를 확인할 수 없습니다.
+                          </p>
+                        ) : null}
+
+                        {bakeryDataStatus === "idle" &&
+                        selectedOfficialMarketCode ? (
+                          <p className="mt-4 rounded-lg border border-dashed border-emerald-200 bg-white px-3 py-3 text-xs leading-5 text-slate-600">
+                            선택한 공식상권의 제과점 통계는 버튼을 눌렀을 때만 조회합니다.
+                          </p>
+                        ) : null}
+
+                        {bakeryDataStatus === "loading" ? (
+                          <p
+                            role="status"
+                            className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-xs font-semibold text-blue-800"
+                          >
+                            제과점 데이터 조회 중...
+                          </p>
+                        ) : null}
+
+                        {bakeryDataStatus === "error" && bakeryDataError ? (
+                          <p
+                            role="alert"
+                            className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-700"
+                          >
+                            {bakeryDataError}
+                          </p>
+                        ) : null}
+
+                        {bakeryDataStatus === "success" &&
+                        bakeryData &&
+                        bakeryData.officialMarketCode ===
+                          selectedOfficialMarketCode ? (
+                          <div className="mt-4 space-y-4">
+                            <dl className="grid gap-3 rounded-xl border border-emerald-100 bg-white p-3 sm:grid-cols-2 lg:grid-cols-5">
+                              <div>
+                                <dt className="text-[10px] font-bold text-slate-500">
+                                  공식상권명
+                                </dt>
+                                <dd className="mt-1 text-xs font-bold text-slate-900">
+                                  {bakeryData.officialMarketName ?? "정보 없음"}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-[10px] font-bold text-slate-500">
+                                  공식상권코드
+                                </dt>
+                                <dd className="mt-1 font-mono text-xs text-slate-900">
+                                  {bakeryData.officialMarketCode}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-[10px] font-bold text-slate-500">
+                                  업종명
+                                </dt>
+                                <dd className="mt-1 text-xs font-bold text-slate-900">
+                                  {bakeryData.industryName}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-[10px] font-bold text-slate-500">
+                                  기준분기
+                                </dt>
+                                <dd className="mt-1 text-xs text-slate-900">
+                                  {bakeryData.referencePeriod} · {bakeryData.quarterCode}
+                                </dd>
+                              </div>
+                              <div>
+                                <dt className="text-[10px] font-bold text-slate-500">
+                                  데이터 상태
+                                </dt>
+                                <dd className="mt-1 text-xs font-bold text-slate-900">
+                                  {bakeryDataStatusLabel(bakeryData.dataStatus)}
+                                </dd>
+                              </div>
+                            </dl>
+
+                            {bakeryData.dataStatus !== "available" ? (
+                              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+                                {bakeryData.dataStatus === "partial"
+                                  ? "일부 데이터 없음"
+                                  : "데이터 없음"}
+                              </p>
+                            ) : null}
+
+                            <div className="grid gap-3 lg:grid-cols-2">
+                              <section className="rounded-xl border border-slate-200 bg-white p-3">
+                                <h5 className="text-xs font-bold text-slate-900">
+                                  매출
+                                </h5>
+                                <dl className="mt-2">
+                                  {BAKERY_SALES_METRICS.map((definition) => {
+                                    const observation = bakeryData.sales.find(
+                                      (item) => item.metric === definition.metric,
+                                    );
+
+                                    return (
+                                      <div
+                                        key={definition.metric}
+                                        className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-b-0"
+                                      >
+                                        <dt className="text-[11px] text-slate-600">
+                                          {definition.label}
+                                        </dt>
+                                        <dd className="text-right text-xs font-bold text-slate-950">
+                                          {formatBakeryMetric(
+                                            observation,
+                                            definition.suffix,
+                                          )}
+                                        </dd>
+                                      </div>
+                                    );
+                                  })}
+                                </dl>
+                              </section>
+
+                              <section className="rounded-xl border border-slate-200 bg-white p-3">
+                                <h5 className="text-xs font-bold text-slate-900">
+                                  점포
+                                </h5>
+                                <dl className="mt-2">
+                                  {BAKERY_STORES_METRICS.map((definition) => {
+                                    const observation = bakeryData.stores.find(
+                                      (item) => item.metric === definition.metric,
+                                    );
+
+                                    return (
+                                      <div
+                                        key={definition.metric}
+                                        className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-b-0"
+                                      >
+                                        <dt className="text-[11px] text-slate-600">
+                                          {definition.label}
+                                        </dt>
+                                        <dd className="text-right text-xs font-bold text-slate-950">
+                                          {formatBakeryMetric(
+                                            observation,
+                                            definition.suffix,
+                                          )}
+                                        </dd>
+                                      </div>
+                                    );
+                                  })}
+                                </dl>
+                              </section>
+                            </div>
+
+                            <p className="border-t border-emerald-100 pt-3 text-[10px] leading-5 text-slate-500">
+                              서울시 공식상권 기준 통계이며 실제 후보 점포의 예상매출을 의미하지 않습니다.
+                              <br />
+                              데이터 기준분기를 확인하여 참고자료로 사용합니다.
+                            </p>
+                          </div>
+                        ) : null}
+                      </article>
+                    ) : null}
                   </div>
                 ) : null}
               </>
