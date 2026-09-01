@@ -117,28 +117,55 @@ interface MarketCrosswalkResponse {
 type BakeryDataRequestStatus = "idle" | "loading" | "success" | "error";
 
 interface BakeryMetricDefinition {
+  source: "sales" | "stores";
   metric: MarketDataMetric;
   label: string;
   suffix: "원" | "건" | "개" | "%";
 }
 
-const BAKERY_SALES_METRICS: readonly BakeryMetricDefinition[] = [
-  { metric: "monthly_sales_amount", label: "월 추정매출 금액", suffix: "원" },
-  { metric: "monthly_sales_count", label: "월 추정매출 건수", suffix: "건" },
-];
-
-const BAKERY_STORES_METRICS: readonly BakeryMetricDefinition[] = [
+const BAKERY_PRIMARY_KPIS: readonly BakeryMetricDefinition[] = [
   {
+    source: "sales",
+    metric: "monthly_sales_amount",
+    label: "월 추정매출",
+    suffix: "원",
+  },
+  {
+    source: "sales",
+    metric: "monthly_sales_count",
+    label: "월 매출건수",
+    suffix: "건",
+  },
+  {
+    source: "stores",
     metric: "similar_industry_store_count",
     label: "유사업종 점포 수",
     suffix: "개",
   },
-  { metric: "store_count", label: "점포 수", suffix: "개" },
-  { metric: "franchise_store_count", label: "프랜차이즈 점포 수", suffix: "개" },
-  { metric: "opening_rate", label: "개업률", suffix: "%" },
-  { metric: "opening_store_count", label: "개업 점포 수", suffix: "개" },
-  { metric: "closing_rate", label: "폐업률", suffix: "%" },
-  { metric: "closing_store_count", label: "폐업 점포 수", suffix: "개" },
+  { source: "stores", metric: "store_count", label: "점포 수", suffix: "개" },
+  {
+    source: "stores",
+    metric: "franchise_store_count",
+    label: "프랜차이즈 점포 수",
+    suffix: "개",
+  },
+];
+
+const BAKERY_OPEN_CLOSE_KPIS: readonly BakeryMetricDefinition[] = [
+  { source: "stores", metric: "opening_rate", label: "개업률", suffix: "%" },
+  {
+    source: "stores",
+    metric: "opening_store_count",
+    label: "개업 점포 수",
+    suffix: "개",
+  },
+  { source: "stores", metric: "closing_rate", label: "폐업률", suffix: "%" },
+  {
+    source: "stores",
+    metric: "closing_store_count",
+    label: "폐업 점포 수",
+    suffix: "개",
+  },
 ];
 
 export interface SelectedMarketSpatialSummary {
@@ -429,6 +456,15 @@ function formatBakeryMetric(
   }
 
   return `${observation.value.toLocaleString("ko-KR")}${suffix}`;
+}
+
+function bakeryObservationForMetric(
+  data: BakeryOfficialMarketData,
+  definition: BakeryMetricDefinition,
+): MarketDataObservation | undefined {
+  const observations =
+    definition.source === "sales" ? data.sales : data.stores;
+  return observations.find((item) => item.metric === definition.metric);
 }
 
 function bakeryDataStatusLabel(
@@ -1892,48 +1928,41 @@ export default function MarketSpatialViewer({
                         bakeryData.officialMarketCode ===
                           selectedOfficialMarketCode ? (
                           <div className="mt-4 space-y-4">
-                            <dl className="grid gap-3 rounded-xl border border-emerald-100 bg-white p-3 sm:grid-cols-2 lg:grid-cols-5">
+                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-white p-4">
                               <div>
-                                <dt className="text-[10px] font-bold text-slate-500">
-                                  공식상권명
-                                </dt>
-                                <dd className="mt-1 text-xs font-bold text-slate-900">
-                                  {bakeryData.officialMarketName ?? "정보 없음"}
-                                </dd>
-                              </div>
-                              <div>
-                                <dt className="text-[10px] font-bold text-slate-500">
-                                  공식상권코드
-                                </dt>
-                                <dd className="mt-1 font-mono text-xs text-slate-900">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700">
+                                  {bakeryData.industryName} · 서울시 공식상권
+                                </p>
+                                <p className="mt-1 text-base font-bold text-slate-950">
+                                  {bakeryData.officialMarketName ?? "상권명 정보 없음"}
+                                </p>
+                                <p className="mt-0.5 font-mono text-[10px] text-slate-500">
                                   {bakeryData.officialMarketCode}
-                                </dd>
+                                </p>
                               </div>
-                              <div>
-                                <dt className="text-[10px] font-bold text-slate-500">
-                                  업종명
-                                </dt>
-                                <dd className="mt-1 text-xs font-bold text-slate-900">
-                                  {bakeryData.industryName}
-                                </dd>
-                              </div>
-                              <div>
-                                <dt className="text-[10px] font-bold text-slate-500">
-                                  기준분기
-                                </dt>
-                                <dd className="mt-1 text-xs text-slate-900">
-                                  {bakeryData.referencePeriod} · {bakeryData.quarterCode}
-                                </dd>
-                              </div>
-                              <div>
-                                <dt className="text-[10px] font-bold text-slate-500">
-                                  데이터 상태
-                                </dt>
-                                <dd className="mt-1 text-xs font-bold text-slate-900">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="rounded-xl bg-emerald-700 px-4 py-2 text-white">
+                                  <p className="text-[10px] font-bold text-emerald-100">
+                                    기준분기
+                                  </p>
+                                  <p className="mt-0.5 text-base font-bold">
+                                    {bakeryData.referencePeriod}
+                                  </p>
+                                  <p className="text-[10px] text-emerald-100">
+                                    {bakeryData.quarterCode}
+                                  </p>
+                                </div>
+                                <span
+                                  className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                                    bakeryData.dataStatus === "available"
+                                      ? "bg-blue-50 text-blue-800"
+                                      : "bg-amber-100 text-amber-800"
+                                  }`}
+                                >
                                   {bakeryDataStatusLabel(bakeryData.dataStatus)}
-                                </dd>
+                                </span>
                               </div>
-                            </dl>
+                            </div>
 
                             {bakeryData.dataStatus !== "available" ? (
                               <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
@@ -1943,67 +1972,95 @@ export default function MarketSpatialViewer({
                               </p>
                             ) : null}
 
-                            <div className="grid gap-3 lg:grid-cols-2">
-                              <section className="rounded-xl border border-slate-200 bg-white p-3">
-                                <h5 className="text-xs font-bold text-slate-900">
-                                  매출
-                                </h5>
-                                <dl className="mt-2">
-                                  {BAKERY_SALES_METRICS.map((definition) => {
-                                    const observation = bakeryData.sales.find(
-                                      (item) => item.metric === definition.metric,
-                                    );
+                            <section>
+                              <h5 className="text-xs font-bold text-slate-900">
+                                핵심 지표
+                              </h5>
+                              <dl className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                                {BAKERY_PRIMARY_KPIS.map((definition) => {
+                                  const observation = bakeryObservationForMetric(
+                                    bakeryData,
+                                    definition,
+                                  );
+                                  const missing =
+                                    !observation ||
+                                    observation.value === null ||
+                                    observation.dataStatus !== "available";
 
-                                    return (
-                                      <div
-                                        key={definition.metric}
-                                        className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-b-0"
+                                  return (
+                                    <div
+                                      key={definition.metric}
+                                      className={`rounded-xl border p-3 ${
+                                        missing
+                                          ? "border-slate-200 bg-slate-50"
+                                          : "border-blue-100 bg-blue-50/60"
+                                      }`}
+                                    >
+                                      <dt className="text-[10px] font-bold text-slate-500">
+                                        {definition.label}
+                                      </dt>
+                                      <dd
+                                        className={`mt-2 break-words font-bold ${
+                                          missing
+                                            ? "text-sm text-slate-500"
+                                            : "text-lg text-slate-950"
+                                        }`}
                                       >
-                                        <dt className="text-[11px] text-slate-600">
-                                          {definition.label}
-                                        </dt>
-                                        <dd className="text-right text-xs font-bold text-slate-950">
-                                          {formatBakeryMetric(
-                                            observation,
-                                            definition.suffix,
-                                          )}
-                                        </dd>
-                                      </div>
-                                    );
-                                  })}
-                                </dl>
-                              </section>
+                                        {formatBakeryMetric(
+                                          observation,
+                                          definition.suffix,
+                                        )}
+                                      </dd>
+                                    </div>
+                                  );
+                                })}
+                              </dl>
+                            </section>
 
-                              <section className="rounded-xl border border-slate-200 bg-white p-3">
-                                <h5 className="text-xs font-bold text-slate-900">
-                                  점포
-                                </h5>
-                                <dl className="mt-2">
-                                  {BAKERY_STORES_METRICS.map((definition) => {
-                                    const observation = bakeryData.stores.find(
-                                      (item) => item.metric === definition.metric,
-                                    );
+                            <section>
+                              <h5 className="text-xs font-bold text-slate-900">
+                                개폐업 현황
+                              </h5>
+                              <dl className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                                {BAKERY_OPEN_CLOSE_KPIS.map((definition) => {
+                                  const observation = bakeryObservationForMetric(
+                                    bakeryData,
+                                    definition,
+                                  );
+                                  const missing =
+                                    !observation ||
+                                    observation.value === null ||
+                                    observation.dataStatus !== "available";
 
-                                    return (
-                                      <div
-                                        key={definition.metric}
-                                        className="flex items-center justify-between gap-3 border-b border-slate-100 py-2 last:border-b-0"
+                                  return (
+                                    <div
+                                      key={definition.metric}
+                                      className={`rounded-xl border p-3 ${
+                                        missing
+                                          ? "border-slate-200 bg-slate-50"
+                                          : "border-emerald-100 bg-emerald-50/60"
+                                      }`}
+                                    >
+                                      <dt className="text-[10px] font-bold text-slate-500">
+                                        {definition.label}
+                                      </dt>
+                                      <dd
+                                        className={`mt-2 font-bold ${
+                                          missing
+                                            ? "text-sm text-slate-500"
+                                            : "text-lg text-slate-950"
+                                        }`}
                                       >
-                                        <dt className="text-[11px] text-slate-600">
-                                          {definition.label}
-                                        </dt>
-                                        <dd className="text-right text-xs font-bold text-slate-950">
-                                          {formatBakeryMetric(
-                                            observation,
-                                            definition.suffix,
-                                          )}
-                                        </dd>
-                                      </div>
-                                    );
-                                  })}
-                                </dl>
-                              </section>
-                            </div>
+                                        {formatBakeryMetric(
+                                          observation,
+                                          definition.suffix,
+                                        )}
+                                      </dd>
+                                    </div>
+                                  );
+                                })}
+                              </dl>
+                            </section>
 
                             <p className="border-t border-emerald-100 pt-3 text-[10px] leading-5 text-slate-500">
                               서울시 공식상권 기준 통계이며 실제 후보 점포의 예상매출을 의미하지 않습니다.
