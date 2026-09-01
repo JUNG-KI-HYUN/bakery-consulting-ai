@@ -7,6 +7,7 @@ import type { MarketDataObservation } from "../types";
 import {
   requestSeoulOpenDataPage,
   SeoulOpenDataClientError,
+  type SeoulOpenDataPage,
 } from "./seoul-open-data";
 
 const SEOUL_SALES_SERVICE = "VwsmTrdarSelngQq";
@@ -32,17 +33,31 @@ function quarterParams(quarterCode: string | number | undefined): string[] {
   return [parsed.rawValue];
 }
 
+export async function fetchSeoulSalesPage({
+  start,
+  end,
+  quarterCode,
+  signal,
+}: SeoulSalesRequest): Promise<SeoulOpenDataPage> {
+  return requestSeoulOpenDataPage({
+    service: SEOUL_SALES_SERVICE,
+    start,
+    end,
+    optionalParams: quarterParams(quarterCode),
+    signal,
+  });
+}
+
 export async function fetchSeoulSalesObservations({
   start,
   end,
   quarterCode,
   signal,
 }: SeoulSalesRequest): Promise<MarketDataObservation[]> {
-  const page = await requestSeoulOpenDataPage({
-    service: SEOUL_SALES_SERVICE,
+  const page = await fetchSeoulSalesPage({
     start,
     end,
-    optionalParams: quarterParams(quarterCode),
+    quarterCode,
     signal,
   });
 
