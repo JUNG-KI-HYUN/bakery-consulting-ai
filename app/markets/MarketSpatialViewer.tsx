@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -73,6 +73,24 @@ interface HitTestFeature {
   maximumX: number;
   maximumY: number;
 }
+
+interface PanOffset {
+  x: number;
+  y: number;
+}
+
+interface PointerGesture {
+  pointerId: number;
+  startClientX: number;
+  startClientY: number;
+  startPanOffset: PanOffset;
+  dragging: boolean;
+}
+
+const PAN_DRAG_THRESHOLD_PX = 5;
+const MIN_MAP_ZOOM = 1;
+const MAX_MAP_ZOOM = 8;
+const WHEEL_ZOOM_FACTOR = 1.2;
 
 interface CrosswalkCandidate {
   referenceId: string;
@@ -466,6 +484,8 @@ export default function MarketSpatialViewer({
   >({});
   const [canvasSize, setCanvasSize] = useState({ width: 720, height: 440 });
   const [zoom, setZoom] = useState(1);
+  const [panOffset, setPanOffset] = useState<PanOffset>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
   const [renderDurationMs, setRenderDurationMs] = useState<number | null>(null);
   const [hitTestDurationMs, setHitTestDurationMs] = useState<number | null>(null);
   const [selectedReferences, setSelectedReferences] = useState<HitTestFeature[]>(
@@ -485,6 +505,10 @@ export default function MarketSpatialViewer({
     new Map<string, MarketCrosswalkResponse>(),
   );
   const hitTestFeaturesRef = useRef<HitTestFeature[]>([]);
+  const pointerGestureRef = useRef<PointerGesture | null>(null);
+  const zoomRef = useRef(zoom);
+  const panOffsetRef = useRef(panOffset);
+  const canvasSizeRef = useRef(canvasSize);
   const bakeryDataControllerRef = useRef<AbortController | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectionCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -492,6 +516,10 @@ export default function MarketSpatialViewer({
 
   const selectedReference =
     selectedReferences[selectedReferenceIndex] ?? null;
+
+  zoomRef.current = zoom;
+  panOffsetRef.current = panOffset;
+  canvasSizeRef.current = canvasSize;
 
   const loadLayer = useCallback(async (layerId: SpatialLayerId) => {
     const layer = getSpatialLayerDefinition(layerId);
@@ -630,6 +658,65 @@ export default function MarketSpatialViewer({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      event.preventDefault();
+
+      if (!Number.isFinite(event.deltaY) || event.deltaY === 0) {
+        return;
+      }
+
+      const currentZoom = zoomRef.current;
+      const requestedZoom =
+        event.deltaY < 0
+          ? currentZoom * WHEEL_ZOOM_FACTOR
+          : currentZoom / WHEEL_ZOOM_FACTOR;
+      const nextZoom = Math.min(
+        MAX_MAP_ZOOM,
+        Math.max(MIN_MAP_ZOOM, requestedZoom),
+      );
+      if (nextZoom === currentZoom) {
+        return;
+      }
+
+      const rectangle = canvas.getBoundingClientRect();
+      if (rectangle.width === 0 || rectangle.height === 0) {
+        return;
+      }
+
+      const size = canvasSizeRef.current;
+      const pointerX =
+        ((event.clientX - rectangle.left) / rectangle.width) * size.width;
+      const pointerY =
+        ((event.clientY - rectangle.top) / rectangle.height) * size.height;
+      const currentPan = panOffsetRef.current;
+      const zoomRatio = nextZoom / currentZoom;
+      const nextPan = {
+        x:
+          pointerX -
+          size.width / 2 -
+          (pointerX - size.width / 2 - currentPan.x) * zoomRatio,
+        y:
+          pointerY -
+          size.height / 2 -
+          (pointerY - size.height / 2 - currentPan.y) * zoomRatio,
+      };
+
+      zoomRef.current = nextZoom;
+      panOffsetRef.current = nextPan;
+      setZoom(nextZoom);
+      setPanOffset(nextPan);
+    };
+
+    canvas.addEventListener("wheel", handleWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", handleWheel);
+  }, []);
+
   const renderableLayers = useMemo(
     () =>
       SPATIAL_LAYER_REGISTRY.filter(
@@ -716,8 +803,11 @@ export default function MarketSpatialViewer({
     const project = ([longitude, latitude]: Position) =>
       [
         canvasSize.width / 2 +
-          (longitude - centerLongitude) * longitudeCorrection * scale,
-        canvasSize.height / 2 - (latitude - centerLatitude) * scale,
+          (longitude - centerLongitude) * longitudeCorrection * scale +
+          panOffset.x,
+        canvasSize.height / 2 -
+          (latitude - centerLatitude) * scale +
+          panOffset.y,
       ] as const;
 
     const hitTestFeatures: HitTestFeature[] = [];
@@ -775,7 +865,7 @@ export default function MarketSpatialViewer({
 
     hitTestFeaturesRef.current = hitTestFeatures;
     setRenderDurationMs(performance.now() - startedAt);
-  }, [canvasSize, renderableLayers, zoom]);
+  }, [canvasSize, panOffset, renderableLayers, zoom]);
 
   useEffect(() => {
     const selectionCanvas = selectionCanvasRef.current;
@@ -814,9 +904,15 @@ export default function MarketSpatialViewer({
     context.lineWidth = 2.5;
     context.fill(cachedFeature.path, "evenodd");
     context.stroke(cachedFeature.path);
-  }, [canvasSize, renderDurationMs, selectedReference]);
+  }, [
+    canvasSize,
+    panOffset,
+    renderDurationMs,
+    selectedReference,
+    zoom,
+  ]);
 
-  function handleCanvasClick(event: ReactMouseEvent<HTMLCanvasElement>) {
+  function selectReferenceAtClientPoint(clientX: number, clientY: number) {
     const canvas = canvasRef.current;
     if (!canvas) {
       return;
@@ -830,9 +926,9 @@ export default function MarketSpatialViewer({
     const startedAt = performance.now();
     const rectangle = canvas.getBoundingClientRect();
     const x =
-      ((event.clientX - rectangle.left) / rectangle.width) * canvasSize.width;
+      ((clientX - rectangle.left) / rectangle.width) * canvasSize.width;
     const y =
-      ((event.clientY - rectangle.top) / rectangle.height) * canvasSize.height;
+      ((clientY - rectangle.top) / rectangle.height) * canvasSize.height;
     const matches = hitTestFeaturesRef.current
       .filter(
         (feature) =>
@@ -847,6 +943,117 @@ export default function MarketSpatialViewer({
     setSelectedReferences(matches);
     setSelectedReferenceIndex(0);
     setHitTestDurationMs(performance.now() - startedAt);
+  }
+
+  function handleCanvasPointerDown(
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ) {
+    if (!event.isPrimary || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    pointerGestureRef.current = {
+      pointerId: event.pointerId,
+      startClientX: event.clientX,
+      startClientY: event.clientY,
+      startPanOffset: panOffsetRef.current,
+      dragging: false,
+    };
+    setIsPanning(false);
+  }
+
+  function handleCanvasPointerMove(
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ) {
+    const gesture = pointerGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    const deltaClientX = event.clientX - gesture.startClientX;
+    const deltaClientY = event.clientY - gesture.startClientY;
+    if (
+      !gesture.dragging &&
+      Math.hypot(deltaClientX, deltaClientY) < PAN_DRAG_THRESHOLD_PX
+    ) {
+      return;
+    }
+
+    if (!gesture.dragging) {
+      gesture.dragging = true;
+      setIsPanning(true);
+    }
+
+    event.preventDefault();
+    const rectangle = event.currentTarget.getBoundingClientRect();
+    if (rectangle.width === 0 || rectangle.height === 0) {
+      return;
+    }
+
+    const nextPan = {
+      x:
+        gesture.startPanOffset.x +
+        deltaClientX * (canvasSize.width / rectangle.width),
+      y:
+        gesture.startPanOffset.y +
+        deltaClientY * (canvasSize.height / rectangle.height),
+    };
+    panOffsetRef.current = nextPan;
+    setPanOffset(nextPan);
+  }
+
+  function handleCanvasPointerUp(
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ) {
+    const gesture = pointerGestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    pointerGestureRef.current = null;
+    setIsPanning(false);
+
+    if (!gesture.dragging) {
+      selectReferenceAtClientPoint(event.clientX, event.clientY);
+    }
+  }
+
+  function handleCanvasPointerCancel(
+    event: ReactPointerEvent<HTMLCanvasElement>,
+  ) {
+    if (pointerGestureRef.current?.pointerId !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    pointerGestureRef.current = null;
+    setIsPanning(false);
+  }
+
+  function changeZoomWithButton(delta: number) {
+    setZoom((current) => {
+      const nextZoom = Math.min(
+        MAX_MAP_ZOOM,
+        Math.max(MIN_MAP_ZOOM, current + delta),
+      );
+      zoomRef.current = nextZoom;
+      return nextZoom;
+    });
+  }
+
+  function resetMapView() {
+    const resetPan = { x: 0, y: 0 };
+    zoomRef.current = MIN_MAP_ZOOM;
+    panOffsetRef.current = resetPan;
+    setZoom(MIN_MAP_ZOOM);
+    setPanOffset(resetPan);
   }
 
   function toggleLayer(layer: SpatialLayerDefinition) {
@@ -1223,9 +1430,14 @@ export default function MarketSpatialViewer({
             <canvas
               ref={canvasRef}
               aria-label={`서울 공간 참조레이어 ${renderedFeatureCount.toLocaleString("ko-KR")}개 geometry 표시`}
-              onClick={handleCanvasClick}
-              className="block max-w-full cursor-crosshair"
-              title="공식 참조 geometry를 클릭해 Inspector에서 확인"
+              onPointerDown={handleCanvasPointerDown}
+              onPointerMove={handleCanvasPointerMove}
+              onPointerUp={handleCanvasPointerUp}
+              onPointerCancel={handleCanvasPointerCancel}
+              className={`block max-w-full touch-none ${
+                isPanning ? "cursor-grabbing" : "cursor-grab"
+              }`}
+              title="드래그 이동 · 휠 확대/축소 · 클릭 상세보기"
             >
               브라우저가 Canvas를 지원하지 않아 공간 참조레이어를 표시할 수 없습니다.
             </canvas>
@@ -1240,29 +1452,33 @@ export default function MarketSpatialViewer({
               <p className="mt-0.5">
                 {renderedFeatureCount.toLocaleString("ko-KR")}개 · Canvas {formatMilliseconds(renderDurationMs)}
               </p>
-              <p className="mt-0.5">geometry 클릭 → Inspector</p>
+              <p className="mt-0.5">
+                확대 {zoom.toFixed(2)}× · 드래그 이동 · 휠 확대/축소 · 클릭 상세보기
+              </p>
             </div>
 
             <div className="absolute right-3 top-3 flex overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <button
                 type="button"
-                onClick={() => setZoom((current) => Math.min(4, current + 0.5))}
-                className="border-r border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50"
+                onClick={() => changeZoomWithButton(0.5)}
+                disabled={zoom >= MAX_MAP_ZOOM}
+                className="border-r border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label="공간 Viewer 확대"
               >
                 +
               </button>
               <button
                 type="button"
-                onClick={() => setZoom(1)}
+                onClick={resetMapView}
                 className="border-r border-slate-200 px-3 py-2 text-[11px] font-bold text-slate-600 hover:bg-slate-50"
+                aria-label="공간 Viewer 초기화"
               >
-                {zoom.toFixed(1)}×
+                초기화
               </button>
               <button
                 type="button"
-                onClick={() => setZoom((current) => Math.max(1, current - 0.5))}
-                disabled={zoom === 1}
+                onClick={() => changeZoomWithButton(-0.5)}
+                disabled={zoom <= MIN_MAP_ZOOM}
                 className="px-3 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-35"
                 aria-label="공간 Viewer 축소"
               >
