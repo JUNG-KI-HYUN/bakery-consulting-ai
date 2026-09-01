@@ -190,6 +190,13 @@ test("SALES는 전체 페이지를 순회한 뒤 공식상권과 CS100005를 필
         { value: count.value, dataStatus: count.dataStatus },
         { value: null, dataStatus: "missing" },
       );
+
+      const otherMarket = await fetchBakerySalesForOfficialMarket(
+        "3110003",
+        TEST_QUARTER_CODE,
+      );
+      assert.deepEqual(otherMarket, []);
+      assert.equal(requests.length, 2);
     },
   );
 });
@@ -253,24 +260,35 @@ test("최신 공통분기는 INFO-200을 건너뛰고 양쪽 데이터가 있는
 
 test("통합 상태는 available, partial, missing을 구분한다", async (context) => {
   async function loadWithMode(mode) {
+    const quarterByMode = {
+      available: "20254",
+      partial: "20253",
+      missing: "20252",
+    };
+    const quarterCode = quarterByMode[mode];
+
     return withMockFetch(
       (request) => {
         if (mode === "missing") {
           return noDataResponse();
         }
         if (request.service === SALES_SERVICE) {
-          return successResponse(SALES_SERVICE, [salesRow()]);
+          return successResponse(SALES_SERVICE, [
+            salesRow({ STDR_YYQU_CD: quarterCode }),
+          ]);
         }
         return successResponse(
           STORES_SERVICE,
-          mode === "partial" ? [] : [storesRow()],
+          mode === "partial"
+            ? []
+            : [storesRow({ STDR_YYQU_CD: quarterCode })],
           mode === "partial" ? 0 : 1,
         );
       },
       () =>
         getBakeryOfficialMarketData({
           marketCode: TEST_MARKET_CODE,
-          quarterCode: TEST_QUARTER_CODE,
+          quarterCode,
         }),
     );
   }
@@ -287,6 +305,37 @@ test("통합 상태는 available, partial, missing을 구분한다", async (cont
     assert.deepEqual(result.sales, []);
     assert.deepEqual(result.stores, []);
   });
+});
+
+test("실패한 SALES 분기 응답은 캐시하지 않는다", async () => {
+  const quarterCode = "20244";
+  let requestCount = 0;
+
+  await withMockFetch(
+    (request) => {
+      requestCount += 1;
+      if (requestCount === 1) {
+        return noDataResponse();
+      }
+      return successResponse(SALES_SERVICE, [
+        salesRow({ STDR_YYQU_CD: quarterCode }),
+      ]);
+    },
+    async () => {
+      await assert.rejects(
+        () =>
+          fetchBakerySalesForOfficialMarket(TEST_MARKET_CODE, quarterCode),
+        (error) => error.apiCode === "INFO-200",
+      );
+
+      const observations = await fetchBakerySalesForOfficialMarket(
+        TEST_MARKET_CODE,
+        quarterCode,
+      );
+      assert.equal(observations.length, 2);
+      assert.equal(requestCount, 2);
+    },
+  );
 });
 
 test("잘못된 공식상권 코드는 네트워크 호출 전에 거부한다", async () => {

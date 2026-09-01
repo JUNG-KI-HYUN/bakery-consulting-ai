@@ -22,6 +22,14 @@ const BAKERY_INDUSTRY_NAME = "제과점";
 const SEOUL_API_PAGE_SIZE = 1_000;
 const LATEST_QUARTER_LOOKBACK = 8;
 const SEOUL_API_NO_DATA_CODE = "INFO-200";
+const SALES_QUARTER_CACHE_TTL_MS = 5 * 60 * 1_000;
+
+interface SalesQuarterCacheEntry {
+  expiresAt: number;
+  rows: SeoulOpenDataRow[];
+}
+
+const salesQuarterCache = new Map<string, SalesQuarterCacheEntry>();
 
 export interface SeoulMarketQuarter {
   quarterCode: string;
@@ -184,17 +192,26 @@ function matchesBakeryMarketRow(
   );
 }
 
-export async function fetchBakerySalesForOfficialMarket(
-  marketCode: string,
-  quarterCode: string | number,
+async function fetchSalesRowsForQuarter(
+  quarterCode: string,
   signal?: AbortSignal,
-): Promise<MarketDataObservation[]> {
-  const normalizedMarketCode = normalizeOfficialMarketCode(marketCode);
-  const quarter = requireQuarter(quarterCode);
+): Promise<SeoulOpenDataRow[]> {
+  const now = Date.now();
+  for (const [cachedQuarter, entry] of salesQuarterCache) {
+    if (entry.expiresAt <= now) {
+      salesQuarterCache.delete(cachedQuarter);
+    }
+  }
+
+  const cached = salesQuarterCache.get(quarterCode);
+  if (cached) {
+    return cached.rows;
+  }
+
   const firstPage = await fetchSeoulSalesPage({
     start: 1,
     end: SEOUL_API_PAGE_SIZE,
-    quarterCode: quarter.quarterCode,
+    quarterCode,
     signal,
   });
 
@@ -205,10 +222,7 @@ export async function fetchBakerySalesForOfficialMarket(
     );
   }
 
-  const matchedRows = firstPage.rows.filter((row) =>
-    matchesBakeryMarketRow(row, normalizedMarketCode),
-  );
-
+  const rows = [...firstPage.rows];
   for (
     let start = SEOUL_API_PAGE_SIZE + 1;
     start <= firstPage.totalCount;
@@ -217,16 +231,33 @@ export async function fetchBakerySalesForOfficialMarket(
     const page = await fetchSeoulSalesPage({
       start,
       end: Math.min(start + SEOUL_API_PAGE_SIZE - 1, firstPage.totalCount),
-      quarterCode: quarter.quarterCode,
+      quarterCode,
       signal,
     });
-
-    matchedRows.push(
-      ...page.rows.filter((row) =>
-        matchesBakeryMarketRow(row, normalizedMarketCode),
-      ),
-    );
+    rows.push(...page.rows);
   }
+
+  if (!signal?.aborted) {
+    salesQuarterCache.set(quarterCode, {
+      expiresAt: Date.now() + SALES_QUARTER_CACHE_TTL_MS,
+      rows,
+    });
+  }
+
+  return rows;
+}
+
+export async function fetchBakerySalesForOfficialMarket(
+  marketCode: string,
+  quarterCode: string | number,
+  signal?: AbortSignal,
+): Promise<MarketDataObservation[]> {
+  const normalizedMarketCode = normalizeOfficialMarketCode(marketCode);
+  const quarter = requireQuarter(quarterCode);
+  const rows = await fetchSalesRowsForQuarter(quarter.quarterCode, signal);
+  const matchedRows = rows.filter((row) =>
+    matchesBakeryMarketRow(row, normalizedMarketCode),
+  );
 
   return matchedRows.flatMap((row) =>
     adaptSeoulSalesRecord(row as SeoulSalesRecord),
