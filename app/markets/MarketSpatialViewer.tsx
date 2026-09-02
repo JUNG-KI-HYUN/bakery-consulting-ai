@@ -200,6 +200,12 @@ export interface SelectedSubmarketSpatialSummary {
   geometryStatus: string;
 }
 
+type MarketsWorkspaceTab =
+  | "briefing"
+  | "market-map"
+  | "competition"
+  | "public-data";
+
 function isPosition(value: unknown): value is Position {
   return (
     Array.isArray(value) &&
@@ -527,9 +533,13 @@ function InspectorField({ label, value }: { label: string; value: string }) {
 export default function MarketSpatialViewer({
   selectedMarket,
   selectedSubmarket,
+  activeTab,
+  onOpenMarketMap,
 }: {
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
+  activeTab: MarketsWorkspaceTab;
+  onOpenMarketMap: () => void;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -1333,7 +1343,7 @@ export default function MarketSpatialViewer({
 
   return (
     <section className="panel-card overflow-hidden" aria-labelledby="spatial-viewer-title">
-      <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-6">
+      <div className={`${activeTab === "briefing" || activeTab === "competition" ? "hidden" : ""} border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-6`}>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
@@ -1356,6 +1366,7 @@ export default function MarketSpatialViewer({
       </div>
 
       <div className="space-y-3 p-4 md:p-6">
+        {activeTab === "market-map" ? (
         <details className="rounded-xl border border-slate-200 bg-slate-50/80">
           <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap">
             <span>
@@ -1495,9 +1506,10 @@ export default function MarketSpatialViewer({
             </ul>
           </div>
         </details>
+        ) : null}
 
         <div className="min-w-0 space-y-3">
-          {selectedMarket ? (
+          {selectedMarket && (activeTab === "briefing" || activeTab === "market-map") ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -1509,12 +1521,13 @@ export default function MarketSpatialViewer({
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <a
-                    href="#frameone-market-selector"
+                  <button
+                    type="button"
+                    onClick={onOpenMarketMap}
                     className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50"
                   >
                     분석지역 바꾸기
-                  </a>
+                  </button>
                   <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[10px] font-bold text-amber-800">
                     지도 경계 미확정
                   </span>
@@ -1530,6 +1543,7 @@ export default function MarketSpatialViewer({
               <p className="mt-2 text-xs font-semibold text-amber-800">
                 자치구 {selectedMarket.district}
               </p>
+              {activeTab === "market-map" ? (
               <details className="mt-3 rounded-lg border border-amber-200 bg-white/70 px-3 py-2 text-[10px] text-slate-600">
                 <summary className="cursor-pointer font-bold text-slate-700">
                   데이터 상세정보
@@ -1561,6 +1575,8 @@ export default function MarketSpatialViewer({
                   </div>
                 </dl>
               </details>
+              ) : null}
+              {activeTab === "market-map" ? (
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
                 <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-amber-800">
                   FRAMEONE 지도 경계 미확정
@@ -1583,7 +1599,8 @@ export default function MarketSpatialViewer({
                   </>
                 ) : null}
               </div>
-              {crosswalkError ? (
+              ) : null}
+              {activeTab === "market-map" && crosswalkError ? (
                 <p className="mt-2 text-[10px] font-semibold text-red-700">
                   연결 검토 정보를 불러오지 못했습니다: {crosswalkError}
                 </p>
@@ -1591,7 +1608,8 @@ export default function MarketSpatialViewer({
             </div>
           ) : null}
 
-          <section className="overflow-hidden rounded-xl border border-slate-300 bg-white">
+          <section className={`${activeTab === "market-map" || activeTab === "public-data" ? "hidden" : ""} overflow-hidden rounded-xl border border-slate-300 bg-white`}>
+            {activeTab === "briefing" ? (
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
               <div>
                 <p className="text-xs font-bold text-slate-950">
@@ -1608,14 +1626,18 @@ export default function MarketSpatialViewer({
                   : `공식상권 검토 후보 ${kakaoOfficialMarketPolygons.length}개`}
               </span>
             </div>
+            ) : null}
             <KakaoBaseMap
               officialMarketPolygons={kakaoOfficialMarketPolygons}
               selectedOfficialMarketCode={selectedOfficialMarketCode}
               onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
+              view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
             />
+            {activeTab === "briefing" ? (
             <p className="border-t border-slate-200 px-4 py-2.5 text-[10px] leading-4 text-slate-500">
               현재 선택한 FRAMEONE 주요상권의 공식상권 검토 후보만 표시합니다. 검토 후보는 확정 연결이 아닙니다.
             </p>
+            ) : null}
           </section>
 
           {RENDER_LEGACY_CANVAS ? (
@@ -1699,17 +1721,18 @@ export default function MarketSpatialViewer({
 
           <section
             aria-label="선택 상권 정보"
-            className="rounded-xl border border-slate-200 bg-white p-4"
+            className={`${activeTab === "competition" ? "hidden" : ""} rounded-xl border border-slate-200 bg-white p-4`}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                  선택 상권 정보
+                  {activeTab === "briefing" ? "서울시 공식상권" : "선택 상권 정보"}
                 </p>
                 <h3 className="mt-1 text-base font-bold text-slate-950">
-                  지도에서 선택한 항목
+                  {activeTab === "briefing" ? "선택한 공식상권" : "지도에서 선택한 항목"}
                 </h3>
               </div>
+              {activeTab !== "briefing" ? (
               <div className="flex flex-wrap gap-2 text-[10px] font-bold text-slate-600">
                 <span className="rounded-full bg-slate-100 px-2.5 py-1">
                   후보 {selectedReferences.length}개
@@ -1721,6 +1744,7 @@ export default function MarketSpatialViewer({
                   </p>
                 </details>
               </div>
+              ) : null}
             </div>
 
             {selectedReferences.length === 0 ? (
@@ -1734,7 +1758,7 @@ export default function MarketSpatialViewer({
               </div>
             ) : (
               <>
-                {selectedReferences.length > 1 ? (
+                {activeTab !== "briefing" && selectedReferences.length > 1 ? (
                   <div className="mt-4">
                     <p className="text-[10px] font-bold text-slate-500">
                       겹쳐 보이는 지도 항목 · 확정 연결 아님
@@ -1774,7 +1798,7 @@ export default function MarketSpatialViewer({
 
                 {selectedReference && selectedReferenceLayer ? (
                   <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                    <article className="rounded-xl border border-blue-200 bg-blue-50/40 p-4">
+                    <article className={`${activeTab === "briefing" ? "hidden" : ""} rounded-xl border border-blue-200 bg-blue-50/40 p-4`}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
@@ -1909,7 +1933,7 @@ export default function MarketSpatialViewer({
                       </details>
                     </article>
 
-                    <article className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
+                    <article className={`${activeTab === "public-data" ? "" : "hidden"} rounded-xl border border-amber-200 bg-amber-50/50 p-4`}>
                       <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700">
                         선택한 FRAMEONE 주요상권과 연결 검토
                       </p>
@@ -1995,7 +2019,7 @@ export default function MarketSpatialViewer({
                       )}
                     </article>
 
-                    {isOfficialMarketReference ? (
+                    {isOfficialMarketReference && activeTab !== "market-map" ? (
                       <article
                         aria-label="서울시 공식상권 제과점 현황"
                         className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 lg:col-span-2"
@@ -2014,6 +2038,7 @@ export default function MarketSpatialViewer({
                             <p className="mt-0.5 text-xs font-semibold text-slate-500">
                               서울시 공식상권
                             </p>
+                            {activeTab === "public-data" ? (
                             <details className="mt-1 text-[10px] text-slate-500">
                               <summary className="cursor-pointer font-bold">
                                 데이터 상세정보
@@ -2022,6 +2047,7 @@ export default function MarketSpatialViewer({
                                 공식상권 코드 {selectedReferenceId ?? "정보 없음"}
                               </p>
                             </details>
+                            ) : null}
                           </div>
                           <button
                             type="button"
@@ -2065,7 +2091,9 @@ export default function MarketSpatialViewer({
                             role="alert"
                             className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-3 text-xs text-red-700"
                           >
-                            {bakeryDataError}
+                            {activeTab === "briefing"
+                              ? "공공데이터 확인 필요"
+                              : bakeryDataError}
                           </p>
                         ) : null}
 
@@ -2087,6 +2115,7 @@ export default function MarketSpatialViewer({
                                     bakeryData.referencePeriod,
                                   )} 기준
                                 </p>
+                                {activeTab === "public-data" ? (
                                 <details className="mt-1 text-[10px] text-slate-500">
                                   <summary className="cursor-pointer font-bold">
                                     데이터 상세정보
@@ -2095,6 +2124,7 @@ export default function MarketSpatialViewer({
                                     공식상권 코드 {bakeryData.officialMarketCode} · 내부 분기코드 {bakeryData.quarterCode}
                                   </p>
                                 </details>
+                                ) : null}
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <span
@@ -2232,7 +2262,7 @@ export default function MarketSpatialViewer({
               </>
             )}
 
-            {selectedMarket && crosswalk ? (
+            {activeTab === "public-data" && selectedMarket && crosswalk ? (
               <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 md:grid-cols-2">
                 <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-3">
                   <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-blue-700">
@@ -2300,6 +2330,7 @@ export default function MarketSpatialViewer({
             ) : null}
           </section>
 
+          {activeTab === "public-data" ? (
           <div className="grid gap-2 md:grid-cols-3">
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-blue-700">
@@ -2326,7 +2357,9 @@ export default function MarketSpatialViewer({
               </p>
             </div>
           </div>
+          ) : null}
 
+          {activeTab === "public-data" ? (
           <details className="text-right text-[10px] text-slate-500">
             <summary className="cursor-pointer font-bold">데이터 상세정보</summary>
             {gridData ? (
@@ -2339,6 +2372,7 @@ export default function MarketSpatialViewer({
               </p>
             )}
           </details>
+          ) : null}
         </div>
       </div>
     </section>

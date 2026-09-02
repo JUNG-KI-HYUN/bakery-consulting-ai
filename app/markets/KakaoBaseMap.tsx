@@ -13,6 +13,7 @@ type KakaoMapStatus = "loading" | "ready" | "error";
 type NearbySearchStatus = "idle" | "loading" | "success" | "error";
 type NearbyCategoryId = "bakery" | "confectionery" | "cafe";
 type RadiusM = 300 | 500;
+export type KakaoBaseMapView = "briefing" | "competition" | "hidden";
 
 export type KakaoPolygonPosition = [number, number];
 type KakaoPolygonRing = KakaoPolygonPosition[];
@@ -246,10 +247,12 @@ export default function KakaoBaseMap({
   officialMarketPolygons,
   selectedOfficialMarketCode,
   onSelectOfficialMarket,
+  view = "briefing",
 }: {
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
   onSelectOfficialMarket: (featureIndex: number) => void;
+  view?: KakaoBaseMapView;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<KakaoMapInstance | null>(null);
@@ -608,6 +611,7 @@ export default function KakaoBaseMap({
 
   return (
     <div>
+      <div className={view === "briefing" ? "" : "hidden"}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] font-bold text-slate-700">
@@ -665,7 +669,7 @@ export default function KakaoBaseMap({
       </div>
 
       <div
-        className="relative h-[400px] w-full overflow-hidden bg-slate-100 md:h-[500px]"
+        className="relative h-[360px] w-full overflow-hidden bg-slate-100 md:h-[410px]"
         aria-busy={status === "loading"}
       >
         <div
@@ -700,7 +704,9 @@ export default function KakaoBaseMap({
           />
         ) : null}
       </div>
+      </div>
 
+      {view !== "hidden" ? (
       <section
         className="border-t border-slate-200 bg-white px-4 py-4"
         aria-labelledby="nearby-place-title"
@@ -708,10 +714,10 @@ export default function KakaoBaseMap({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h3 id="nearby-place-title" className="text-sm font-bold text-slate-950">
-              주변 장소
+              {view === "briefing" ? "주변 경쟁환경 요약" : "주변 경쟁점 상세"}
             </h3>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
-              카카오 지도 검색 기준 / 최대 {MAX_PER_CATEGORY}개 표시 · 분석 반경 {analysisPoint ? analysisRadiusM : radiusM}m
+              카카오 검색 기준 · 베이커리/제과점 결과 중복 가능 · 지도에는 업종별 최대 {MAX_PER_CATEGORY}개 표시
             </p>
           </div>
           <span
@@ -753,7 +759,7 @@ export default function KakaoBaseMap({
           </div>
         ) : null}
 
-        <div className="mt-3 grid gap-3 lg:grid-cols-3">
+        <div className={`mt-3 grid gap-3 ${view === "briefing" ? "grid-cols-3" : "lg:grid-cols-3"}`}>
           {NEARBY_CATEGORIES.map((category) => {
             const result = nearbyPlaces[category.id];
             const places = result.places;
@@ -761,21 +767,23 @@ export default function KakaoBaseMap({
             return (
               <article
                 key={category.id}
-                className={`min-w-0 rounded-lg border p-3 ${
+                className={`min-w-0 rounded-lg border ${view === "briefing" ? "px-2 py-3 text-center sm:p-3" : "p-3"} ${
                   enabled
                     ? "border-slate-200 bg-slate-50/70"
                     : "border-slate-200 bg-slate-50 opacity-55"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2">
+                <div className={view === "briefing" ? "" : "flex items-center justify-between gap-2"}>
                   <h4 className="text-xs font-bold text-slate-900">
                     {category.label}
                   </h4>
-                  <span className="text-[10px] font-bold text-slate-500">
-                    검색 결과 {result.totalCount}곳 / 지도 표시 {places.length}곳 (최대 {MAX_PER_CATEGORY}곳)
+                  <span className={view === "briefing" ? "mt-1 block text-xl font-bold tabular-nums text-slate-950" : "text-[10px] font-bold text-slate-500"}>
+                    {view === "briefing"
+                      ? result.totalCount.toLocaleString("ko-KR")
+                      : `검색 결과 ${result.totalCount}곳 / 지도 표시 ${places.length}곳 (최대 ${MAX_PER_CATEGORY}곳)`}
                   </span>
                 </div>
-                {places.length > 0 ? (
+                {view === "competition" && places.length > 0 ? (
                   <ul className="mt-2 max-h-48 space-y-1.5 overflow-y-auto pr-1">
                     {places.map((place) => (
                       <li
@@ -796,18 +804,19 @@ export default function KakaoBaseMap({
                       </li>
                     ))}
                   </ul>
-                ) : (
+                ) : view === "competition" ? (
                   <p className="mt-2 text-[11px] text-slate-500">
                     {nearbySearchStatus === "loading"
                       ? "검색 중…"
                       : "검색 결과 없음"}
                   </p>
-                )}
+                ) : null}
               </article>
             );
           })}
         </div>
       </section>
+      ) : null}
     </div>
   );
 }

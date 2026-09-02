@@ -3,6 +3,22 @@
 import { useMemo, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
 
+export type MarketsWorkspaceTab =
+  | "briefing"
+  | "market-map"
+  | "competition"
+  | "public-data";
+
+const WORKSPACE_TABS: ReadonlyArray<{
+  id: MarketsWorkspaceTab;
+  label: string;
+}> = [
+  { id: "briefing", label: "브리핑" },
+  { id: "market-map", label: "상권지도" },
+  { id: "competition", label: "경쟁점" },
+  { id: "public-data", label: "공공데이터" },
+];
+
 export interface MarketNode {
   nodeId: string;
   parentSubmarketId: string;
@@ -132,23 +148,13 @@ export default function MarketsExplorer({
   const [selectedSubmarketId, setSelectedSubmarketId] = useState<string | null>(
     null,
   );
+  const [activeTab, setActiveTab] =
+    useState<MarketsWorkspaceTab>("briefing");
 
   const allMarkets = useMemo(
     () => hierarchy.districts.flatMap((district) => district.markets),
     [hierarchy.districts],
   );
-
-  const totals = useMemo(() => {
-    const submarkets = allMarkets.flatMap((market) => market.submarkets);
-    const nodes = submarkets.flatMap((submarket) => submarket.nodes);
-
-    return {
-      districts: hierarchy.districts.length,
-      markets: allMarkets.length,
-      submarkets: submarkets.length,
-      nodes: nodes.length,
-    };
-  }, [allMarkets, hierarchy.districts.length]);
 
   const normalizedQuery = query.trim().toLocaleLowerCase("ko-KR");
 
@@ -234,45 +240,70 @@ export default function MarketsExplorer({
   }
 
   return (
-    <div className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1600px] -translate-x-1/2 space-y-6 overflow-x-clip">
+    <div className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1600px] -translate-x-1/2 overflow-x-clip">
+      <nav
+        aria-label="상권분석 업무 메뉴"
+        className="mb-4 flex gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 lg:hidden"
+      >
+        {WORKSPACE_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            aria-current={activeTab === tab.id ? "page" : undefined}
+            className={`shrink-0 rounded-lg px-4 py-2.5 text-sm font-bold ${
+              activeTab === tab.id
+                ? "bg-slate-900 text-white"
+                : "text-slate-600 hover:bg-slate-100"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="grid items-start gap-5 lg:grid-cols-[190px_minmax(0,1fr)]">
+        <aside className="panel-card sticky top-6 hidden overflow-hidden lg:block">
+          <p className="border-b border-slate-200 px-4 py-3 text-xs font-bold text-slate-500">
+            상권분석 업무
+          </p>
+          <nav aria-label="상권분석 업무 메뉴" className="space-y-1 p-2">
+            {WORKSPACE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                aria-current={activeTab === tab.id ? "page" : undefined}
+                className={`w-full rounded-lg px-3 py-3 text-left text-sm font-bold ${
+                  activeTab === tab.id
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <div className="min-w-0 space-y-6">
+      {activeTab === "briefing" ? (
+        <>
       <section className="panel-card overflow-hidden bg-gradient-to-br from-white via-white to-[#FFF7ED]">
-        <div className="grid gap-6 p-6 lg:grid-cols-[1.35fr_1fr] lg:items-end">
+        <div className="p-5 md:p-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F59E0B]">
-              서울 상권 상담 자료 · v{hierarchy.schemaVersion}
+              상권분석 브리핑
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0B1220] md:text-3xl">
-              서울 베이커리 상권 살펴보기
+              서울 베이커리 상권 브리핑
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
               주요상권을 선택한 뒤 지도에서 서울시 공식상권을 직접 클릭하면
               해당 상권의 제과점 통계를 확인할 수 있습니다. 확인된 데이터만
               상담 참고자료로 제공합니다.
             </p>
-            <p className="mt-3 text-xs text-slate-500">
-              기준일 {hierarchy.checkedAt} · {hierarchy.city}
-            </p>
           </div>
-          <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-2">
-            {[
-              ["자치구", totals.districts],
-              ["주요상권", totals.markets],
-              ["세부상권", totals.submarkets],
-              ["현장 확인 지점", totals.nodes],
-            ].map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-xl border border-slate-200 bg-white/85 px-4 py-3"
-              >
-                <dt className="text-[11px] font-semibold text-slate-500">
-                  {label}
-                </dt>
-                <dd className="mt-1 text-2xl font-bold text-[#0B1220]">
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
         </div>
       </section>
 
@@ -305,12 +336,26 @@ export default function MarketsExplorer({
           ))}
         </ol>
       </nav>
+        </>
+      ) : (
+        <section className="panel-card px-5 py-4">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+            직원용 업무 화면
+          </p>
+          <h2 className="mt-1 text-xl font-bold text-slate-950">
+            {WORKSPACE_TABS.find((tab) => tab.id === activeTab)?.label}
+          </h2>
+        </section>
+      )}
 
       <MarketSpatialViewer
         selectedMarket={selectedMarketSpatialSummary}
         selectedSubmarket={selectedSubmarketSpatialSummary}
+        activeTab={activeTab}
+        onOpenMarketMap={() => setActiveTab("market-map")}
       />
 
+      {activeTab === "market-map" ? (
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.4fr)]">
         <aside
           id="frameone-market-selector"
@@ -626,7 +671,10 @@ export default function MarketsExplorer({
           )}
         </section>
       </div>
+      ) : null}
 
+        </div>
+      </div>
     </div>
   );
 }
