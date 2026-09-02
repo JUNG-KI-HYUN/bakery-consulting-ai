@@ -39,8 +39,11 @@ interface KakaoLatLng {
   getLng(): number;
 }
 
+interface KakaoMouseEvent {
+  latLng: KakaoLatLng;
+}
+
 interface KakaoMapInstance {
-  getCenter(): KakaoLatLng;
   relayout(): void;
 }
 
@@ -50,8 +53,6 @@ interface KakaoPolygonInstance {
 
 interface KakaoCircleInstance {
   setMap(map: KakaoMapInstance | null): void;
-  setPosition(position: KakaoLatLng): void;
-  setRadius(radius: number): void;
 }
 
 interface KakaoMarkerInstance {
@@ -100,8 +101,16 @@ interface KakaoMapsApi {
     zIndex?: number;
   }) => KakaoInfoWindowInstance;
   event: {
-    addListener(target: object, type: string, handler: () => void): void;
-    removeListener(target: object, type: string, handler: () => void): void;
+    addListener(
+      target: object,
+      type: string,
+      handler: ((event: KakaoMouseEvent) => void) | (() => void),
+    ): void;
+    removeListener(
+      target: object,
+      type: string,
+      handler: ((event: KakaoMouseEvent) => void) | (() => void),
+    ): void;
   };
 }
 
@@ -115,6 +124,7 @@ const SEOUL_CENTER = {
   latitude: 37.5665,
   longitude: 126.978,
 };
+type MapPoint = typeof SEOUL_CENTER;
 
 interface NearbyCategoryDefinition {
   id: NearbyCategoryId;
@@ -256,7 +266,10 @@ export default function KakaoBaseMap({
       : "NEXT_PUBLIC_KAKAO_MAP_KEY가 설정되지 않아 지도를 표시할 수 없습니다.",
   );
   const [radiusM, setRadiusM] = useState<RadiusM>(DEFAULT_RADIUS_M);
-  const [searchCenter, setSearchCenter] = useState(SEOUL_CENTER);
+  const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null);
+  const [analysisPoint, setAnalysisPoint] = useState<MapPoint | null>(null);
+  const [analysisRadiusM, setAnalysisRadiusM] =
+    useState<RadiusM>(DEFAULT_RADIUS_M);
   const [nearbyPlaces, setNearbyPlaces] =
     useState<NearbyPlacesByCategory>(emptyNearbyPlaces);
   const [enabledCategories, setEnabledCategories] =
@@ -270,7 +283,6 @@ export default function KakaoBaseMap({
   const [nearbySearchError, setNearbySearchError] = useState("");
   const [selectedNearbyPlace, setSelectedNearbyPlace] =
     useState<NearbyPlace | null>(null);
-  const [searchRevision, setSearchRevision] = useState(0);
 
   const enabledPlaceCount = useMemo(
     () =>
@@ -361,14 +373,17 @@ export default function KakaoBaseMap({
   useEffect(() => {
     const kakaoMaps = (window as KakaoWindow).kakao?.maps;
     const map = mapInstanceRef.current;
-    if (status !== "ready" || !kakaoMaps || !map) {
+    if (status !== "ready" || !kakaoMaps || !map || !analysisPoint) {
       return;
     }
 
     const circle = new kakaoMaps.Circle({
       map,
-      center: map.getCenter(),
-      radius: DEFAULT_RADIUS_M,
+      center: new kakaoMaps.LatLng(
+        analysisPoint.latitude,
+        analysisPoint.longitude,
+      ),
+      radius: analysisRadiusM,
       strokeWeight: 2,
       strokeColor: "#ea580c",
       strokeOpacity: 0.95,
@@ -377,36 +392,55 @@ export default function KakaoBaseMap({
     });
     circleRef.current = circle;
 
-    const handleCenterChanged = () => {
-      circle.setPosition(map.getCenter());
-    };
-    const handleDragEnd = () => {
-      const center = map.getCenter();
-      setSearchCenter({
-        latitude: center.getLat(),
-        longitude: center.getLng(),
-      });
-    };
-
-    kakaoMaps.event.addListener(map, "center_changed", handleCenterChanged);
-    kakaoMaps.event.addListener(map, "dragend", handleDragEnd);
-
     return () => {
-      kakaoMaps.event.removeListener(map, "center_changed", handleCenterChanged);
-      kakaoMaps.event.removeListener(map, "dragend", handleDragEnd);
       circle.setMap(null);
       if (circleRef.current === circle) {
         circleRef.current = null;
       }
     };
+  }, [analysisPoint, analysisRadiusM, status]);
+
+  useEffect(() => {
+    const kakaoMaps = (window as KakaoWindow).kakao?.maps;
+    const map = mapInstanceRef.current;
+    if (status !== "ready" || !kakaoMaps || !map) {
+      return;
+    }
+
+    const handleMapClick = (event: KakaoMouseEvent) => {
+      setSelectedPoint({
+        latitude: event.latLng.getLat(),
+        longitude: event.latLng.getLng(),
+      });
+    };
+    kakaoMaps.event.addListener(map, "click", handleMapClick);
+
+    return () => {
+      kakaoMaps.event.removeListener(map, "click", handleMapClick);
+    };
   }, [status]);
 
   useEffect(() => {
-    circleRef.current?.setRadius(radiusM);
-  }, [radiusM, status]);
+    const kakaoMaps = (window as KakaoWindow).kakao?.maps;
+    const map = mapInstanceRef.current;
+    if (status !== "ready" || !kakaoMaps || !map || !selectedPoint) {
+      return;
+    }
+
+    const marker = new kakaoMaps.Marker({
+      map,
+      position: new kakaoMaps.LatLng(
+        selectedPoint.latitude,
+        selectedPoint.longitude,
+      ),
+      title: "분석 위치 후보",
+    });
+
+    return () => marker.setMap(null);
+  }, [selectedPoint, status]);
 
   useEffect(() => {
-    if (status !== "ready" || !mapInstanceRef.current) {
+    if (status !== "ready" || !mapInstanceRef.current || !analysisPoint) {
       return;
     }
 
@@ -420,9 +454,9 @@ export default function KakaoBaseMap({
     infoWindowRef.current?.close();
 
     const searchParams = new URLSearchParams({
-      lat: String(searchCenter.latitude),
-      lng: String(searchCenter.longitude),
-      radius: String(radiusM),
+      lat: String(analysisPoint.latitude),
+      lng: String(analysisPoint.longitude),
+      radius: String(analysisRadiusM),
     });
     void fetch(`/api/markets/nearby-places?${searchParams}`, {
       signal: controller.signal,
@@ -478,7 +512,7 @@ export default function KakaoBaseMap({
         nearbySearchControllerRef.current = null;
       }
     };
-  }, [radiusM, searchCenter, searchRevision, status]);
+  }, [analysisPoint, analysisRadiusM, status]);
 
   useEffect(() => {
     const kakaoMaps = (window as KakaoWindow).kakao?.maps;
@@ -538,15 +572,13 @@ export default function KakaoBaseMap({
     return () => observer.disconnect();
   }, [status]);
 
-  function refreshNearbyPlaces() {
-    const center = mapInstanceRef.current?.getCenter();
-    if (center) {
-      setSearchCenter({
-        latitude: center.getLat(),
-        longitude: center.getLng(),
-      });
+  function analyzeSelectedPoint() {
+    if (!selectedPoint) {
+      return;
     }
-    setSearchRevision((current) => current + 1);
+
+    setAnalysisPoint({ ...selectedPoint });
+    setAnalysisRadiusM(radiusM);
   }
 
   function toggleCategory(categoryId: NearbyCategoryId) {
@@ -608,11 +640,15 @@ export default function KakaoBaseMap({
           })}
           <button
             type="button"
-            onClick={refreshNearbyPlaces}
-            disabled={status !== "ready" || nearbySearchStatus === "loading"}
+            onClick={analyzeSelectedPoint}
+            disabled={
+              status !== "ready" ||
+              !selectedPoint ||
+              nearbySearchStatus === "loading"
+            }
             className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            현재 중심 다시 검색
+            이 위치 분석
           </button>
         </div>
       </div>
@@ -664,7 +700,7 @@ export default function KakaoBaseMap({
               주변 장소
             </h3>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
-              카카오 지도 검색 기준 / 최대 {MAX_PER_CATEGORY}개 표시 · 지도 중심 {radiusM}m
+              카카오 지도 검색 기준 / 최대 {MAX_PER_CATEGORY}개 표시 · 분석 반경 {analysisPoint ? analysisRadiusM : radiusM}m
             </p>
           </div>
           <span
@@ -676,6 +712,12 @@ export default function KakaoBaseMap({
               : `지도 표시 ${enabledPlaceCount}곳`}
           </span>
         </div>
+
+        <p className="mt-2 text-xs font-semibold text-slate-600" role="status">
+          {selectedPoint
+            ? "분석 위치가 선택되었습니다. 이 위치 분석을 눌러 주변 장소를 확인하세요."
+            : "지도에서 분석할 위치를 선택하세요."}
+        </p>
 
         {nearbySearchError ? (
           <p
