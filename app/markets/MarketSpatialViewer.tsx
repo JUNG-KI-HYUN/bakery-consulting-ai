@@ -19,6 +19,9 @@ import {
   type SpatialLayerDefinition,
   type SpatialLayerId,
 } from "./spatial-layer-registry";
+import KakaoBaseMap, {
+  type KakaoOfficialMarketPolygon,
+} from "./KakaoBaseMap";
 
 type Position = [number, number];
 type LinearRing = Position[];
@@ -63,10 +66,13 @@ interface LoadedSpatialLayer {
 
 type LoadedLayerMap = Partial<Record<SpatialLayerId, LoadedSpatialLayer>>;
 
-interface HitTestFeature {
+interface SelectedReferenceFeature {
   layerId: SpatialLayerId;
   featureIndex: number;
   feature: ViewerFeature;
+}
+
+interface HitTestFeature extends SelectedReferenceFeature {
   path: Path2D;
   minimumX: number;
   minimumY: number;
@@ -91,6 +97,7 @@ const PAN_DRAG_THRESHOLD_PX = 5;
 const MIN_MAP_ZOOM = 1;
 const MAX_MAP_ZOOM = 8;
 const WHEEL_ZOOM_FACTOR = 1.2;
+const RENDER_LEGACY_CANVAS = false;
 
 interface CrosswalkCandidate {
   referenceId: string;
@@ -549,9 +556,9 @@ export default function MarketSpatialViewer({
   const [isPanning, setIsPanning] = useState(false);
   const [renderDurationMs, setRenderDurationMs] = useState<number | null>(null);
   const [hitTestDurationMs, setHitTestDurationMs] = useState<number | null>(null);
-  const [selectedReferences, setSelectedReferences] = useState<HitTestFeature[]>(
-    [],
-  );
+  const [selectedReferences, setSelectedReferences] = useState<
+    SelectedReferenceFeature[]
+  >([]);
   const [selectedReferenceIndex, setSelectedReferenceIndex] = useState(0);
   const [crosswalk, setCrosswalk] = useState<MarketCrosswalkResponse | null>(null);
   const [crosswalkLoading, setCrosswalkLoading] = useState(false);
@@ -1175,6 +1182,59 @@ export default function MarketSpatialViewer({
     /^\d+$/.test(selectedReferenceId)
       ? selectedReferenceId
       : null;
+  const officialMarketLayer = loadedLayers["seoul-official-markets"];
+  const kakaoOfficialMarketPolygons = useMemo(() => {
+    if (!officialMarketLayer || !crosswalk) {
+      return [];
+    }
+
+    const candidateIds = new Set(
+      crosswalk.officialMarketCandidates.map(
+        (candidate) => candidate.referenceId,
+      ),
+    );
+    if (candidateIds.size === 0) {
+      return [];
+    }
+
+    const polygons: KakaoOfficialMarketPolygon[] = [];
+    officialMarketLayer.collection.features.forEach((feature, featureIndex) => {
+      const officialMarketCode = referenceIdForFeature(
+        "seoul-official-markets",
+        feature,
+      );
+      if (!candidateIds.has(officialMarketCode)) {
+        return;
+      }
+
+      polygons.push({
+        featureIndex,
+        officialMarketCode,
+        geometry: feature.geometry,
+      });
+    });
+    return polygons;
+  }, [crosswalk, officialMarketLayer]);
+
+  const handleKakaoOfficialMarketSelect = useCallback(
+    (featureIndex: number) => {
+      const feature = officialMarketLayer?.collection.features[featureIndex];
+      if (!feature) {
+        return;
+      }
+
+      setSelectedReferences([
+        {
+          layerId: "seoul-official-markets",
+          featureIndex,
+          feature,
+        },
+      ]);
+      setSelectedReferenceIndex(0);
+      setHitTestDurationMs(null);
+    },
+    [officialMarketLayer],
+  );
 
   useEffect(() => {
     bakeryDataControllerRef.current?.abort();
@@ -1531,7 +1591,35 @@ export default function MarketSpatialViewer({
             </div>
           ) : null}
 
-          <div
+          <section className="overflow-hidden rounded-xl border border-slate-300 bg-white">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div>
+                <p className="text-xs font-bold text-slate-950">
+                  Kakao 기본 지도
+                </p>
+                <p className="mt-1 text-[11px] text-slate-500">
+                  서울 중심 · 드래그 이동 · 휠 확대/축소
+                </p>
+              </div>
+              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">
+                {crosswalkLoading ||
+                loadingLayerIds.has("seoul-official-markets")
+                  ? "후보 경계 준비 중…"
+                  : `공식상권 검토 후보 ${kakaoOfficialMarketPolygons.length}개`}
+              </span>
+            </div>
+            <KakaoBaseMap
+              officialMarketPolygons={kakaoOfficialMarketPolygons}
+              selectedOfficialMarketCode={selectedOfficialMarketCode}
+              onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
+            />
+            <p className="border-t border-slate-200 px-4 py-2.5 text-[10px] leading-4 text-slate-500">
+              현재 선택한 FRAMEONE 주요상권의 공식상권 검토 후보만 표시합니다. 검토 후보는 확정 연결이 아닙니다.
+            </p>
+          </section>
+
+          {RENDER_LEGACY_CANVAS ? (
+            <div
             ref={canvasContainerRef}
             className="relative min-h-[380px] w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-50 lg:min-h-[620px]"
           >
@@ -1606,7 +1694,8 @@ export default function MarketSpatialViewer({
                 </div>
               </div>
             ) : null}
-          </div>
+            </div>
+          ) : null}
 
           <section
             aria-label="선택 상권 정보"
