@@ -256,6 +256,7 @@ export default function KakaoBaseMap({
   const circleRef = useRef<KakaoCircleInstance | null>(null);
   const infoWindowRef = useRef<KakaoInfoWindowInstance | null>(null);
   const nearbySearchControllerRef = useRef<AbortController | null>(null);
+  const ignoreNextMapClickRef = useRef(false);
   const mapKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY?.trim() ?? "";
   const [status, setStatus] = useState<KakaoMapStatus>(
     mapKey ? "loading" : "error",
@@ -350,8 +351,13 @@ export default function KakaoBaseMap({
           fillColor: selected ? "#f59e0b" : "#2563eb",
           fillOpacity: selected ? 0.32 : 0.16,
         });
-        const clickHandler = () =>
+        const clickHandler = () => {
+          ignoreNextMapClickRef.current = true;
           onSelectOfficialMarket(feature.featureIndex);
+          window.setTimeout(() => {
+            ignoreNextMapClickRef.current = false;
+          }, 0);
+        };
         kakaoMaps.event.addListener(polygon, "click", clickHandler);
         overlays.push({ polygon, clickHandler });
       }
@@ -408,6 +414,11 @@ export default function KakaoBaseMap({
     }
 
     const handleMapClick = (event: KakaoMouseEvent) => {
+      if (ignoreNextMapClickRef.current) {
+        ignoreNextMapClickRef.current = false;
+        return;
+      }
+
       setSelectedPoint({
         latitude: event.latLng.getLat(),
         longitude: event.latLng.getLng(),
