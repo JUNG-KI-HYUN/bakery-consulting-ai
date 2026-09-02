@@ -12,7 +12,6 @@ import {
 type KakaoMapStatus = "loading" | "ready" | "error";
 type NearbySearchStatus = "idle" | "loading" | "success" | "error";
 type NearbyCategoryId = "bakery" | "confectionery" | "cafe";
-type SearchMethod = "keyword" | "category";
 type RadiusM = 300 | 500;
 
 export type KakaoPolygonPosition = [number, number];
@@ -65,42 +64,6 @@ interface KakaoInfoWindowInstance {
   setContent(content: Node | string): void;
 }
 
-interface KakaoPlaceDocument {
-  id?: string;
-  place_name?: string;
-  category_name?: string;
-  address_name?: string;
-  road_address_name?: string;
-  x?: string;
-  y?: string;
-  distance?: string;
-}
-
-interface KakaoPlacesSearchOptions {
-  location: KakaoLatLng;
-  radius: number;
-  size: number;
-  sort: unknown;
-}
-
-type KakaoPlacesSearchCallback = (
-  result: KakaoPlaceDocument[],
-  status: string,
-) => void;
-
-interface KakaoPlacesService {
-  categorySearch(
-    code: string,
-    callback: KakaoPlacesSearchCallback,
-    options: KakaoPlacesSearchOptions,
-  ): void;
-  keywordSearch(
-    keyword: string,
-    callback: KakaoPlacesSearchCallback,
-    options: KakaoPlacesSearchOptions,
-  ): void;
-}
-
 interface KakaoMapsApi {
   load(callback: () => void): void;
   LatLng: new (latitude: number, longitude: number) => KakaoLatLng;
@@ -136,11 +99,6 @@ interface KakaoMapsApi {
     removable?: boolean;
     zIndex?: number;
   }) => KakaoInfoWindowInstance;
-  services?: {
-    Places: new () => KakaoPlacesService;
-    SortBy: { DISTANCE: unknown };
-    Status: { ERROR: string; OK: string; ZERO_RESULT: string };
-  };
   event: {
     addListener(target: object, type: string, handler: () => void): void;
     removeListener(target: object, type: string, handler: () => void): void;
@@ -161,8 +119,6 @@ const SEOUL_CENTER = {
 interface NearbyCategoryDefinition {
   id: NearbyCategoryId;
   label: string;
-  searchMethod: SearchMethod;
-  searchValue: string;
 }
 
 interface NearbyPlace {
@@ -176,8 +132,24 @@ interface NearbyPlace {
   distanceM: number;
 }
 
-type NearbyPlacesByCategory = Record<NearbyCategoryId, NearbyPlace[]>;
+interface NearbyCategoryResult {
+  totalCount: number;
+  places: NearbyPlace[];
+  error?: string;
+}
+
+type NearbyPlacesByCategory = Record<NearbyCategoryId, NearbyCategoryResult>;
 type EnabledCategories = Record<NearbyCategoryId, boolean>;
+
+interface NearbyPlacesResponse {
+  categories?: Array<{
+    id: NearbyCategoryId;
+    totalCount: number;
+    places: NearbyPlace[];
+    error?: string;
+  }>;
+  message?: string;
+}
 
 const DEFAULT_RADIUS_M: RadiusM = 500;
 const MAX_PER_CATEGORY = 15;
@@ -185,28 +157,22 @@ const NEARBY_CATEGORIES: readonly NearbyCategoryDefinition[] = [
   {
     id: "bakery",
     label: "베이커리",
-    searchMethod: "keyword",
-    searchValue: "베이커리",
   },
   {
     id: "confectionery",
     label: "제과점",
-    searchMethod: "keyword",
-    searchValue: "제과점",
   },
   {
     id: "cafe",
     label: "카페",
-    searchMethod: "category",
-    searchValue: "CE7",
   },
 ];
 
 function emptyNearbyPlaces(): NearbyPlacesByCategory {
   return {
-    bakery: [],
-    confectionery: [],
-    cafe: [],
+    bakery: { totalCount: 0, places: [] },
+    confectionery: { totalCount: 0, places: [] },
+    cafe: { totalCount: 0, places: [] },
   };
 }
 
@@ -228,113 +194,6 @@ function kakaoPathForPolygon(
   );
 
   return rings.length === 1 ? rings[0] : rings;
-}
-
-function distanceInMeters(
-  first: { latitude: number; longitude: number },
-  second: { latitude: number; longitude: number },
-) {
-  const toRadians = (value: number) => (value * Math.PI) / 180;
-  const latitudeDelta = toRadians(second.latitude - first.latitude);
-  const longitudeDelta = toRadians(second.longitude - first.longitude);
-  const firstLatitude = toRadians(first.latitude);
-  const secondLatitude = toRadians(second.latitude);
-  const haversine =
-    Math.sin(latitudeDelta / 2) ** 2 +
-    Math.cos(firstLatitude) *
-      Math.cos(secondLatitude) *
-      Math.sin(longitudeDelta / 2) ** 2;
-
-  return Math.round(
-    6_371_000 * 2 * Math.atan2(Math.sqrt(haversine), Math.sqrt(1 - haversine)),
-  );
-}
-
-function mapPlaceDocument(
-  document: KakaoPlaceDocument,
-  category: NearbyCategoryDefinition,
-  center: { latitude: number; longitude: number },
-): NearbyPlace | null {
-  const name = document.place_name?.trim();
-  const latitude = Number(document.y);
-  const longitude = Number(document.x);
-
-  if (!name || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    return null;
-  }
-
-  const rawDistance = Number(document.distance);
-  const distanceM = Number.isFinite(rawDistance)
-    ? Math.round(rawDistance)
-    : distanceInMeters(center, { latitude, longitude });
-
-  return {
-    id:
-      document.id?.trim() ||
-      `${category.id}|${name}|${latitude}|${longitude}`,
-    name,
-    categoryId: category.id,
-    categoryLabel: category.label,
-    address:
-      document.road_address_name?.trim() ||
-      document.address_name?.trim() ||
-      "주소 정보 없음",
-    latitude,
-    longitude,
-    distanceM,
-  };
-}
-
-function searchNearbyCategory(
-  kakaoMaps: KakaoMapsApi,
-  category: NearbyCategoryDefinition,
-  center: { latitude: number; longitude: number },
-  radiusM: RadiusM,
-) {
-  return new Promise<NearbyPlace[]>((resolve, reject) => {
-    const services = kakaoMaps.services;
-    if (!services) {
-      reject(new Error("Kakao 장소검색 서비스를 준비하지 못했습니다."));
-      return;
-    }
-
-    const places = new services.Places();
-    const location = new kakaoMaps.LatLng(center.latitude, center.longitude);
-    const callback: KakaoPlacesSearchCallback = (documents, status) => {
-      if (status === services.Status.ZERO_RESULT) {
-        resolve([]);
-        return;
-      }
-      if (status !== services.Status.OK) {
-        reject(new Error(`${category.label} 검색에 실패했습니다.`));
-        return;
-      }
-
-      const seen = new Set<string>();
-      const results: NearbyPlace[] = [];
-      for (const document of documents.slice(0, MAX_PER_CATEGORY)) {
-        const place = mapPlaceDocument(document, category, center);
-        if (!place || seen.has(place.id)) {
-          continue;
-        }
-        seen.add(place.id);
-        results.push(place);
-      }
-      resolve(results);
-    };
-    const options: KakaoPlacesSearchOptions = {
-      location,
-      radius: radiusM,
-      size: MAX_PER_CATEGORY,
-      sort: services.SortBy.DISTANCE,
-    };
-
-    if (category.searchMethod === "category") {
-      places.categorySearch(category.searchValue, callback, options);
-    } else {
-      places.keywordSearch(category.searchValue, callback, options);
-    }
-  });
 }
 
 function formatDistance(distanceM: number) {
@@ -386,7 +245,7 @@ export default function KakaoBaseMap({
   const mapInstanceRef = useRef<KakaoMapInstance | null>(null);
   const circleRef = useRef<KakaoCircleInstance | null>(null);
   const infoWindowRef = useRef<KakaoInfoWindowInstance | null>(null);
-  const searchRequestIdRef = useRef(0);
+  const nearbySearchControllerRef = useRef<AbortController | null>(null);
   const mapKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY?.trim() ?? "";
   const [status, setStatus] = useState<KakaoMapStatus>(
     mapKey ? "loading" : "error",
@@ -419,7 +278,7 @@ export default function KakaoBaseMap({
         (total, category) =>
           total +
           (enabledCategories[category.id]
-            ? nearbyPlaces[category.id].length
+            ? nearbyPlaces[category.id].places.length
             : 0),
         0,
       ),
@@ -451,12 +310,6 @@ export default function KakaoBaseMap({
       });
       setStatus("ready");
       setErrorMessage("");
-      if (!kakaoMaps.services) {
-        setNearbySearchStatus("error");
-        setNearbySearchError(
-          "Kakao 장소검색 서비스를 준비하지 못했습니다. 지도는 계속 사용할 수 있습니다.",
-        );
-      }
     });
   }, []);
 
@@ -553,72 +406,77 @@ export default function KakaoBaseMap({
   }, [radiusM, status]);
 
   useEffect(() => {
-    const kakaoMaps = (window as KakaoWindow).kakao?.maps;
-    if (
-      status !== "ready" ||
-      !kakaoMaps ||
-      !mapInstanceRef.current ||
-      !kakaoMaps.services
-    ) {
+    if (status !== "ready" || !mapInstanceRef.current) {
       return;
     }
 
-    const requestId = ++searchRequestIdRef.current;
-    let cancelled = false;
+    nearbySearchControllerRef.current?.abort();
+    const controller = new AbortController();
+    nearbySearchControllerRef.current = controller;
     setNearbySearchStatus("loading");
     setNearbySearchError("");
     setNearbyPlaces(emptyNearbyPlaces());
     setSelectedNearbyPlace(null);
     infoWindowRef.current?.close();
 
-    void Promise.all(
-      NEARBY_CATEGORIES.map(async (category) => {
-        try {
-          const places = await searchNearbyCategory(
-            kakaoMaps,
-            category,
-            searchCenter,
-            radiusM,
-          );
-          return { category, places, error: null };
-        } catch (error) {
-          return {
-            category,
-            places: [],
-            error:
-              error instanceof Error
-                ? error.message
-                : `${category.label} 검색에 실패했습니다.`,
+    const searchParams = new URLSearchParams({
+      lat: String(searchCenter.latitude),
+      lng: String(searchCenter.longitude),
+      radius: String(radiusM),
+    });
+    void fetch(`/api/markets/nearby-places?${searchParams}`, {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const payload = (await response.json()) as NearbyPlacesResponse;
+        if (!response.ok) {
+          throw new Error(payload.message ?? "주변 장소를 불러오지 못했습니다.");
+        }
+        return payload;
+      })
+      .then((payload) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const nextPlaces = emptyNearbyPlaces();
+        const errors: string[] = [];
+        for (const result of payload.categories ?? []) {
+          nextPlaces[result.id] = {
+            totalCount: result.totalCount,
+            places: result.places,
+            ...(result.error ? { error: result.error } : {}),
           };
+          if (result.error) {
+            errors.push(result.error);
+          }
         }
-      }),
-    ).then((results) => {
-      if (cancelled || requestId !== searchRequestIdRef.current) {
-        return;
-      }
 
-      const nextPlaces = emptyNearbyPlaces();
-      const errors: string[] = [];
-      for (const result of results) {
-        nextPlaces[result.category.id] = result.places;
-        if (result.error) {
-          errors.push(result.error);
+        setNearbyPlaces(nextPlaces);
+        if (errors.length > 0) {
+          setNearbySearchStatus("error");
+          setNearbySearchError(
+            `${errors.join(" ")} 지도 이동·확대/축소는 계속 사용할 수 있습니다.`,
+          );
+        } else {
+          setNearbySearchStatus("success");
         }
-      }
-
-      setNearbyPlaces(nextPlaces);
-      if (errors.length > 0) {
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) {
+          return;
+        }
         setNearbySearchStatus("error");
         setNearbySearchError(
-          `${errors.join(" ")} 지도 이동·확대/축소는 계속 사용할 수 있습니다.`,
+          `${error instanceof Error ? error.message : "주변 장소를 불러오지 못했습니다."} 지도 이동·확대/축소는 계속 사용할 수 있습니다.`,
         );
-      } else {
-        setNearbySearchStatus("success");
-      }
-    });
+      });
 
     return () => {
-      cancelled = true;
+      controller.abort();
+      if (nearbySearchControllerRef.current === controller) {
+        nearbySearchControllerRef.current = null;
+      }
     };
   }, [radiusM, searchCenter, searchRevision, status]);
 
@@ -643,7 +501,7 @@ export default function KakaoBaseMap({
         continue;
       }
 
-      for (const place of nearbyPlaces[category.id]) {
+      for (const place of nearbyPlaces[category.id].places) {
         const marker = new kakaoMaps.Marker({
           map,
           position: new kakaoMaps.LatLng(place.latitude, place.longitude),
@@ -785,7 +643,7 @@ export default function KakaoBaseMap({
         {mapKey ? (
           <Script
             id="kakao-map-sdk"
-            src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(mapKey)}&autoload=false&libraries=services`}
+            src={`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(mapKey)}&autoload=false`}
             strategy="afterInteractive"
             onReady={initializeMap}
             onError={() => {
@@ -806,7 +664,7 @@ export default function KakaoBaseMap({
               주변 장소
             </h3>
             <p className="mt-1 text-[11px] leading-4 text-slate-500">
-              카카오 지도 검색 기준 · 지도 중심 {radiusM}m · 업종별 최대 {MAX_PER_CATEGORY}곳 표시
+              카카오 지도 검색 기준 / 최대 {MAX_PER_CATEGORY}개 표시 · 지도 중심 {radiusM}m
             </p>
           </div>
           <span
@@ -844,7 +702,8 @@ export default function KakaoBaseMap({
 
         <div className="mt-3 grid gap-3 lg:grid-cols-3">
           {NEARBY_CATEGORIES.map((category) => {
-            const places = nearbyPlaces[category.id];
+            const result = nearbyPlaces[category.id];
+            const places = result.places;
             const enabled = enabledCategories[category.id];
             return (
               <article
@@ -860,7 +719,7 @@ export default function KakaoBaseMap({
                     {category.label}
                   </h4>
                   <span className="text-[10px] font-bold text-slate-500">
-                    {places.length}곳 {enabled ? "표시" : "숨김"}
+                    검색 결과 {result.totalCount}곳 / 지도 표시 {places.length}곳 (최대 {MAX_PER_CATEGORY}곳)
                   </span>
                 </div>
                 {places.length > 0 ? (
