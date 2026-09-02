@@ -142,7 +142,12 @@ const BAKERY_PRIMARY_KPIS: readonly BakeryMetricDefinition[] = [
     label: "유사업종 점포 수",
     suffix: "개",
   },
-  { source: "stores", metric: "store_count", label: "점포 수", suffix: "개" },
+  {
+    source: "stores",
+    metric: "store_count",
+    label: "점포 수",
+    suffix: "개",
+  },
   {
     source: "stores",
     metric: "franchise_store_count",
@@ -151,20 +156,22 @@ const BAKERY_PRIMARY_KPIS: readonly BakeryMetricDefinition[] = [
   },
 ];
 
-const BAKERY_OPEN_CLOSE_KPIS: readonly BakeryMetricDefinition[] = [
-  { source: "stores", metric: "opening_rate", label: "개업률", suffix: "%" },
+interface BakeryOpenCloseDefinition {
+  label: string;
+  countMetric: MarketDataMetric;
+  rateMetric: MarketDataMetric;
+}
+
+const BAKERY_OPEN_CLOSE_ROWS: readonly BakeryOpenCloseDefinition[] = [
   {
-    source: "stores",
-    metric: "opening_store_count",
-    label: "개업 점포 수",
-    suffix: "개",
+    label: "신규 개업",
+    countMetric: "opening_store_count",
+    rateMetric: "opening_rate",
   },
-  { source: "stores", metric: "closing_rate", label: "폐업률", suffix: "%" },
   {
-    source: "stores",
-    metric: "closing_store_count",
-    label: "폐업 점포 수",
-    suffix: "개",
+    label: "폐업",
+    countMetric: "closing_store_count",
+    rateMetric: "closing_rate",
   },
 ];
 
@@ -326,8 +333,21 @@ function mergeBounds(layers: LoadedSpatialLayer[]): Bounds | null {
 
 function layerStatusLabel(layer: SpatialLayerDefinition) {
   return layer.geometryAvailable
-    ? "지도 경계 확인됨"
-    : "지도 경계 확인 필요";
+    ? "지도 표시 가능"
+    : "지도 경계 미확정";
+}
+
+function staffLayerLabel(layer: SpatialLayerDefinition) {
+  const labels: Record<SpatialLayerId, string> = {
+    "frameone-markets": "FRAMEONE 분석지역",
+    "frameone-submarkets": "FRAMEONE 세부지역",
+    "frameone-nodes": "현장 확인지점",
+    "seoul-official-markets": "서울시 공식상권",
+    "seoul-admin-dongs": "행정동",
+    "seoul-living-grid-250m": "생활인구 격자",
+  };
+
+  return labels[layer.layerId];
 }
 
 function formatMilliseconds(value: number | null) {
@@ -477,6 +497,11 @@ function bakeryDataStatusLabel(
     return "일부 데이터 없음";
   }
   return "데이터 없음";
+}
+
+function formatReferenceQuarter(referencePeriod: string) {
+  const match = /^(\d{4})-Q([1-4])$/.exec(referencePeriod);
+  return match ? `${match[1]}년 ${match[2]}분기` : referencePeriod;
 }
 
 function InspectorField({ label, value }: { label: string; value: string }) {
@@ -680,7 +705,13 @@ export default function MarketSpatialViewer({
 
     const updateSize = () => {
       const width = Math.max(280, Math.floor(container.clientWidth));
-      const height = Math.max(380, Math.min(720, Math.round(width * 0.68)));
+      const height =
+        width >= 960
+          ? Math.max(
+              620,
+              Math.min(850, Math.round(window.innerHeight * 0.68)),
+            )
+          : Math.max(380, Math.min(620, Math.round(width * 0.75)));
       setCanvasSize((current) =>
         current.width === width && current.height === height
           ? current
@@ -691,7 +722,11 @@ export default function MarketSpatialViewer({
     updateSize();
     const observer = new ResizeObserver(updateSize);
     observer.observe(container);
-    return () => observer.disconnect();
+    window.addEventListener("resize", updateSize);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateSize);
+    };
   }, []);
 
   useEffect(() => {
@@ -1260,21 +1295,24 @@ export default function MarketSpatialViewer({
         </div>
       </div>
 
-      <div className="grid gap-5 p-4 md:p-6 xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside aria-label="지도 표시 설정">
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+      <div className="space-y-3 p-4 md:p-6">
+        <details className="rounded-xl border border-slate-200 bg-slate-50/80">
+          <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap">
+            <span>
+              <span className="block text-xs font-bold text-slate-900">
                 지도 표시 설정
-              </p>
-              <h3 className="mt-1 text-base font-bold text-slate-950">지도 항목 선택</h3>
-            </div>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">
-              표시 {renderableLayers.length}개
+              </span>
+              <span className="mt-0.5 block text-[11px] text-slate-500">
+                서울시 공식상권을 기본 표시합니다. 필요한 지도만 추가로 켜세요.
+              </span>
             </span>
-          </div>
+            <span className="shrink-0 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-slate-600 shadow-sm">
+              표시 {renderableLayers.length}개 · 설정
+            </span>
+          </summary>
 
-          <ul className="space-y-2">
+          <div className="border-t border-slate-200 p-3">
+            <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
             {SPATIAL_LAYER_REGISTRY.map((layer) => {
               const isVisible = visibleLayerIds.has(layer.layerId);
               const isLoading = loadingLayerIds.has(layer.layerId);
@@ -1301,7 +1339,7 @@ export default function MarketSpatialViewer({
                     <span className="min-w-0 flex-1">
                       <span className="flex items-start justify-between gap-2">
                         <span className="text-sm font-bold text-slate-950">
-                          {layer.label}
+                          {staffLayerLabel(layer)}
                         </span>
                         <span
                           aria-hidden="true"
@@ -1316,7 +1354,7 @@ export default function MarketSpatialViewer({
                       </span>
                       <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">
                         {layer.category === "frameone"
-                          ? "FRAMEONE 상권체계"
+                          ? "FRAMEONE 기준정보"
                           : "서울시 제공 지도"} · {layer.featureCount.toLocaleString("ko-KR")}개
                       </span>
                     </span>
@@ -1366,7 +1404,7 @@ export default function MarketSpatialViewer({
 
                   {!layer.geometryAvailable ? (
                     <p className="mt-2 rounded-lg bg-white/80 px-2.5 py-2 text-[10px] font-semibold text-amber-800">
-                      경계 확인 필요 · 지도 렌더링 비활성
+                      지도 경계 미확정 · 지도 표시 보류
                     </p>
                   ) : null}
                   {isLoading ? (
@@ -1394,8 +1432,9 @@ export default function MarketSpatialViewer({
                 </li>
               );
             })}
-          </ul>
-        </aside>
+            </ul>
+          </div>
+        </details>
 
         <div className="min-w-0 space-y-3">
           {selectedMarket ? (
@@ -1409,9 +1448,17 @@ export default function MarketSpatialViewer({
                     {selectedMarket.marketName}
                   </p>
                 </div>
-                <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[10px] font-bold text-amber-800">
-                  지도 경계 확인 필요
-                </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <a
+                    href="#frameone-market-selector"
+                    className="rounded-full border border-slate-300 bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50"
+                  >
+                    분석지역 바꾸기
+                  </a>
+                  <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-[10px] font-bold text-amber-800">
+                    지도 경계 미확정
+                  </span>
+                </div>
               </div>
               <p className="mt-2 text-xs leading-5 text-amber-900">
                 세부상권 {selectedMarket.submarketCount}개 · 현장 확인 지점 {selectedMarket.nodeCount}개
@@ -1486,7 +1533,7 @@ export default function MarketSpatialViewer({
 
           <div
             ref={canvasContainerRef}
-            className="relative min-h-80 w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-50"
+            className="relative min-h-[380px] w-full overflow-hidden rounded-xl border border-slate-300 bg-slate-50 lg:min-h-[620px]"
           >
             <canvas
               ref={canvasRef}
@@ -1622,7 +1669,9 @@ export default function MarketSpatialViewer({
                             }`}
                           >
                             <span className="block font-bold">
-                              {layer?.label ?? reference.layerId}
+                              {layer
+                                ? staffLayerLabel(layer)
+                                : reference.layerId}
                             </span>
                             <span className="mt-0.5 block font-mono opacity-75">
                               {referenceId}
@@ -1656,7 +1705,7 @@ export default function MarketSpatialViewer({
                       <dl className="mt-3">
                         <InspectorField
                           label="지도 항목"
-                          value={selectedReferenceLayer.label}
+                          value={staffLayerLabel(selectedReferenceLayer)}
                         />
                         <InspectorField
                           label="선택 코드"
@@ -1859,13 +1908,13 @@ export default function MarketSpatialViewer({
 
                     {isOfficialMarketReference ? (
                       <article
-                        aria-label="서울시 공식상권 제과점 실데이터"
+                        aria-label="서울시 공식상권 제과점 현황"
                         className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 lg:col-span-2"
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
-                              서울시 공식상권 제과점 통계
+                              선택한 공식상권의 제과점 현황
                             </p>
                             <h4 className="mt-1 text-sm font-bold text-slate-950">
                               {referenceNameForFeature(
@@ -1873,9 +1922,17 @@ export default function MarketSpatialViewer({
                                 selectedReference.feature,
                               )}
                             </h4>
-                            <p className="mt-0.5 font-mono text-[10px] text-slate-500">
-                              공식상권 코드 {selectedReferenceId ?? "정보 없음"}
+                            <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                              서울시 공식상권
                             </p>
+                            <details className="mt-1 text-[10px] text-slate-500">
+                              <summary className="cursor-pointer font-bold">
+                                데이터 상세정보
+                              </summary>
+                              <p className="mt-1 font-mono">
+                                공식상권 코드 {selectedReferenceId ?? "정보 없음"}
+                              </p>
+                            </details>
                           </div>
                           <button
                             type="button"
@@ -1888,7 +1945,7 @@ export default function MarketSpatialViewer({
                           >
                             {bakeryDataStatus === "loading"
                               ? "제과점 데이터 조회 중..."
-                              : "제과점 실데이터 조회"}
+                              : "제과점 데이터 확인"}
                           </button>
                         </div>
 
@@ -1936,22 +1993,21 @@ export default function MarketSpatialViewer({
                                 <p className="mt-1 text-base font-bold text-slate-950">
                                   {bakeryData.officialMarketName ?? "상권명 정보 없음"}
                                 </p>
-                                <p className="mt-0.5 font-mono text-[10px] text-slate-500">
-                                  {bakeryData.officialMarketCode}
+                                <p className="mt-1 text-xs font-semibold text-emerald-800">
+                                  {formatReferenceQuarter(
+                                    bakeryData.referencePeriod,
+                                  )} 기준
                                 </p>
+                                <details className="mt-1 text-[10px] text-slate-500">
+                                  <summary className="cursor-pointer font-bold">
+                                    데이터 상세정보
+                                  </summary>
+                                  <p className="mt-1 font-mono">
+                                    공식상권 코드 {bakeryData.officialMarketCode} · 내부 분기코드 {bakeryData.quarterCode}
+                                  </p>
+                                </details>
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <div className="rounded-xl bg-emerald-700 px-4 py-2 text-white">
-                                  <p className="text-[10px] font-bold text-emerald-100">
-                                    기준분기
-                                  </p>
-                                  <p className="mt-0.5 text-base font-bold">
-                                    {bakeryData.referencePeriod}
-                                  </p>
-                                  <p className="text-[10px] text-emerald-100">
-                                    {bakeryData.quarterCode}
-                                  </p>
-                                </div>
                                 <span
                                   className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                                     bakeryData.dataStatus === "available"
@@ -2000,10 +2056,10 @@ export default function MarketSpatialViewer({
                                         {definition.label}
                                       </dt>
                                       <dd
-                                        className={`mt-2 break-words font-bold ${
+                                        className={`mt-2 whitespace-nowrap font-bold tabular-nums ${
                                           missing
                                             ? "text-sm text-slate-500"
-                                            : "text-lg text-slate-950"
+                                            : "text-base text-slate-950 2xl:text-lg"
                                         }`}
                                       >
                                         {formatBakeryMetric(
@@ -2015,55 +2071,66 @@ export default function MarketSpatialViewer({
                                   );
                                 })}
                               </dl>
+                              <p className="mt-2 text-[10px] leading-4 text-slate-500">
+                                점포 수 3종은 서울시가 각각 제공한 값입니다. 화면에서 값 사이의 포함관계를 임의로 판단하지 않습니다.
+                              </p>
                             </section>
 
                             <section>
-                              <h5 className="text-xs font-bold text-slate-900">
-                                개폐업 현황
-                              </h5>
-                              <dl className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                                {BAKERY_OPEN_CLOSE_KPIS.map((definition) => {
-                                  const observation = bakeryObservationForMetric(
-                                    bakeryData,
-                                    definition,
-                                  );
-                                  const missing =
-                                    !observation ||
-                                    observation.value === null ||
-                                    observation.dataStatus !== "available";
+                              <div className="flex flex-wrap items-end justify-between gap-2">
+                                <h5 className="text-xs font-bold text-slate-900">
+                                  최근 개·폐업 현황
+                                </h5>
+                                <p className="text-[10px] font-semibold text-slate-500">
+                                  {formatReferenceQuarter(
+                                    bakeryData.referencePeriod,
+                                  )} 기준
+                                </p>
+                              </div>
+                              <div className="mt-2 overflow-hidden rounded-xl border border-emerald-100 bg-white">
+                                <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-2 bg-emerald-50 px-3 py-2 text-[10px] font-bold text-emerald-800 sm:gap-4 sm:px-4">
+                                  <span>구분</span>
+                                  <span className="text-right sm:min-w-20">점포 수</span>
+                                  <span className="text-right sm:min-w-16">비율</span>
+                                </div>
+                                <dl className="divide-y divide-emerald-100">
+                                  {BAKERY_OPEN_CLOSE_ROWS.map((definition) => {
+                                    const countObservation = bakeryData.stores.find(
+                                      (item) => item.metric === definition.countMetric,
+                                    );
+                                    const rateObservation = bakeryData.stores.find(
+                                      (item) => item.metric === definition.rateMetric,
+                                    );
 
-                                  return (
-                                    <div
-                                      key={definition.metric}
-                                      className={`rounded-xl border p-3 ${
-                                        missing
-                                          ? "border-slate-200 bg-slate-50"
-                                          : "border-emerald-100 bg-emerald-50/60"
-                                      }`}
-                                    >
-                                      <dt className="text-[10px] font-bold text-slate-500">
-                                        {definition.label}
-                                      </dt>
-                                      <dd
-                                        className={`mt-2 font-bold ${
-                                          missing
-                                            ? "text-sm text-slate-500"
-                                            : "text-lg text-slate-950"
-                                        }`}
+                                    return (
+                                      <div
+                                        key={definition.label}
+                                        className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 px-3 py-3 sm:gap-4 sm:px-4"
                                       >
-                                        {formatBakeryMetric(
-                                          observation,
-                                          definition.suffix,
-                                        )}
-                                      </dd>
-                                    </div>
-                                  );
-                                })}
-                              </dl>
+                                        <dt className="text-xs font-bold text-slate-800">
+                                          {definition.label}
+                                        </dt>
+                                        <dd className="whitespace-nowrap text-right text-[11px] font-bold tabular-nums text-slate-950 sm:min-w-20 sm:text-sm">
+                                          {formatBakeryMetric(
+                                            countObservation,
+                                            "개",
+                                          )}
+                                        </dd>
+                                        <dd className="whitespace-nowrap text-right text-[11px] font-bold tabular-nums text-slate-950 sm:min-w-16 sm:text-sm">
+                                          {formatBakeryMetric(
+                                            rateObservation,
+                                            "%",
+                                          )}
+                                        </dd>
+                                      </div>
+                                    );
+                                  })}
+                                </dl>
+                              </div>
                             </section>
 
                             <p className="border-t border-emerald-100 pt-3 text-[10px] leading-5 text-slate-500">
-                              서울시 공식상권 기준 통계이며 실제 후보 점포의 예상매출을 의미하지 않습니다.
+                              이 데이터는 해당 서울시 공식상권 전체의 제과점 통계이며 후보점포의 예상매출이 아닙니다.
                               <br />
                               데이터 기준분기를 확인하여 참고자료로 사용합니다.
                             </p>

@@ -234,7 +234,7 @@ export default function MarketsExplorer({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1600px] -translate-x-1/2 space-y-6 overflow-x-clip">
       <section className="panel-card overflow-hidden bg-gradient-to-br from-white via-white to-[#FFF7ED]">
         <div className="grid gap-6 p-6 lg:grid-cols-[1.35fr_1fr] lg:items-end">
           <div>
@@ -276,13 +276,46 @@ export default function MarketsExplorer({
         </div>
       </section>
 
+      <nav
+        aria-label="상권분석 사용 순서"
+        className="panel-card px-4 py-3 md:px-5"
+      >
+        <ol className="grid gap-2 text-xs font-bold text-slate-700 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
+          {[
+            ["1", "FRAMEONE 분석지역 선택"],
+            ["2", "지도에서 서울시 공식상권 클릭"],
+            ["3", "제과점 실데이터 확인"],
+          ].map(([step, label], index) => (
+            <li key={step} className="contents">
+              <span className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-900 text-[11px] text-white">
+                  {step}
+                </span>
+                {label}
+              </span>
+              {index < 2 ? (
+                <span
+                  aria-hidden="true"
+                  className="hidden text-center text-slate-300 md:block"
+                >
+                  →
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ol>
+      </nav>
+
       <MarketSpatialViewer
         selectedMarket={selectedMarketSpatialSummary}
         selectedSubmarket={selectedSubmarketSpatialSummary}
       />
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.4fr)]">
-        <aside className="panel-card overflow-hidden lg:sticky lg:top-6">
+        <aside
+          id="frameone-market-selector"
+          className="panel-card overflow-hidden lg:sticky lg:top-6"
+        >
           <div className="border-b border-slate-200 p-4">
             <label
               htmlFor="market-search"
