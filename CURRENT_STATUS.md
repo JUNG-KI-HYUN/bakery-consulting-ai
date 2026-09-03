@@ -1,6 +1,6 @@
 # CURRENT STATUS
 
-Last updated: 2026-09-02
+Last updated: 2026-09-03
 
 ## 1. Current Branch
 
@@ -8,301 +8,421 @@ Last updated: 2026-09-02
 
 ## 2. Latest Checkpoint
 
-`6d26c7d feat: refine markets staff workspace`
+Current HEAD:
 
-주의:
-위 커밋 이후 Kakao Map 전환 작업이 working tree에 추가되어 있으며
-아직 commit / push / merge 하지 않았다.
+`5366666 docs: add FRAMEONE development rules and research`
 
-현재 작업 중인 주요 파일:
-- `app/markets/KakaoBaseMap.tsx`
-- `app/markets/MarketSpatialViewer.tsx`
+Recent commits:
 
-기존 사용자 데이터 변경사항은 반드시 보존한다:
+- `5366666 docs: add FRAMEONE development rules and research`
+- `3cbb691 feat: analyze markets from candidate store address`
+- `615d357 feat: reorganize markets briefing workspace`
+- `9c0c06b fix: isolate map analysis from polygon clicks`
+- `2775114 feat: analyze map from selected point`
+
+Current protected local data files:
+
 - `data/consultations.json`
 - `data/diagnosis-drafts.json.backup`
 
-`reset / restore / clean` 등으로 삭제하거나 되돌리지 않는다.
+These files currently contain existing user changes and must not be reset, restored, overwritten, deleted, staged, or committed unless the user explicitly requests it.
 
 ---
 
 ## 3. Completed Baseline
 
-이미 완료된 데이터 및 검증 결과를 다시 만들지 않는다.
+The following baseline data work is complete and must not be rebuilt from scratch.
 
 - District: 25
 - FRAMEONE Market: 156
 - Submarket: 382
 - Node: 763
-- 서울시 공식상권 geometry: 1,650
-- 생활인구 250m Grid geometry: 10,125
-- Hierarchy / ID / TypeScript 제약 검증 완료
-- 가짜 좌표 / 가짜 geometry 없음
-- FRAMEONE Market/Submarket/Node geometry는 생성하지 않음
+- Seoul official commercial district geometry: 1,650
+- Living population 250m Grid geometry: 10,125
+- Hierarchy / ID / TypeScript constraint validation completed
+- Fake coordinates: none
+- Fake geometry: none
+- FRAMEONE Market/Submarket/Node geometry is intentionally not generated
 
-서울시 공식상권과 FRAMEONE Market은 서로 다른 체계다.
-자동으로 동일 상권이라고 간주하거나 확정 매칭하지 않는다.
+Important rule:
 
----
+FRAMEONE Market/Submarket/Node and Seoul official commercial districts are different data systems.
 
-## 4. Current Development Phase
+Do not automatically treat them as the same commercial district.
 
-현재 `/markets`를 기존 Canvas 중심 화면에서
-Kakao Map 기반 상권 브리핑 화면으로 전환 중이다.
-
-완료:
-- Kakao Maps JavaScript SDK 로딩
-- `NEXT_PUBLIC_KAKAO_MAP_KEY` 연결
-- Kakao 지도 실제 표시 확인
-- 기본 drag / zoom 동작 확인
-- 기존 Canvas 코드는 삭제하지 않고 보존
-
-현재 문제:
-- Kakao 지도와 기존 Canvas 지도가 동시에 표시됨
-- 지도 영역이 브리핑 화면 기준으로 너무 큼
-- 주변 베이커리 / 제과점 / 카페가 아직 Kakao 지도에 표시되지 않음
-- 서울시 공식상권 Polygon이 아직 Kakao 지도 위에 올라가지 않음
-- 기존 SALES / STORES 정보가 사용자에게 무엇을 의미하는지 UI가 불명확함
-
-따라서 기존 Canvas 최적화를 계속하는 것이 아니라
-Kakao Map을 실제 기본 지도 엔진으로 사용하는 방향으로 진행한다.
+Candidate/manual-review relationships must not be silently converted to confirmed relationships.
 
 ---
 
-## 5. Product Direction
+## 4. `/markets` V1 Status
 
-이 프로젝트는 단순 상권분석 프로그램이 아니다.
+The previous Canvas-centered workspace has been converted into a practical Kakao Map-based market briefing/workspace.
 
-최종 목적은:
+### 4.1 Current tab structure
 
-`매물 수집 → 후보점포 사전분석 → 고객 브리핑 → 무료 리포트
-→ 현장출동 → 상세 현장조사 → 후보 비교 → 계약 전 검토
-→ 최종 상세 리포트 → 재조사`
+Desktop:
+- 190px left sidebar
 
-까지 연결되는 FRAMEONE 베이커리 점포개발 업무 시스템이다.
+Mobile:
+- horizontal top tabs
 
-### A. 브리핑 화면
+Tabs:
+1. 브리핑
+2. 상권지도
+3. 경쟁점
+4. 공공데이터
 
-사용자:
-- FRAMEONE 직원
-- 상담 고객
+Default tab:
+- 브리핑
 
-목적:
-- 고객 상담 및 내부 브리핑
-- 복잡한 데이터가 아니라 핵심 판단을 빠르게 이해
+### 4.2 Briefing screen
 
-원칙:
-- 매우 단순한 UI
-- Kakao 지도 중심
-- 후보점포
-- 300m / 500m
-- 주변 경쟁점
-- 공식상권
-- 핵심 지표
-- 주요 리스크
+The briefing screen is intentionally simplified for customer consultation and internal briefing.
 
-원본 API 필드, 내부 ID, 기술 상태값 등은 기본 화면에서 숨긴다.
+It currently includes:
 
-### B. 직원 업무 / 현장조사
+- selected FRAMEONE analysis area
+- Kakao Map
+- 300m / 500m radius selection
+- bakery / confectionery / cafe category controls
+- candidate analysis point
+- nearby competition summary
+- selected Seoul official commercial district
+- existing SALES / STORES summary
+- simplified public-data status messages
 
-무료 리포트보다 훨씬 상세하게 구성한다.
+The briefing screen hides technical/internal information such as:
 
-포함 예정:
-- 후보점포 시설
-- 주변 부동산 최소 5곳 조사
-- 주요 아파트 및 배후 동선
-- 실제 시간대별 유동 관찰
-- 연령대 추정
-- 체류공간
-- 경쟁 베이커리 / 카페
-- 메뉴 및 가격
-- 객단가 추정
-- 테이블 / 좌석
-- 고객 관찰
-- 시설
-- 전기
-- 급배수
-- 배기
-- 장비 반입
-- 사진
-- 메모
+- internal IDs
+- official district codes
+- `text_only`
+- `manual_review`
+- crosswalk review details
+- administrative-dong review candidates
+- detailed source/debug states
 
-현장 관찰 수치와 경쟁점 예상매출 등은 반드시 추정치로 관리한다.
+Detailed information is available in staff-oriented tabs.
 
-### C. 무료 고객 리포트
+### 4.3 Map size
 
-상담 고객에게 제공하는 1차 진단 자료다.
+Current Kakao Map height:
 
-포함:
-- 후보점포 요약
-- 지도
-- 주변 경쟁환경
-- 공식상권 기초자료
-- 핵심 장점 / 위험
-- 계약 전 추가 확인사항
+- desktop: about 410px
+- mobile: about 360px
 
-상세 현장조사 노하우와 내부 검토 전체를 무료 리포트에 노출하지 않는다.
+---
 
-### D. 최종 상세 리포트
+## 5. Kakao Map Analysis Status
 
-현장조사 및 상세 컨설팅 결과물이다.
+Current map interaction is explicit-analysis based.
 
-향후 포함:
-- 입지
-- 경쟁점
-- 현장 유동
-- 부동산 인터뷰
-- 시설
-- 장비
-- 도면
-- 임대차
-- 창업비용
-- 손익분기점
-- 현장사진
-- 핵심 리스크
-- 최종 판단
+### Current behavior
 
-최종 판단:
+1. Initial page load does not automatically run nearby-place search.
+2. Map drag does not trigger nearby-place search.
+3. User clicks the map to select an analysis-location candidate.
+4. Candidate marker is shown.
+5. User chooses 300m or 500m.
+6. User presses `[이 위치 분석]`.
+7. Only then is the analysis point fixed and the nearby-place REST request executed.
+8. Circle and results stay fixed even if the user pans the map.
+9. Clicking a new map point changes only the candidate point.
+10. Existing results remain until the user explicitly analyzes the new location.
+
+### Polygon behavior
+
+Seoul official commercial district Polygon click remains separate from map-location analysis.
+
+Polygon click does not change the analysis-location candidate.
+
+---
+
+## 6. Nearby Place Search
+
+Current nearby-place search uses server-side Kakao Local REST.
+
+Route:
+
+`/api/markets/nearby-places`
+
+Current categories:
+
+- bakery
+- confectionery
+- cafe
+
+Important interpretation rules:
+
+- Kakao result counts are search results, not an authoritative official competitor count.
+- Bakery and confectionery result sets can overlap.
+- Do not sum overlapping categories as a unique competitor total without deduplication.
+- Map marker display can be limited while total search result count is larger.
+
+Current Kakao search is a briefing/reference layer only.
+
+A future canonical competitor database will use official/public data + FRAMEONE field verification.
+
+---
+
+## 7. Candidate Store Address Analysis V1
+
+Completed in commit:
+
+`3cbb691 feat: analyze markets from candidate store address`
+
+### Current flow
+
+Candidate store address
+→ server-side Kakao geocode
+→ confirmed address
+→ candidate-store marker
+→ map center movement
+→ choose 300m / 500m
+→ candidate-store-based analysis
+→ existing nearby-place search flow
+
+### Current route
+
+`app/api/markets/geocode/route.ts`
+
+The route uses server-side `KAKAO_REST_API_KEY`.
+
+API keys and raw coordinates are not shown on the customer briefing screen.
+
+### Current limitations
+
+- If an address is ambiguous, the current V1 uses the first Kakao address-search result.
+- Users should enter a concrete road-name address/building number.
+- Candidate-store DB persistence is not implemented yet.
+- Candidate-store selection does not automatically confirm a Seoul official commercial district.
+- Direct map-click analysis still works alongside candidate-store-based analysis.
+
+---
+
+## 8. Seoul Official Commercial District / Public Data
+
+Existing Seoul official commercial district Polygon flow remains available.
+
+Current existing public-data flow includes:
+
+- official district selection
+- SALES
+- STORES
+- bakery sector reference
+- existing public-data status handling
+
+Important rule:
+
+Seoul public sales data is `estimated sales`.
+
+Do not label it as:
+
+- actual store sales
+- candidate-store expected sales
+- 300m actual sales
+
+Technical/API failures are simplified in the briefing screen as:
+
+`공공데이터 확인 필요`
+
+Detailed cause belongs in the staff/public-data area.
+
+A local environment may still return 503 from `/api/markets/bakery-data` depending on current Seoul API configuration.
+
+This is a separate environment/data-connection issue and must not be mixed with Kakao map UX changes.
+
+---
+
+## 9. Product Direction
+
+This project is not a simple commercial-area analysis program.
+
+The target workflow is:
+
+`매물 수집`
+→ `후보점포 등록`
+→ `사전분석`
+→ `고객 브리핑`
+→ `무료 리포트`
+→ `현장출동`
+→ `상세 현장조사`
+→ `후보 비교`
+→ `계약 전 Due Diligence`
+→ `협상`
+→ `최종 계약판정`
+→ `최종 상세 리포트`
+→ `계약/공사/오픈 지원`
+→ `오픈 후 실제성과 수집`
+
+The core product question is:
+
+- “이 점포를 계약해도 되는가?”
+- “이 공간에 실제 베이커리 매장을 구현할 수 있는가?”
+
+The final verdict must eventually remain one of:
+
 - 추천
 - 조건부 추천
 - 보류
 - 위험
 
+No startup-success guarantee is allowed.
+
+Sales, profit, premium recovery, and similar values must be expressed as estimates unless backed by actual verified data.
+
 ---
 
-## 6. Core Data Principles
+## 10. One Input / History Principles
 
 ### One Input Principle
 
-같은 데이터는 한 번만 입력한다.
+The same information should be entered once and reused.
 
-예:
-- 매물에서 받은 주소를 지도에서 다시 입력하지 않는다.
-- Kakao에서 수집한 경쟁점을 현장조사에서 다시 등록하지 않는다.
-- 현장사진을 리포트에서 다시 업로드하지 않는다.
-- 현장메모를 최종 리포트 작성 시 다시 타이핑하지 않는다.
+Examples:
+
+- candidate-store information
+- address
+- nearby competitors
+- field observations
+- photos
+- lease conditions
+- facility information
+- notes
+
+These should later be reusable across:
+
+- briefing
+- staff workspace
+- field survey
+- candidate comparison
+- reports
+- partner handoff
 
 ### History Principle
 
-기존 값을 덮어쓰지 않는다.
+Important historical values must not be overwritten.
 
-이력 보존 대상:
-- 후보점포 매물 조건
-- 월세 / 보증금 / 권리금 변화
-- 현장조사 회차
-- 경쟁점 변화
-- 부동산 인터뷰
-- 메뉴 / 가격
-- 현장사진
-- 판단 변화
+Examples:
 
-2~3개월 후 다시 조사할 경우:
+- rent changes
+- premium changes
+- listing status changes
+- field-survey rounds
+- competitor changes
+- facility verification changes
+- negotiation scenarios
+- decision changes
 
-`기존 조사 수정`
-
-이 아니라
-
-`새 조사 회차 생성`
-
-방식으로 저장한다.
-
-향후 이전 조사와 최신 조사의 변화 비교가 가능해야 한다.
+Use snapshot/version/history/survey-round structures.
 
 ---
 
-## 7. Data Source Principles
+## 11. Research / Development Reference Documents
 
-다음 출처를 반드시 구분한다.
+Research documents are now stored under:
 
-1. Kakao 지도 / 장소검색
-2. 서울시 및 기타 공공데이터
-3. FRAMEONE 현장조사
-4. 직원 직접입력
-5. AI 분석 / 요약
+`docs/research/2026-09-02/`
 
-Kakao 검색 결과를 공식 경쟁점 전체 수라고 단정하지 않는다.
+Current reference set:
 
-카카오와 공공데이터가 다르면
-누락 / 신규 / 폐업 가능성 등을 검토 대상으로 표시하고
-확정 사실처럼 처리하지 않는다.
+- `COMPETITOR_FEATURE_MATRIX.md`
+- `FEATURE_REVERSE_ENGINEERING.md`
+- `FRAMEONE_IMPLEMENTABILITY_MATRIX.md`
+- `PUBLIC_DATA_API_MAP.md`
+- `SALES_ANALYSIS_IMPLEMENTATION.md`
+- `COMPETITOR_ANALYSIS_IMPLEMENTATION.md`
+- `GOVERNMENT_SUPPORT_IMPLEMENTATION.md`
+- `STARTUP_NAVIGATOR_IMPLEMENTATION.md`
+- `FRAMEONE_FEATURE_ROADMAP.md`
+- `CODEX_FUTURE_IMPLEMENTATION_PLAN.md`
 
----
+Do not load all documents for every Codex task.
 
-## 8. AI Principle
-
-AI는 원본 숫자를 생성하지 않는다.
-
-AI 활용 예정:
-- 데이터 비교 요약
-- 재조사 변화 요약
-- 현장 음성메모 구조화
-- 조사 누락 보조
-- 고객 브리핑 문장
-- 상세 리포트 초안
-
-AI가 임의로:
-- 매출 생성
-- 경쟁점 수 생성
-- 법률 판단
-- 세무 판단
-- 인허가 가능 여부 확정
-- 계약 성공 여부 확정
-
-하지 않는다.
-
-AI 결과는 원본 데이터와 구분한다.
+Read only the documents directly relevant to the current feature.
 
 ---
 
-## 9. Immediate Development Priority
+## 12. Current Development Priority
 
-현재는 아래 순서만 진행한다.
+The next major development phase is Decision P0.
 
-1. Kakao 지도 1개로 통합
-2. 지도 크기를 브리핑 화면에 적합하게 조정
-3. 300m / 500m 반경
-4. Kakao 기반 베이커리 / 제과점 / 카페 주변 장소 표시
-5. 주변 장소 상호 / 위치 / 거리 표시
-6. 서울시 공식상권 Polygon을 Kakao Map Overlay로 표시
-7. 공식상권 클릭 → 기존 SALES / STORES 연결
-8. 데이터 의미를 쉽게 이해할 수 있는 브리핑 카드 구성
-9. `/markets` 브리핑 UI 단순화
+Recommended order:
 
----
+1. Evidence Foundation
+2. Data Confidence
+3. Risk V3 shadow evaluation
+4. Investment Engine
+5. Stress Test + Working-Capital Runway
+6. Deal Simulator
+7. Candidate Comparison
+8. Decision Explanation
 
-## 10. Do Not Implement Yet
+Market-data expansion continues after the Decision P0 foundation.
 
-현재 Kakao 기반 브리핑 화면이 안정화되기 전에는 아래를 본격 구현하지 않는다.
+Planned Market P1 sequence:
 
-- AI 요약
-- Chrome Extension 대규모 변경
-- 현장조사 전체 모듈
-- 사진 관리 전체 모듈
-- 재조사 전체 모듈
-- 최종 상세 리포트
-- 후보점포 비교 전체 기능
-- Risk V2 연결
-
-단, 향후 기능 구현을 막는 데이터 구조를 새로 만들지 않도록
-매물 이력 / 조사 회차 / 사진 연결 / 재조사를 고려해서 설계한다.
+1. canonical competitor store
+2. permit + public-store source integration
+3. opening/closure history
+4. Seoul estimated-sales trend
+5. 100/250/300/500m Micro Market
+6. later field-evidence feedback
 
 ---
 
-## 11. Next Work Unit
+## 13. Immediate Next Codex Task
 
-다음 실제 개발 작업:
+Next Codex task:
 
-Kakao Map을 `/markets`의 기본 지도 하나로 통합하고,
+`P0 Evidence Foundation — Step 1: type foundation only`
 
-- 300m / 500m
-- 베이커리
-- 제과점
-- 카페
-- 주변 상호 / 위치 / 거리
-- 서울시 공식상권 Polygon
+Scope:
 
-을 지도에서 사용할 수 있게 한다.
+- define Evidence-related types
+- define verification status
+- define evidence source type
+- add optional/versioned fields where appropriate
+- preserve existing JSON/sample backward compatibility
 
-기존 SALES / STORES / Crosswalk 의미는 변경하지 않는다.
+Do not include in this first task:
 
-새 라이브러리 추가 및 전체 프로젝트 리팩토링은 하지 않는다.
+- Evidence UI
+- photo upload
+- Data Confidence calculation
+- Risk V3
+- Investment Engine
+- DB migration
+- large API refactor
+- report redesign
+
+The first Evidence step should be a small, backward-compatible foundation only.
+
+---
+
+## 14. Development Safety
+
+Always follow `AGENTS.md`.
+
+Key rules:
+
+- one Codex task = one feature unit
+- no unrelated refactor
+- do not invent public API fields/data
+- preserve user changes
+- do not silently migrate historical data
+- actual / estimated / verified / unknown must not be conflated
+- public-data provenance and as-of date must be retained
+- AI does not invent numbers/legal conclusions/facility estimates
+- CRITICAL risk must not be offset by positive market indicators
+- commit/push/merge only when explicitly requested
+
+---
+
+## 15. Current Git Safety State
+
+Protected local files expected to remain modified:
+
+- `data/consultations.json`
+- `data/diagnosis-drafts.json.backup`
+
+Do not reset, restore, overwrite, delete, stage, or commit these files without explicit user instruction.
