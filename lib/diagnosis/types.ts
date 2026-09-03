@@ -1,3 +1,12 @@
+import type { Evidence } from "../evidence/types";
+
+export type {
+  Evidence,
+  EvidenceSourceType,
+  EvidenceValue,
+  VerificationStatus,
+} from "../evidence/types";
+
 export type StoreType = "판매형" | "제조형" | "카페형" | "배달병행형";
 export type Verdict = "추천" | "조건부 추천" | "보류" | "위험";
 
@@ -147,6 +156,10 @@ export interface DiagnosisSections {
 }
 
 export interface ConsultationRecord {
+  /** 누락은 버전 정보가 없는 기존 record를 뜻한다. 읽을 때 자동 부여하지 않는다. */
+  schemaVersion?: string;
+  /** 누락은 근거가 기록되지 않았다는 뜻이며, 기존 입력을 확인됨으로 간주하지 않는다. */
+  evidence?: Evidence[];
   consultation: ConsultationInput;
   candidateStore: CandidateStoreInput;
   facilityCheck: FacilityCheckInput;
