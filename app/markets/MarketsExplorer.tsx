@@ -299,9 +299,8 @@ export default function MarketsExplorer({
               서울 베이커리 상권 브리핑
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              주요상권을 선택한 뒤 지도에서 서울시 공식상권을 직접 클릭하면
-              해당 상권의 제과점 통계를 확인할 수 있습니다. 확인된 데이터만
-              상담 참고자료로 제공합니다.
+              주요상권과 후보점포 주소, 반경을 정한 뒤 주변 경쟁환경을 확인하세요.
+              주소가 없으면 지도를 열어 분석할 위치를 직접 선택할 수 있습니다.
             </p>
           </div>
         </div>
@@ -313,9 +312,9 @@ export default function MarketsExplorer({
       >
         <ol className="grid gap-2 text-xs font-bold text-slate-700 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
           {[
-            ["1", "FRAMEONE 분석지역 선택"],
-            ["2", "지도에서 서울시 공식상권 클릭"],
-            ["3", "제과점 실데이터 확인"],
+            ["1", "분석 대상 선택"],
+            ["2", "주소 또는 지도 위치 분석"],
+            ["3", "지도와 분석결과 확인"],
           ].map(([step, label], index) => (
             <li key={step} className="contents">
               <span className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
@@ -353,6 +352,28 @@ export default function MarketsExplorer({
         selectedSubmarket={selectedSubmarketSpatialSummary}
         activeTab={activeTab}
         onOpenMarketMap={() => setActiveTab("market-map")}
+        marketSelector={
+          <label className="block min-w-0 text-xs font-bold text-slate-700">
+            FRAMEONE 주요상권
+            <select
+              value={selectedMarketId}
+              onChange={(event) => {
+                const market = allMarkets.find((item) => item.marketId === event.target.value);
+                if (market) selectMarket(market);
+              }}
+              className="input mt-2 min-h-11 min-w-0"
+            >
+              {!selectedMarket ? <option value="">주요상권을 선택하세요</option> : null}
+              {hierarchy.districts.map((district) => (
+                <optgroup key={district.districtId} label={district.name}>
+                  {district.markets.map((market) => (
+                    <option key={market.marketId} value={market.marketId}>{market.name}</option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </label>
+        }
       />
 
       {activeTab === "market-map" ? (

@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 
 type KakaoMapStatus = "loading" | "ready" | "error";
@@ -257,11 +258,15 @@ export default function KakaoBaseMap({
   selectedOfficialMarketCode,
   onSelectOfficialMarket,
   view = "briefing",
+  marketSelector,
+  marketName = "주요상권 미선택",
 }: {
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
   onSelectOfficialMarket: (featureIndex: number) => void;
   view?: KakaoBaseMapView;
+  marketSelector?: ReactNode;
+  marketName?: string;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<KakaoMapInstance | null>(null);
@@ -303,6 +308,10 @@ export default function KakaoBaseMap({
   const [candidateAddressStatus, setCandidateAddressStatus] =
     useState<CandidateAddressStatus>("idle");
   const [candidateAddressError, setCandidateAddressError] = useState("");
+  const [mapVisible, setMapVisible] = useState(false);
+  const [conditionsOpen, setConditionsOpen] = useState(true);
+  // 편집 중인 조건과 분리해 실행 시점의 분석 대상을 표시한다.
+  const [analysisTarget, setAnalysisTarget] = useState<{ label: string; marketName: string } | null>(null);
 
   const enabledPlaceCount = useMemo(
     () =>
@@ -442,6 +451,7 @@ export default function KakaoBaseMap({
         latitude: event.latLng.getLat(),
         longitude: event.latLng.getLng(),
       });
+      setConditionsOpen(true);
     };
     kakaoMaps.event.addListener(map, "click", handleMapClick);
 
@@ -627,22 +637,27 @@ export default function KakaoBaseMap({
     }
 
     setAnalysisPoint({ ...selectedPoint });
+    setNearbySearchStatus("loading");
     setAnalysisRadiusM(radiusM);
+    setAnalysisTarget({ label: `지도 선택 위치 · ${selectedPoint.latitude.toFixed(5)}, ${selectedPoint.longitude.toFixed(5)}`, marketName });
+    setConditionsOpen(false);
+    setMapVisible(true);
   }
 
-  function analyzeCandidateStore() {
-    if (!candidateStore) {
-      return;
-    }
-
+  function analyzeCandidateStore(candidate: CandidateStore) {
+    setNearbySearchStatus("loading");
     setAnalysisPoint({
-      latitude: candidateStore.latitude,
-      longitude: candidateStore.longitude,
+      latitude: candidate.latitude,
+      longitude: candidate.longitude,
     });
     setAnalysisRadiusM(radiusM);
+    setAnalysisTarget({ label: candidate.address, marketName });
+    setSelectedPoint(null);
+    setConditionsOpen(false);
+    setMapVisible(true);
   }
 
-  async function locateCandidateStore() {
+  async function locateCandidateStore(analyze = false) {
     const address = candidateAddress.trim();
     if (!address || status !== "ready") {
       return;
@@ -672,6 +687,8 @@ export default function KakaoBaseMap({
       };
       setCandidateStore(nextCandidateStore);
       setCandidateAddressStatus("success");
+      setMapVisible(true);
+      if (analyze) analyzeCandidateStore(nextCandidateStore);
 
       const kakaoMaps = (window as KakaoWindow).kakao?.maps;
       const map = mapInstanceRef.current;
@@ -708,122 +725,87 @@ export default function KakaoBaseMap({
   return (
     <div>
       <div className={view === "briefing" ? "" : "hidden"}>
-      <section className="border-b border-slate-200 bg-white px-4 py-4" aria-labelledby="candidate-store-title">
-        <h3 id="candidate-store-title" className="text-sm font-bold text-slate-950">
-          후보점포
-        </h3>
-        <form
-          className="mt-2 flex flex-col gap-2 sm:flex-row"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void locateCandidateStore();
-          }}
-        >
-          <label htmlFor="candidate-store-address" className="sr-only">
-            후보점포 주소
-          </label>
-          <input
-            id="candidate-store-address"
-            type="text"
-            value={candidateAddress}
-            onChange={(event) => setCandidateAddress(event.target.value)}
-            placeholder="후보점포 주소를 입력하세요"
-            className="input min-w-0 flex-1"
-          />
-          <button
-            type="submit"
-            disabled={
-              status !== "ready" ||
-              candidateAddress.trim().length === 0 ||
-              candidateAddressStatus === "loading"
-            }
-            className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {candidateAddressStatus === "loading" ? "위치 확인 중…" : "위치 확인"}
-          </button>
-        </form>
-
-        {candidateStore ? (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-emerald-50 px-3 py-2.5">
-            <p className="min-w-0 text-xs font-semibold text-emerald-900">
-              <span className="mr-2 text-emerald-700">확인된 주소</span>
-              {candidateStore.address}
-            </p>
-            <button
-              type="button"
-              onClick={analyzeCandidateStore}
-              disabled={nearbySearchStatus === "loading"}
-              className="shrink-0 rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              후보점포 기준 분석
-            </button>
+      {analysisTarget ? (
+        <section aria-label="현재 분석" className="border-b border-slate-200 bg-blue-50 px-4 py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className="text-sm font-bold text-slate-950">현재 분석</h3>
+              <p className="mt-2 break-words text-sm font-semibold text-slate-900">{analysisTarget.label}</p>
+              <p className="mt-1 text-xs text-slate-600">FRAMEONE 주요상권 {analysisTarget.marketName} · {analysisRadiusM}m</p>
+            </div>
+            <button type="button" onClick={() => setConditionsOpen(true)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">분석조건 변경</button>
           </div>
-        ) : null}
-
-        {candidateAddressError ? (
-          <p className="mt-2 text-xs font-semibold text-red-700" role="alert">
-            {candidateAddressError}
-          </p>
-        ) : null}
-      </section>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-bold text-slate-700">
-            지도 중심 반경
-          </span>
-          {([300, 500] as const).map((radius) => (
-            <button
-              key={radius}
-              type="button"
-              onClick={() => setRadiusM(radius)}
-              aria-pressed={radiusM === radius}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
-                radiusM === radius
-                  ? "border-orange-500 bg-orange-500 text-white"
-                  : "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-              }`}
-            >
-              {radius}m
-            </button>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {NEARBY_CATEGORIES.map((category) => {
-            const enabled = enabledCategories[category.id];
-            return (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => toggleCategory(category.id)}
-                aria-pressed={enabled}
-                className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
-                  enabled
-                    ? "border-sky-600 bg-sky-50 text-sky-800"
-                    : "border-slate-300 bg-white text-slate-400"
-                }`}
-              >
-                {category.label} {enabled ? "ON" : "OFF"}
+        </section>
+      ) : null}
+      <section className={conditionsOpen ? "border-b border-slate-200 bg-white px-4 py-4" : "hidden"} aria-labelledby="candidate-store-title">
+        <h3 id="candidate-store-title" className="text-base font-bold text-slate-950">분석 대상</h3>
+        <p className="mt-1 text-xs leading-5 text-slate-500">주요상권과 후보점포 주소, 분석 반경을 정해 주세요.</p>
+        <form onSubmit={(event) => { event.preventDefault(); void locateCandidateStore(true); }}>
+          <fieldset disabled={candidateAddressStatus === "loading"} className="mt-4 space-y-4">
+            {marketSelector}
+            <label htmlFor="candidate-store-address" className="block text-xs font-bold text-slate-700">
+              후보점포 주소
+              <input id="candidate-store-address" type="text" value={candidateAddress}
+                onChange={(event) => {
+                  setCandidateAddress(event.target.value);
+                  setCandidateStore(null);
+                  setCandidateAddressError("");
+                  setCandidateAddressStatus("idle");
+                }}
+                placeholder="후보점포 주소를 입력하세요" className="input mt-2 min-h-11 min-w-0" />
+            </label>
+            <div className="flex flex-wrap items-center gap-2" role="group" aria-label="분석 반경">
+              <span className="mr-1 text-xs font-bold text-slate-700">분석 반경</span>
+              {([300, 500] as const).map((radius) => (
+                <button key={radius} type="button" onClick={() => setRadiusM(radius)} aria-pressed={radiusM === radius}
+                  className={`min-h-11 rounded-full border px-4 text-xs font-bold ${radiusM === radius ? "border-orange-500 bg-orange-500 text-white" : "border-slate-300 bg-white text-slate-700"}`}>
+                  {radius}m
+                </button>
+              ))}
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <button type="submit" disabled={status !== "ready" || !candidateAddress.trim() || nearbySearchStatus === "loading"}
+                className="min-h-11 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
+                {candidateAddressStatus === "loading" ? "위치 확인 중…" : "후보점포 분석"}
               </button>
-            );
-          })}
-          <button
-            type="button"
-            onClick={analyzeSelectedPoint}
-            disabled={
-              status !== "ready" ||
-              !selectedPoint ||
-              nearbySearchStatus === "loading"
-            }
-            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            이 위치 분석
-          </button>
+              <button type="button" onClick={() => void locateCandidateStore()} disabled={status !== "ready" || !candidateAddress.trim()}
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 disabled:opacity-50">위치 확인</button>
+              <button type="button" onClick={() => setMapVisible(true)}
+                className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700">지도 보기</button>
+            </div>
+          </fieldset>
+        </form>
+        <p className="mt-3 text-xs leading-5 text-slate-500">주소가 없으면 지도를 열어 위치를 선택한 뒤 이 위치 분석을 눌러 주세요. FRAMEONE 주요상권은 서울시 공식상권과 다른 분류입니다.</p>
+        {analysisTarget ? <p className="mt-2 text-xs text-slate-500">변경한 조건은 다시 분석할 때 적용됩니다.</p> : null}
+        {!mapVisible && status !== "ready" ? <p role="status" className="mt-2 text-xs text-slate-600">{status === "error" ? errorMessage : "주소 분석을 위한 지도를 준비하고 있습니다…"}</p> : null}
+        {candidateStore ? <p className="mt-3 break-words text-xs text-slate-700">확인된 주소: {candidateStore.address}</p> : null}
+        {candidateAddressError ? <p role="alert" className="mt-2 text-xs font-semibold text-red-700">{candidateAddressError}</p> : null}
+      </section>
+      {!mapVisible ? (
+        <p className="m-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+          분석 대상을 선택한 후 주변 경쟁환경을 확인할 수 있습니다. 주소를 분석하거나 지도 보기를 눌러 주세요.
+        </p>
+      ) : null}
+      <div className={mapVisible ? "" : "hidden"}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="min-w-0 text-xs text-slate-600">
+            <p className="font-bold text-slate-900">Kakao 지도 · 선택 반경 {radiusM}m</p>
+            <p className="mt-1 break-words">{selectedPoint ? `분석 위치 후보 · ${selectedPoint.latitude.toFixed(5)}, ${selectedPoint.longitude.toFixed(5)}` : "지도를 클릭해 분석할 위치를 선택할 수 있습니다."}</p>
+          </div>
+          <button type="button" onClick={analyzeSelectedPoint} disabled={status !== "ready" || !selectedPoint || nearbySearchStatus === "loading"}
+            className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 disabled:opacity-50">이 위치 분석</button>
+          <div className="flex flex-wrap gap-2">
+            {NEARBY_CATEGORIES.map((category) => (
+              <button key={category.id} type="button" onClick={() => toggleCategory(category.id)} aria-pressed={enabledCategories[category.id]}
+                className="min-h-11 rounded-full border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">
+                {category.label} {enabledCategories[category.id] ? "ON" : "OFF"}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-
       <div
-        className="relative h-[360px] w-full overflow-hidden bg-slate-100 md:h-[410px]"
+        className={mapVisible ? "relative h-[360px] w-full overflow-hidden bg-slate-100 md:h-[410px]" : "relative hidden h-[360px] w-full overflow-hidden bg-slate-100 md:h-[410px]"}
         aria-busy={status === "loading"}
       >
         <div
@@ -860,7 +842,7 @@ export default function KakaoBaseMap({
       </div>
       </div>
 
-      {view !== "hidden" ? (
+      {view !== "hidden" && analysisPoint ? (
       <section
         className="border-t border-slate-200 bg-white px-4 py-4"
         aria-labelledby="nearby-place-title"
@@ -880,21 +862,12 @@ export default function KakaoBaseMap({
           >
             {nearbySearchStatus === "loading"
               ? "주변 장소 검색 중…"
-              : `지도 표시 ${enabledPlaceCount}곳`}
+              : nearbySearchStatus === "success" ? `지도 표시 ${enabledPlaceCount}곳` : "조회 상태 확인 필요"}
           </span>
         </div>
 
         <p className="mt-2 text-xs font-semibold text-slate-600" role="status">
-          {selectedPoint
-            ? "분석 위치가 선택되었습니다. 이 위치 분석을 눌러 주변 장소를 확인하세요."
-            : analysisPoint &&
-                candidateStore &&
-                analysisPoint.latitude === candidateStore.latitude &&
-                analysisPoint.longitude === candidateStore.longitude
-              ? `후보점포 기준 ${analysisRadiusM}m 분석 결과입니다.`
-              : candidateStore
-                ? "후보점포 위치가 확인되었습니다. 후보점포 기준 분석을 눌러 주변 장소를 확인하세요."
-            : "지도에서 분석할 위치를 선택하세요."}
+          현재 분석 위치 기준 {analysisRadiusM}m 주변 장소입니다. 지도 이동이나 새 위치 선택은 다시 분석하기 전까지 이 결과를 바꾸지 않습니다.
         </p>
 
         {nearbySearchError ? (
@@ -939,7 +912,7 @@ export default function KakaoBaseMap({
                     {category.label}
                   </h4>
                   <span className={view === "briefing" ? "mt-1 block text-xl font-bold tabular-nums text-slate-950" : "text-[10px] font-bold text-slate-500"}>
-                    {view === "briefing"
+                    {nearbySearchStatus !== "success" ? (nearbySearchStatus === "loading" ? "조회 중…" : "확인 필요") : view === "briefing"
                       ? result.totalCount.toLocaleString("ko-KR")
                       : `검색 결과 ${result.totalCount}곳 / 지도 표시 ${places.length}곳 (최대 ${MAX_PER_CATEGORY}곳)`}
                   </span>
@@ -969,7 +942,7 @@ export default function KakaoBaseMap({
                   <p className="mt-2 text-[11px] text-slate-500">
                     {nearbySearchStatus === "loading"
                       ? "검색 중…"
-                      : "검색 결과 없음"}
+                      : nearbySearchStatus === "success" ? "검색 결과 없음" : "조회 상태 확인 필요"}
                   </p>
                 ) : null}
               </article>
@@ -977,6 +950,8 @@ export default function KakaoBaseMap({
           })}
         </div>
       </section>
+      ) : view === "competition" ? (
+        <p className="p-5 text-sm text-slate-600">분석 대상을 선택한 후 주변 경쟁환경을 확인할 수 있습니다. 브리핑에서 주소 또는 지도 위치를 분석해 주세요.</p>
       ) : null}
     </div>
   );

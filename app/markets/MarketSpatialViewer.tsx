@@ -535,11 +535,13 @@ export default function MarketSpatialViewer({
   selectedSubmarket,
   activeTab,
   onOpenMarketMap,
+  marketSelector,
 }: {
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
   activeTab: MarketsWorkspaceTab;
   onOpenMarketMap: () => void;
+  marketSelector: React.ReactNode;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -1509,7 +1511,7 @@ export default function MarketSpatialViewer({
         ) : null}
 
         <div className="min-w-0 space-y-3">
-          {selectedMarket && (activeTab === "briefing" || activeTab === "market-map") ? (
+          {selectedMarket && activeTab === "market-map" ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -1609,25 +1611,9 @@ export default function MarketSpatialViewer({
           ) : null}
 
           <section className={`${activeTab === "market-map" || activeTab === "public-data" ? "hidden" : ""} overflow-hidden rounded-xl border border-slate-300 bg-white`}>
-            {activeTab === "briefing" ? (
-            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 px-4 py-3">
-              <div>
-                <p className="text-xs font-bold text-slate-950">
-                  Kakao 기본 지도
-                </p>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  서울 중심 · 드래그 이동 · 휠 확대/축소
-                </p>
-              </div>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-600">
-                {crosswalkLoading ||
-                loadingLayerIds.has("seoul-official-markets")
-                  ? "후보 경계 준비 중…"
-                  : `공식상권 검토 후보 ${kakaoOfficialMarketPolygons.length}개`}
-              </span>
-            </div>
-            ) : null}
             <KakaoBaseMap
+              marketSelector={marketSelector}
+              marketName={selectedMarket?.marketName ?? "주요상권 미선택"}
               officialMarketPolygons={kakaoOfficialMarketPolygons}
               selectedOfficialMarketCode={selectedOfficialMarketCode}
               onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
