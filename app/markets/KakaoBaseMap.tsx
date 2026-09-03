@@ -1,7 +1,15 @@
 "use client";
 
 import Script from "next/script";
-import type { ExecutedSpatialAnalysis } from "@/lib/market-data/official-market-spatial-relation";
+import type {
+  ExecutedMarketAnalysis,
+  KakaoNearbySearchState,
+  MarketAnalysisRequestStatus as NearbySearchStatus,
+  NearbyCategoryId,
+  NearbyCategoryResult,
+  NearbyPlace,
+  NearbyPlacesResponse,
+} from "@/lib/market-data/market-analysis-context";
 import {
   useCallback,
   useEffect,
@@ -12,9 +20,7 @@ import {
 } from "react";
 
 type KakaoMapStatus = "loading" | "ready" | "error";
-type NearbySearchStatus = "idle" | "loading" | "success" | "error";
 type CandidateAddressStatus = "idle" | "loading" | "success" | "error";
-type NearbyCategoryId = "bakery" | "confectionery" | "cafe";
 type RadiusM = 300 | 500;
 export type KakaoBaseMapView = "briefing" | "competition" | "hidden";
 
@@ -137,35 +143,8 @@ interface NearbyCategoryDefinition {
   label: string;
 }
 
-interface NearbyPlace {
-  id: string;
-  name: string;
-  categoryId: NearbyCategoryId;
-  categoryLabel: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  distanceM: number;
-}
-
-interface NearbyCategoryResult {
-  totalCount: number;
-  places: NearbyPlace[];
-  error?: string;
-}
-
 type NearbyPlacesByCategory = Record<NearbyCategoryId, NearbyCategoryResult>;
 type EnabledCategories = Record<NearbyCategoryId, boolean>;
-
-interface NearbyPlacesResponse {
-  categories?: Array<{
-    id: NearbyCategoryId;
-    totalCount: number;
-    places: NearbyPlace[];
-    error?: string;
-  }>;
-  message?: string;
-}
 
 interface CandidateGeocodeResponse {
   latitude?: number;
@@ -259,6 +238,7 @@ export default function KakaoBaseMap({
   selectedOfficialMarketCode,
   onSelectOfficialMarket,
   onAnalysisExecuted,
+  onNearbySearchChange,
   view = "briefing",
   marketSelector,
   marketName = "주요상권 미선택",
@@ -266,7 +246,8 @@ export default function KakaoBaseMap({
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
   onSelectOfficialMarket: (featureIndex: number) => void;
-  onAnalysisExecuted?: (analysis: ExecutedSpatialAnalysis) => void;
+  onAnalysisExecuted?: (analysis: ExecutedMarketAnalysis) => void;
+  onNearbySearchChange?: (state: KakaoNearbySearchState) => void;
   view?: KakaoBaseMapView;
   marketSelector?: ReactNode;
   marketName?: string;
@@ -511,6 +492,7 @@ export default function KakaoBaseMap({
     nearbySearchControllerRef.current = controller;
     setNearbySearchStatus("loading");
     setNearbySearchError("");
+    onNearbySearchChange?.({ status: "loading", response: null, error: null });
     setNearbyPlaces(emptyNearbyPlaces());
     setSelectedNearbyPlace(null);
     infoWindowRef.current?.close();
@@ -549,6 +531,11 @@ export default function KakaoBaseMap({
         }
 
         setNearbyPlaces(nextPlaces);
+        onNearbySearchChange?.({
+          status: errors.length > 0 ? "error" : "success",
+          response: payload,
+          error: errors.length > 0 ? errors.join(" ") : null,
+        });
         if (errors.length > 0) {
           setNearbySearchStatus("error");
           setNearbySearchError(
@@ -563,6 +550,11 @@ export default function KakaoBaseMap({
           return;
         }
         setNearbySearchStatus("error");
+        onNearbySearchChange?.({
+          status: "error",
+          response: null,
+          error: error instanceof Error ? error.message : "주변 장소를 불러오지 못했습니다.",
+        });
         setNearbySearchError(
           `${error instanceof Error ? error.message : "주변 장소를 불러오지 못했습니다."} 지도 이동·확대/축소는 계속 사용할 수 있습니다.`,
         );
@@ -574,7 +566,7 @@ export default function KakaoBaseMap({
         nearbySearchControllerRef.current = null;
       }
     };
-  }, [analysisPoint, analysisRadiusM, status]);
+  }, [analysisPoint, analysisRadiusM, status, onNearbySearchChange]);
 
   useEffect(() => {
     const kakaoMaps = (window as KakaoWindow).kakao?.maps;
@@ -642,7 +634,7 @@ export default function KakaoBaseMap({
     setAnalysisPoint({ ...selectedPoint });
     setNearbySearchStatus("loading");
     setAnalysisRadiusM(radiusM);
-    onAnalysisExecuted?.({ analysisPoint: { ...selectedPoint }, analysisRadiusMeters: radiusM });
+    onAnalysisExecuted?.({ source: "map", confirmedAddress: null, analysisPoint: { ...selectedPoint }, analysisRadiusMeters: radiusM });
     setAnalysisTarget({ label: `지도 선택 위치 · ${selectedPoint.latitude.toFixed(5)}, ${selectedPoint.longitude.toFixed(5)}`, marketName });
     setConditionsOpen(false);
     setMapVisible(true);
@@ -655,7 +647,7 @@ export default function KakaoBaseMap({
       longitude: candidate.longitude,
     });
     setAnalysisRadiusM(radiusM);
-    onAnalysisExecuted?.({ analysisPoint: { latitude: candidate.latitude, longitude: candidate.longitude }, analysisRadiusMeters: radiusM });
+    onAnalysisExecuted?.({ source: "address", confirmedAddress: candidate.address, analysisPoint: { latitude: candidate.latitude, longitude: candidate.longitude }, analysisRadiusMeters: radiusM });
     setAnalysisTarget({ label: candidate.address, marketName });
     setSelectedPoint(null);
     setConditionsOpen(false);

@@ -10,10 +10,16 @@ import {
 } from "react";
 import type { BakeryOfficialMarketData } from "@/lib/market-data/services/bakery-official-market";
 import {
+  buildMarketAnalysisContext,
+  type ExecutedMarketAnalysis,
+  type KakaoNearbySearchState,
+  type MarketAnalysisContext,
+  type MarketAnalysisRequestStatus as BakeryDataRequestStatus,
+} from "@/lib/market-data/market-analysis-context";
+import {
   findRelatedOfficialMarkets,
   OFFICIAL_MARKET_RELATION_LABELS,
   officialMarketRelationDescription,
-  type ExecutedSpatialAnalysis,
   type OfficialMarketSpatialResult,
 } from "@/lib/market-data/official-market-spatial-relation";
 import type {
@@ -136,8 +142,6 @@ interface MarketCrosswalkResponse {
   administrativeDongCandidates: CrosswalkCandidate[];
   livingGridCandidates: [];
 }
-
-type BakeryDataRequestStatus = "idle" | "loading" | "success" | "error";
 
 interface BakeryMetricDefinition {
   source: "sales" | "stores";
@@ -552,12 +556,14 @@ export default function MarketSpatialViewer({
   activeTab,
   onOpenMarketMap,
   marketSelector,
+  onAnalysisContextChange,
 }: {
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
   activeTab: MarketsWorkspaceTab;
   onOpenMarketMap: () => void;
   marketSelector: React.ReactNode;
+  onAnalysisContextChange?: (context: MarketAnalysisContext) => void;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -572,7 +578,12 @@ export default function MarketSpatialViewer({
     defaultVisibleLayerIds,
   );
   const [loadedLayers, setLoadedLayers] = useState<LoadedLayerMap>({});
-  const [executedSpatialAnalysis, setExecutedSpatialAnalysis] = useState<ExecutedSpatialAnalysis | null>(null);
+  const [executedSpatialAnalysis, setExecutedSpatialAnalysis] = useState<ExecutedMarketAnalysis | null>(null);
+  const [kakaoNearby, setKakaoNearby] = useState<KakaoNearbySearchState>({ status: "idle", response: null, error: null });
+  const handleAnalysisExecuted = useCallback((analysis: ExecutedMarketAnalysis) => {
+    setExecutedSpatialAnalysis(analysis);
+    setKakaoNearby({ status: "loading", response: null, error: null });
+  }, []);
   const [loadingLayerIds, setLoadingLayerIds] = useState<Set<SpatialLayerId>>(
     new Set(),
   );
@@ -597,6 +608,7 @@ export default function MarketSpatialViewer({
   const [bakeryData, setBakeryData] =
     useState<BakeryOfficialMarketData | null>(null);
   const [bakeryDataError, setBakeryDataError] = useState<string | null>(null);
+  const [bakeryDataMarketCode, setBakeryDataMarketCode] = useState<string | null>(null);
   const requestedLayerIdsRef = useRef(new Set<SpatialLayerId>());
   const crosswalkCacheRef = useRef(
     new Map<string, MarketCrosswalkResponse>(),
@@ -1224,6 +1236,40 @@ export default function MarketSpatialViewer({
     [executedSpatialAnalysis, officialSpatialInputs, officialMarketLayer],
   );
   const selectedSpatialRelation = spatialRelations?.results.find((result) => result.marketCode === selectedOfficialMarketCode);
+  const selectedOfficialMarketName = selectedOfficialMarketCode && selectedReference
+    ? referenceNameForFeature("seoul-official-markets", selectedReference.feature)
+    : null;
+  const officialLayerError = layerErrors["seoul-official-markets"] ?? null;
+  const officialLayerLoading = loadingLayerIds.has("seoul-official-markets");
+  const selectedMarketName = selectedMarket?.marketName ?? null;
+  const analysisContext = useMemo(() => buildMarketAnalysisContext({
+    executedAnalysis: executedSpatialAnalysis,
+    selectedFrameoneMarket: selectedMarketId !== null && selectedMarketName !== null
+      ? { marketId: selectedMarketId, marketName: selectedMarketName } : null,
+    kakaoNearby,
+    officialMarkets: {
+      status: officialMarketLayer ? "success" : officialLayerError ? "error" : officialLayerLoading ? "loading" : "idle",
+      error: officialLayerError,
+      results: spatialRelations?.results ?? null,
+      manuallySelected: selectedOfficialMarketCode !== null && selectedOfficialMarketName !== null
+        ? { marketCode: selectedOfficialMarketCode, marketName: selectedOfficialMarketName } : null,
+    },
+    publicData: {
+      requestStatus: bakeryDataStatus,
+      requestedOfficialMarketCode: bakeryDataMarketCode,
+      data: bakeryData,
+      error: bakeryDataError,
+    },
+  }), [executedSpatialAnalysis, selectedMarketId, selectedMarketName, kakaoNearby,
+    officialMarketLayer, officialLayerError, officialLayerLoading, spatialRelations,
+    selectedOfficialMarketCode, selectedOfficialMarketName, bakeryDataStatus, bakeryDataMarketCode,
+    bakeryData, bakeryDataError]);
+
+  // Single read-only output for future consumers; no new UI or persistence.
+  useEffect(() => {
+    onAnalysisContextChange?.(analysisContext);
+  }, [analysisContext, onAnalysisContextChange]);
+
   const kakaoOfficialMarketPolygons = useMemo(() => {
     if (!officialMarketLayer || !crosswalk) {
       return [];
@@ -1283,6 +1329,7 @@ export default function MarketSpatialViewer({
     setBakeryDataStatus("idle");
     setBakeryData(null);
     setBakeryDataError(null);
+    setBakeryDataMarketCode(null);
   }, [selectedOfficialMarketCode]);
 
   useEffect(
@@ -1300,6 +1347,7 @@ export default function MarketSpatialViewer({
     bakeryDataControllerRef.current?.abort();
     const controller = new AbortController();
     bakeryDataControllerRef.current = controller;
+    setBakeryDataMarketCode(selectedOfficialMarketCode);
     setBakeryDataStatus("loading");
     setBakeryData(null);
     setBakeryDataError(null);
@@ -1646,7 +1694,8 @@ export default function MarketSpatialViewer({
               officialMarketPolygons={kakaoOfficialMarketPolygons}
               selectedOfficialMarketCode={selectedOfficialMarketCode}
               onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
-              onAnalysisExecuted={setExecutedSpatialAnalysis}
+              onAnalysisExecuted={handleAnalysisExecuted}
+              onNearbySearchChange={setKakaoNearby}
               view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
             />
             {activeTab === "briefing" ? (

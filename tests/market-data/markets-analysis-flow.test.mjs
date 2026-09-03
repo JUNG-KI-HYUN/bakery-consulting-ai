@@ -24,11 +24,16 @@ const hooks = {
   ...react,
   useState(initial) {
     const owner = activeFixture;
-    const state = slot(() => ({ value: typeof initial === "function" ? initial() : initial }));
-    return [state.value, (update) => {
-      const next = typeof update === "function" ? update(state.value) : update;
-      if (!Object.is(state.value, next)) { state.value = next; owner.dirty = true; }
-    }];
+    const state = slot(() => {
+      const state = { value: typeof initial === "function" ? initial() : initial };
+      // React setters keep their identity across parent/child rerenders.
+      state.setValue = (update) => {
+        const next = typeof update === "function" ? update(state.value) : update;
+        if (!Object.is(state.value, next)) { state.value = next; owner.dirty = true; }
+      };
+      return state;
+    });
+    return [state.value, state.setValue];
   },
   useRef(initial) { return slot(() => ({ current: initial })); },
   useMemo(factory, deps) {
@@ -309,7 +314,7 @@ test("STEP 2 viewer: all official geometries independent of crosswalk; manual OU
     assert.equal(map().props.officialMarketPolygons.length, 0); // crosswalk empty
     const index = source.features.findIndex((f) => f.properties.official_area_code === "3120231");
     const [longitude, latitude] = source.features[index].geometry.coordinates[0][0];
-    map().props.onAnalysisExecuted({ analysisPoint: { longitude, latitude }, analysisRadiusMeters: 500 }); await view.flush();
+    map().props.onAnalysisExecuted({ source: "map", confirmedAddress: null, analysisPoint: { longitude, latitude }, analysisRadiusMeters: 500 }); await view.flush();
     assert.ok(html().includes("가락시장 참고자료 선택")); // not limited to candidates
     assert.equal(map().props.selectedOfficialMarketCode, null); // no auto-selection
     map().props.onSelectOfficialMarket(0); await view.flush();
@@ -320,4 +325,135 @@ test("STEP 2 viewer: all official geometries independent of crosswalk; manual OU
     view.props = { ...view.props, activeTab: "public-data" }; view.dirty = true; await view.flush();
     assert.ok(html().includes("별도 참고자료로만 확인하세요."));
   } finally { view.dispose(); }
+});
+
+test("STEP 3: real map/viewer state produces one context across target edits, requests and reference selections", async () => {
+  const sdk = installMapFixture();
+  const mapFetch = global.fetch;
+  const source = JSON.parse(fs.readFileSync(path.join(root, "data/seoul-market/v1.1-final/09_GEO/OFFICIAL_SEOUL_MARKETS.geojson"), "utf8"));
+  const contexts = [], nearbyRequests = [], publicRequests = [];
+  global.fetch = async (input, options) => {
+    const url = new URL(input, "http://fixture.invalid");
+    if (url.pathname.includes("spatial-layers")) return Response.json(source);
+    if (url.pathname.endsWith("crosswalk")) return Response.json({ marketId: url.searchParams.get("marketId"), verificationStatus: "candidate", manualReviewRequired: true, officialMarketCandidates: [], administrativeDongCandidates: [], livingGridCandidates: [] });
+    if (url.pathname.endsWith("nearby-places")) return new Promise((resolve) => nearbyRequests.push({ resolve, signal: options.signal }));
+    if (url.pathname.endsWith("bakery-data")) return new Promise((resolve) => publicRequests.push({ resolve, signal: options.signal, code: url.searchParams.get("marketCode") }));
+    return mapFetch(input, options);
+  };
+  const viewer = fixture(MarketSpatialViewer, {
+    selectedMarket: null, selectedSubmarket: null, activeTab: "briefing", marketSelector: null,
+    onOpenMarketMap() {}, onAnalysisContextChange(context) { contexts.push(context); },
+  });
+  const mapProps = () => viewer.find((node) => node.type === KakaoBaseMap).props;
+  const context = () => contexts.at(-1);
+  let map;
+  async function flush() {
+    await viewer.flush();
+    map.props = mapProps(); map.dirty = true;
+    await map.flush(); await viewer.flush();
+  }
+  function resolveNearby(request, payload, status = 200) {
+    request.resolve(Response.json(payload, { status }));
+  }
+  function publicPayload(request, dataStatus) {
+    // Synthetic observations attributed to the selected source code solely for this fixture.
+    const sampleObservation = (metric, value, sourceId) => ({
+      sourceId, referencePeriod: "2026-Q2", geographyType: "official_market", geographyId: request.code,
+      industryCode: "CS100005", metric, value, unit: sourceId === "SRC-SEOUL-SALES" ? "KRW" : "count", dataStatus: "available",
+    });
+    return { officialMarketCode: request.code, officialMarketName: "fixture official name",
+      industryCode: "CS100005", industryName: "fixture bakery", quarterCode: "20262", referencePeriod: "2026-Q2", dataStatus,
+      sales: dataStatus === "available" ? [sampleObservation("monthly_sales_amount", 1234, "SRC-SEOUL-SALES")] : [],
+      stores: dataStatus === "missing" ? [] : [sampleObservation("store_count", 3, "SRC-SEOUL-STORES")],
+    };
+  }
+  try {
+    await viewer.flush(); map = fixture(KakaoBaseMap, mapProps()); await flush();
+    assert.equal(context().target, null); assert.equal(context().kakaoNearby.bakery, null);
+    map.find((node) => node.props.id === "kakao-map-sdk").props.onReady(); await flush();
+    map.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture input address" } });
+    await flush(); map.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await flush();
+    assert.deepEqual(context().target, { source: "address", confirmedAddress: "fixture resolved address", analysisPoint: { longitude: 127.1, latitude: 37.5 }, executedRadiusMeters: 500 });
+    assert.equal(context().kakaoNearby.status, "loading"); assert.equal(context().kakaoNearby.bakery, null);
+    resolveNearby(nearbyRequests.at(-1), { categories: ["bakery", "confectionery", "cafe"].map((id) => ({ id, totalCount: 0, places: [] })) });
+    await flush(); assert.equal(context().kakaoNearby.status, "success"); assert.equal(context().kakaoNearby.bakery.totalCount, 0);
+
+    const addressContext = context();
+    map.button("분석조건 변경").props.onClick(); map.button("300m").props.onClick();
+    map.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture edited address" } });
+    sdk.emit(sdk.maps[0], "click", { latLng: new sdk.LatLng(37.51, 127.11) });
+    await flush(); assert.equal(context(), addressContext);
+    for (const activeTab of ["competition", "public-data", "market-map", "briefing"]) {
+      viewer.props = { ...viewer.props, activeTab }; viewer.dirty = true; await flush();
+      assert.equal(context(), addressContext);
+    }
+    sdk.emit(sdk.maps[0], "dragend"); sdk.emit(sdk.maps[0], "center_changed"); await flush();
+    assert.equal(context(), addressContext); assert.equal(nearbyRequests.length, 1);
+
+    // Use an actual source polygon vertex for multiple real relations, not invented geometry.
+    const garakIndex = source.features.findIndex((feature) => feature.properties.official_area_code === "3120231");
+    const [longitude, latitude] = source.features[garakIndex].geometry.coordinates[0][0];
+    sdk.emit(sdk.maps[0], "click", { latLng: new sdk.LatLng(latitude, longitude) }); await flush();
+    map.button("이 위치 분석").props.onClick(); await flush();
+    assert.equal(context().target.source, "map"); assert.equal(context().target.confirmedAddress, null);
+    assert.equal(context().target.executedRadiusMeters, 300);
+    assert.equal(context().kakaoNearby.bakery, null); // previous successful response cleared atomically
+    const staleNearby = nearbyRequests.at(-1);
+    // Invoke a replacement execution directly while the previous fixture promise is pending.
+    map.button("500m").props.onClick(); await flush(); map.button("이 위치 분석").props.onClick(); await flush();
+    assert.equal(staleNearby.signal.aborted, true);
+    resolveNearby(staleNearby, { categories: [{ id: "bakery", totalCount: 999, places: [] }] }); await flush();
+    assert.equal(context().kakaoNearby.status, "loading"); assert.equal(context().kakaoNearby.bakery, null);
+    resolveNearby(nearbyRequests.at(-1), { categories: [
+      { id: "bakery", totalCount: 0, places: [], error: "fixture category failure" },
+      { id: "confectionery", totalCount: 11, places: [] }, { id: "cafe", totalCount: 63, places: [] },
+    ] }); await flush();
+    assert.equal(context().kakaoNearby.status, "error"); assert.equal(context().kakaoNearby.bakery.totalCount, null);
+    assert.equal(context().kakaoNearby.confectionery.totalCount, 11); assert.equal(context().kakaoNearby.cafe.totalCount, 63);
+    assert.equal(context().target.executedRadiusMeters, 500);
+    assert.ok(context().officialMarkets.relatedMarkets.some((item) => item.relation === "INSIDE"));
+    assert.ok(context().officialMarkets.relatedMarkets.some((item) => item.relation === "RADIUS_OVERLAP"));
+    assert.equal(context().officialMarkets.manuallySelected, null);
+    const related = context().officialMarkets.relatedMarkets;
+
+    viewer.props = { ...viewer.props, selectedMarket: { marketId: "fixture-frameone", marketName: "fixture FRAMEONE", geometryStatus: "text_only" } }; viewer.dirty = true; await flush();
+    assert.equal(context().frameone.selectedMarketId, "fixture-frameone");
+    assert.deepEqual(context().target.analysisPoint, { longitude, latitude });
+    assert.deepEqual(context().officialMarkets.relatedMarkets, related);
+
+    mapProps().onSelectOfficialMarket(0); await flush();
+    assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "OUTSIDE");
+    assert.deepEqual(context().officialMarkets.relatedMarkets, related);
+    const loadButton = () => viewer.button("제과점 데이터 확인");
+    for (const dataStatus of ["available", "partial", "missing"]) {
+      loadButton().props.onClick(); await flush();
+      assert.equal(context().publicData.requestStatus, "loading"); assert.equal(context().publicData.status, null);
+      const request = publicRequests.at(-1), payload = publicPayload(request, dataStatus);
+      request.resolve(Response.json(payload)); await flush();
+      assert.equal(context().publicData.status, dataStatus);
+      assert.deepEqual(context().publicData.selectedOfficialMarketData, payload);
+      assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "OUTSIDE");
+    }
+    loadButton().props.onClick(); await flush();
+    publicRequests.at(-1).resolve(Response.json({ message: "fixture Seoul failure" }, { status: 502 })); await flush();
+    assert.equal(context().publicData.requestStatus, "error"); assert.equal(context().publicData.status, null);
+    assert.equal(context().publicData.error, "fixture Seoul failure");
+    assert.equal(context().officialMarkets.status, "success");
+
+    loadButton().props.onClick(); await flush();
+    const stalePublic = publicRequests.at(-1), firstNewContext = contexts.length;
+    mapProps().onSelectOfficialMarket(garakIndex); await flush();
+    assert.equal(stalePublic.signal.aborted, true);
+    assert.ok(contexts.slice(firstNewContext).every((item) => item.publicData.requestStatus === "idle" && item.publicData.selectedOfficialMarketData === null));
+    stalePublic.resolve(Response.json(publicPayload(stalePublic, "available"))); await flush();
+    assert.equal(context().publicData.requestStatus, "idle"); assert.equal(context().publicData.selectedOfficialMarketData, null);
+    assert.equal(context().officialMarkets.manuallySelected.marketCode, "3120231");
+    assert.deepEqual(context().officialMarkets.relatedMarkets, related);
+
+    map.button("이 위치 분석").props.onClick(); await flush();
+    resolveNearby(nearbyRequests.at(-1), { message: "fixture nearby transport failure" }, 502); await flush();
+    assert.equal(context().kakaoNearby.status, "error"); assert.equal(context().kakaoNearby.cafe, null);
+    assert.equal(context().kakaoNearby.error, "fixture nearby transport failure");
+    assert.deepEqual(addressContext.target, { source: "address", confirmedAddress: "fixture resolved address", analysisPoint: { longitude: 127.1, latitude: 37.5 }, executedRadiusMeters: 500 });
+  } finally { map?.dispose(); viewer.dispose(); }
 });
