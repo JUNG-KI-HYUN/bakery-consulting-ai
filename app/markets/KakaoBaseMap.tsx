@@ -11,6 +11,7 @@ import {
 
 type KakaoMapStatus = "loading" | "ready" | "error";
 type NearbySearchStatus = "idle" | "loading" | "success" | "error";
+type CandidateAddressStatus = "idle" | "loading" | "success" | "error";
 type NearbyCategoryId = "bakery" | "confectionery" | "cafe";
 type RadiusM = 300 | 500;
 export type KakaoBaseMapView = "briefing" | "competition" | "hidden";
@@ -46,6 +47,7 @@ interface KakaoMouseEvent {
 
 interface KakaoMapInstance {
   relayout(): void;
+  setCenter(center: KakaoLatLng): void;
 }
 
 interface KakaoPolygonInstance {
@@ -126,6 +128,7 @@ const SEOUL_CENTER = {
   longitude: 126.978,
 };
 type MapPoint = typeof SEOUL_CENTER;
+type CandidateStore = MapPoint & { address: string };
 
 interface NearbyCategoryDefinition {
   id: NearbyCategoryId;
@@ -160,6 +163,12 @@ interface NearbyPlacesResponse {
     error?: string;
   }>;
   message?: string;
+}
+
+interface CandidateGeocodeResponse {
+  latitude?: number;
+  longitude?: number;
+  resolvedAddress?: string;
 }
 
 const DEFAULT_RADIUS_M: RadiusM = 500;
@@ -287,6 +296,13 @@ export default function KakaoBaseMap({
   const [nearbySearchError, setNearbySearchError] = useState("");
   const [selectedNearbyPlace, setSelectedNearbyPlace] =
     useState<NearbyPlace | null>(null);
+  const [candidateAddress, setCandidateAddress] = useState("");
+  const [candidateStore, setCandidateStore] = useState<CandidateStore | null>(
+    null,
+  );
+  const [candidateAddressStatus, setCandidateAddressStatus] =
+    useState<CandidateAddressStatus>("idle");
+  const [candidateAddressError, setCandidateAddressError] = useState("");
 
   const enabledPlaceCount = useMemo(
     () =>
@@ -454,6 +470,25 @@ export default function KakaoBaseMap({
   }, [selectedPoint, status]);
 
   useEffect(() => {
+    const kakaoMaps = (window as KakaoWindow).kakao?.maps;
+    const map = mapInstanceRef.current;
+    if (status !== "ready" || !kakaoMaps || !map || !candidateStore) {
+      return;
+    }
+
+    const marker = new kakaoMaps.Marker({
+      map,
+      position: new kakaoMaps.LatLng(
+        candidateStore.latitude,
+        candidateStore.longitude,
+      ),
+      title: "후보점포",
+    });
+
+    return () => marker.setMap(null);
+  }, [candidateStore, status]);
+
+  useEffect(() => {
     if (status !== "ready" || !mapInstanceRef.current || !analysisPoint) {
       return;
     }
@@ -595,6 +630,67 @@ export default function KakaoBaseMap({
     setAnalysisRadiusM(radiusM);
   }
 
+  function analyzeCandidateStore() {
+    if (!candidateStore) {
+      return;
+    }
+
+    setAnalysisPoint({
+      latitude: candidateStore.latitude,
+      longitude: candidateStore.longitude,
+    });
+    setAnalysisRadiusM(radiusM);
+  }
+
+  async function locateCandidateStore() {
+    const address = candidateAddress.trim();
+    if (!address || status !== "ready") {
+      return;
+    }
+
+    setCandidateAddressStatus("loading");
+    setCandidateAddressError("");
+
+    try {
+      const searchParams = new URLSearchParams({ address });
+      const response = await fetch(`/api/markets/geocode?${searchParams}`);
+      const payload = (await response.json()) as CandidateGeocodeResponse;
+      if (
+        !response.ok ||
+        typeof payload.latitude !== "number" ||
+        typeof payload.longitude !== "number" ||
+        !Number.isFinite(payload.latitude) ||
+        !Number.isFinite(payload.longitude)
+      ) {
+        throw new Error("candidate-geocode-failed");
+      }
+
+      const nextCandidateStore: CandidateStore = {
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+        address: payload.resolvedAddress?.trim() || address,
+      };
+      setCandidateStore(nextCandidateStore);
+      setCandidateAddressStatus("success");
+
+      const kakaoMaps = (window as KakaoWindow).kakao?.maps;
+      const map = mapInstanceRef.current;
+      if (kakaoMaps && map) {
+        map.setCenter(
+          new kakaoMaps.LatLng(
+            nextCandidateStore.latitude,
+            nextCandidateStore.longitude,
+          ),
+        );
+      }
+    } catch {
+      setCandidateAddressStatus("error");
+      setCandidateAddressError(
+        "주소 위치를 확인하지 못했습니다. 주소를 확인한 후 다시 시도해 주세요.",
+      );
+    }
+  }
+
   function toggleCategory(categoryId: NearbyCategoryId) {
     if (
       enabledCategories[categoryId] &&
@@ -612,6 +708,64 @@ export default function KakaoBaseMap({
   return (
     <div>
       <div className={view === "briefing" ? "" : "hidden"}>
+      <section className="border-b border-slate-200 bg-white px-4 py-4" aria-labelledby="candidate-store-title">
+        <h3 id="candidate-store-title" className="text-sm font-bold text-slate-950">
+          후보점포
+        </h3>
+        <form
+          className="mt-2 flex flex-col gap-2 sm:flex-row"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void locateCandidateStore();
+          }}
+        >
+          <label htmlFor="candidate-store-address" className="sr-only">
+            후보점포 주소
+          </label>
+          <input
+            id="candidate-store-address"
+            type="text"
+            value={candidateAddress}
+            onChange={(event) => setCandidateAddress(event.target.value)}
+            placeholder="후보점포 주소를 입력하세요"
+            className="input min-w-0 flex-1"
+          />
+          <button
+            type="submit"
+            disabled={
+              status !== "ready" ||
+              candidateAddress.trim().length === 0 ||
+              candidateAddressStatus === "loading"
+            }
+            className="rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {candidateAddressStatus === "loading" ? "위치 확인 중…" : "위치 확인"}
+          </button>
+        </form>
+
+        {candidateStore ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-emerald-50 px-3 py-2.5">
+            <p className="min-w-0 text-xs font-semibold text-emerald-900">
+              <span className="mr-2 text-emerald-700">확인된 주소</span>
+              {candidateStore.address}
+            </p>
+            <button
+              type="button"
+              onClick={analyzeCandidateStore}
+              disabled={nearbySearchStatus === "loading"}
+              className="shrink-0 rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              후보점포 기준 분석
+            </button>
+          </div>
+        ) : null}
+
+        {candidateAddressError ? (
+          <p className="mt-2 text-xs font-semibold text-red-700" role="alert">
+            {candidateAddressError}
+          </p>
+        ) : null}
+      </section>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] font-bold text-slate-700">
@@ -733,6 +887,13 @@ export default function KakaoBaseMap({
         <p className="mt-2 text-xs font-semibold text-slate-600" role="status">
           {selectedPoint
             ? "분석 위치가 선택되었습니다. 이 위치 분석을 눌러 주변 장소를 확인하세요."
+            : analysisPoint &&
+                candidateStore &&
+                analysisPoint.latitude === candidateStore.latitude &&
+                analysisPoint.longitude === candidateStore.longitude
+              ? `후보점포 기준 ${analysisRadiusM}m 분석 결과입니다.`
+              : candidateStore
+                ? "후보점포 위치가 확인되었습니다. 후보점포 기준 분석을 눌러 주변 장소를 확인하세요."
             : "지도에서 분석할 위치를 선택하세요."}
         </p>
 
