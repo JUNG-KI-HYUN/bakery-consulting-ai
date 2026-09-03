@@ -59,6 +59,8 @@ for (const ext of previousLoaders.keys()) {
 }
 const { default: KakaoBaseMap } = require(path.join(root, "app/markets/KakaoBaseMap.tsx"));
 const { default: MarketsExplorer } = require(path.join(root, "app/markets/MarketsExplorer.tsx"));
+const { default: MarketSpatialViewer } = require(path.join(root, "app/markets/MarketSpatialViewer.tsx"));
+const { findRelatedOfficialMarkets } = require(path.join(root, "lib/market-data/official-market-spatial-relation.ts"));
 const originalKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
 const originalFetch = global.fetch;
 const originalWindow = global.window;
@@ -248,4 +250,74 @@ test("CASE J structural check: target controls stack on narrow screens with 44px
   assert.ok(html.includes("flex flex-col gap-2 sm:flex-row"));
   for (const label of ["후보점포 분석", "위치 확인", "지도 보기", "300m", "500m", "이 위치 분석"]) assert.ok(view.button(label).props.className.includes("min-h-11"));
   view.dispose();
+});
+
+test("STEP 2 CASE H/I/J/K/L: actual map handlers share executed spatial calculation, retain manual selection and pan state", async () => {
+  const sdk = installMapFixture();
+  const geometry = { type: "Polygon", coordinates: [[[127.1045, 37.49], [127.106, 37.49], [127.106, 37.52], [127.1045, 37.52], [127.1045, 37.49]]] };
+  const inputs = [{ marketCode: "fixture-only", marketName: "fixture only", geometry }];
+  let executed = null, selections = 0;
+  const view = fixture(KakaoBaseMap, {
+    officialMarketPolygons: [{ featureIndex: 0, officialMarketCode: "fixture-only", geometry }],
+    selectedOfficialMarketCode: "fixture-only", onSelectOfficialMarket() { selections++; },
+    onAnalysisExecuted(value) { executed = value; },
+  });
+  const relation = () => findRelatedOfficialMarkets(executed, inputs);
+  try {
+    await view.flush(); view.find((node) => node.props.id === "kakao-map-sdk").props.onReady(); await view.flush();
+    assert.equal(relation(), null); // I
+    view.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture address" } });
+    await view.flush(); view.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await view.flush();
+    assert.equal(relation().results[0].relation, "RADIUS_OVERLAP"); // J
+    const snapshot = executed;
+    view.button("분석조건 변경").props.onClick(); view.button("300m").props.onClick(); await view.flush();
+    assert.equal(executed, snapshot); assert.equal(relation().results[0].analysisRadiusMeters, 500); // L
+    view.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await view.flush();
+    assert.equal(relation().results[0].relation, "OUTSIDE");
+    sdk.emit(sdk.polygons[0], "click"); await view.flush();
+    assert.equal(selections, 1); assert.equal(view.props.selectedOfficialMarketCode, "fixture-only");
+    assert.equal(relation().radiusOverlapMarkets.length, 0); assert.equal(relation().insideMarkets.length, 0); // H
+    sdk.emit(sdk.maps[0], "click", { latLng: new sdk.LatLng(37.5, 127.1) }); // consume polygon bubble guard
+    sdk.emit(sdk.maps[0], "click", { latLng: new sdk.LatLng(37.5, 127.1) }); await view.flush();
+    view.button("이 위치 분석").props.onClick(); await view.flush();
+    assert.equal(relation().results[0].relation, "OUTSIDE"); // K: same point/radius as geocode
+    view.button("분석조건 변경").props.onClick(); view.button("500m").props.onClick(); await view.flush();
+    view.button("이 위치 분석").props.onClick(); await view.flush();
+    assert.equal(relation().results[0].relation, "RADIUS_OVERLAP");
+    const beforePan = executed, requests = sdk.requests.length;
+    sdk.emit(sdk.maps[0], "dragend"); sdk.emit(sdk.maps[0], "center_changed"); await view.flush();
+    assert.equal(executed, beforePan); assert.equal(sdk.requests.length, requests);
+  } finally { view.dispose(); }
+});
+
+test("STEP 2 viewer: all official geometries independent of crosswalk; manual OUTSIDE warning and neutral state", async () => {
+  installMapFixture();
+  const source = JSON.parse(fs.readFileSync(path.join(root, "data/seoul-market/v1.1-final/09_GEO/OFFICIAL_SEOUL_MARKETS.geojson"), "utf8"));
+  const requests = [];
+  global.fetch = async (url) => {
+    requests.push(url);
+    if (url.includes("spatial-layers")) return Response.json(source);
+    assert.ok(url.includes("crosswalk"));
+    return Response.json({ marketId: "fixture-market", verificationStatus: "candidate", manualReviewRequired: true, officialMarketCandidates: [], administrativeDongCandidates: [], livingGridCandidates: [] });
+  };
+  const view = fixture(MarketSpatialViewer, { selectedMarket: { marketId: "fixture-market", marketName: "fixture market", geometryStatus: "text_only" }, selectedSubmarket: null, activeTab: "briefing", marketSelector: null, onOpenMarketMap() {} });
+  const map = () => view.find((node) => node.type === KakaoBaseMap);
+  const html = () => renderToStaticMarkup(view.tree);
+  try {
+    await view.flush();
+    assert.ok(html().includes("분석지점을 먼저 선택해 주세요."));
+    assert.equal(map().props.officialMarketPolygons.length, 0); // crosswalk empty
+    const index = source.features.findIndex((f) => f.properties.official_area_code === "3120231");
+    const [longitude, latitude] = source.features[index].geometry.coordinates[0][0];
+    map().props.onAnalysisExecuted({ analysisPoint: { longitude, latitude }, analysisRadiusMeters: 500 }); await view.flush();
+    assert.ok(html().includes("가락시장 참고자료 선택")); // not limited to candidates
+    assert.equal(map().props.selectedOfficialMarketCode, null); // no auto-selection
+    map().props.onSelectOfficialMarket(0); await view.flush();
+    assert.equal(map().props.selectedOfficialMarketCode, source.features[0].properties.official_area_code);
+    assert.ok(html().includes("별도 참고자료로만 확인하세요."));
+    assert.ok(html().includes("후보점포 실제매출이나 분석반경 자체의 통계가 아닙니다."));
+    assert.ok(!requests.some((url) => url.includes("bakery-data")));
+    view.props = { ...view.props, activeTab: "public-data" }; view.dirty = true; await view.flush();
+    assert.ok(html().includes("별도 참고자료로만 확인하세요."));
+  } finally { view.dispose(); }
 });

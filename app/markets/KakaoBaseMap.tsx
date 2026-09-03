@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import type { ExecutedSpatialAnalysis } from "@/lib/market-data/official-market-spatial-relation";
 import {
   useCallback,
   useEffect,
@@ -257,6 +258,7 @@ export default function KakaoBaseMap({
   officialMarketPolygons,
   selectedOfficialMarketCode,
   onSelectOfficialMarket,
+  onAnalysisExecuted,
   view = "briefing",
   marketSelector,
   marketName = "주요상권 미선택",
@@ -264,6 +266,7 @@ export default function KakaoBaseMap({
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
   onSelectOfficialMarket: (featureIndex: number) => void;
+  onAnalysisExecuted?: (analysis: ExecutedSpatialAnalysis) => void;
   view?: KakaoBaseMapView;
   marketSelector?: ReactNode;
   marketName?: string;
@@ -639,6 +642,7 @@ export default function KakaoBaseMap({
     setAnalysisPoint({ ...selectedPoint });
     setNearbySearchStatus("loading");
     setAnalysisRadiusM(radiusM);
+    onAnalysisExecuted?.({ analysisPoint: { ...selectedPoint }, analysisRadiusMeters: radiusM });
     setAnalysisTarget({ label: `지도 선택 위치 · ${selectedPoint.latitude.toFixed(5)}, ${selectedPoint.longitude.toFixed(5)}`, marketName });
     setConditionsOpen(false);
     setMapVisible(true);
@@ -651,6 +655,7 @@ export default function KakaoBaseMap({
       longitude: candidate.longitude,
     });
     setAnalysisRadiusM(radiusM);
+    onAnalysisExecuted?.({ analysisPoint: { latitude: candidate.latitude, longitude: candidate.longitude }, analysisRadiusMeters: radiusM });
     setAnalysisTarget({ label: candidate.address, marketName });
     setSelectedPoint(null);
     setConditionsOpen(false);

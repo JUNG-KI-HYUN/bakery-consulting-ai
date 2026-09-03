@@ -9,6 +9,13 @@ import {
   useState,
 } from "react";
 import type { BakeryOfficialMarketData } from "@/lib/market-data/services/bakery-official-market";
+import {
+  findRelatedOfficialMarkets,
+  OFFICIAL_MARKET_RELATION_LABELS,
+  officialMarketRelationDescription,
+  type ExecutedSpatialAnalysis,
+  type OfficialMarketSpatialResult,
+} from "@/lib/market-data/official-market-spatial-relation";
 import type {
   MarketDataMetric,
   MarketDataObservation,
@@ -38,6 +45,15 @@ interface MultiPolygonGeometry {
 }
 
 type ViewerGeometry = PolygonGeometry | MultiPolygonGeometry;
+
+function SpatialRelationNotice({ result }: { result: OfficialMarketSpatialResult }) {
+  return (
+    <div className={`mt-2 rounded-lg border px-3 py-2 text-xs leading-5 ${result.relation === "INSIDE" ? "border-emerald-200 bg-emerald-50 text-emerald-900" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+      <span className="font-bold">{OFFICIAL_MARKET_RELATION_LABELS[result.relation]}</span>
+      <p>{officialMarketRelationDescription(result.relation, result.analysisRadiusMeters)}</p>
+    </div>
+  );
+}
 
 interface ViewerFeature {
   type: "Feature";
@@ -556,6 +572,7 @@ export default function MarketSpatialViewer({
     defaultVisibleLayerIds,
   );
   const [loadedLayers, setLoadedLayers] = useState<LoadedLayerMap>({});
+  const [executedSpatialAnalysis, setExecutedSpatialAnalysis] = useState<ExecutedSpatialAnalysis | null>(null);
   const [loadingLayerIds, setLoadingLayerIds] = useState<Set<SpatialLayerId>>(
     new Set(),
   );
@@ -1195,6 +1212,18 @@ export default function MarketSpatialViewer({
       ? selectedReferenceId
       : null;
   const officialMarketLayer = loadedLayers["seoul-official-markets"];
+  // All official geometries, independent of FRAMEONE's crosswalk candidates.
+  // Retain geometry references only in inputs, never in relation results.
+  const officialSpatialInputs = useMemo(() => officialMarketLayer?.collection.features.map((feature) => ({
+    marketCode: referenceIdForFeature("seoul-official-markets", feature),
+    marketName: referenceNameForFeature("seoul-official-markets", feature),
+    geometry: feature.geometry,
+  })) ?? [], [officialMarketLayer]);
+  const spatialRelations = useMemo(
+    () => officialMarketLayer ? findRelatedOfficialMarkets(executedSpatialAnalysis, officialSpatialInputs) : null,
+    [executedSpatialAnalysis, officialSpatialInputs, officialMarketLayer],
+  );
+  const selectedSpatialRelation = spatialRelations?.results.find((result) => result.marketCode === selectedOfficialMarketCode);
   const kakaoOfficialMarketPolygons = useMemo(() => {
     if (!officialMarketLayer || !crosswalk) {
       return [];
@@ -1617,11 +1646,12 @@ export default function MarketSpatialViewer({
               officialMarketPolygons={kakaoOfficialMarketPolygons}
               selectedOfficialMarketCode={selectedOfficialMarketCode}
               onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
+              onAnalysisExecuted={setExecutedSpatialAnalysis}
               view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
             />
             {activeTab === "briefing" ? (
             <p className="border-t border-slate-200 px-4 py-2.5 text-[10px] leading-4 text-slate-500">
-              현재 선택한 FRAMEONE 주요상권의 공식상권 검토 후보만 표시합니다. 검토 후보는 확정 연결이 아닙니다.
+              지도 경계는 FRAMEONE 연결 검토 후보만 표시합니다. 아래 공간관계는 전체 서울시 공식상권으로 계산하며, FRAMEONE 확정 연결을 뜻하지 않습니다.
             </p>
             ) : null}
           </section>
@@ -1715,7 +1745,7 @@ export default function MarketSpatialViewer({
                   {activeTab === "briefing" ? "서울시 공식상권" : "선택 상권 정보"}
                 </p>
                 <h3 className="mt-1 text-base font-bold text-slate-950">
-                  {activeTab === "briefing" ? "선택한 공식상권" : "지도에서 선택한 항목"}
+                  {activeTab === "briefing" ? "분석지점과 공식상권의 공간관계" : "지도에서 선택한 항목"}
                 </h3>
               </div>
               {activeTab !== "briefing" ? (
@@ -1733,13 +1763,45 @@ export default function MarketSpatialViewer({
               ) : null}
             </div>
 
+            <div aria-label="공식상권 공간관계" className="mt-4" aria-live="polite">
+              {!executedSpatialAnalysis ? (
+                <p className="text-xs text-slate-600">분석지점을 먼저 선택해 주세요.</p>
+              ) : !spatialRelations ? (
+                <p className="text-xs text-amber-800">
+                  {layerErrors["seoul-official-markets"] ? "공간관계 확인 필요: 공식상권 경계를 불러오지 못했습니다." : "공식상권 경계를 불러오는 중입니다."}
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs font-bold text-slate-700">실행 반경 {executedSpatialAnalysis.analysisRadiusMeters}m · 내부 {spatialRelations.insideMarkets.length}개 · 반경 교차 {spatialRelations.radiusOverlapMarkets.length}개</p>
+                  <ul className="mt-2 space-y-2">
+                    {[...spatialRelations.insideMarkets, ...spatialRelations.radiusOverlapMarkets].map((result) => (
+                      <li key={result.marketCode} className="rounded-lg border border-slate-200 p-3">
+                        <button type="button" className="text-left text-sm font-bold text-slate-900 underline underline-offset-4"
+                          onClick={() => handleKakaoOfficialMarketSelect(officialSpatialInputs.findIndex((item) => item.marketCode === result.marketCode))}>
+                          {result.marketName} 참고자료 선택
+                        </button>
+                        <SpatialRelationNotice result={result} />
+                      </li>
+                    ))}
+                  </ul>
+                  {spatialRelations.insideMarkets.length + spatialRelations.radiusOverlapMarkets.length === 0 ? (
+                    <p className="mt-2 text-xs text-slate-600">계산 가능한 공식상권 중 현재 분석지점 및 반경과 직접 겹치는 상권이 없습니다.</p>
+                  ) : null}
+                  {spatialRelations.unknownMarkets.length > 0 ? (
+                    <p className="mt-2 text-xs text-amber-800">공간관계 확인 필요 {spatialRelations.unknownMarkets.length}개 · 계산 불가 항목은 직접 관계 없음으로 처리하지 않습니다.</p>
+                  ) : null}
+                  <p className="mt-2 text-[11px] text-slate-500">분석지점과 공식상권 경계만 비교한 결과이며, FRAMEONE 주요상권의 연결 검토 상태와 별개입니다.</p>
+                </>
+              )}
+            </div>
+
             {selectedReferences.length === 0 ? (
               <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center">
                 <p className="text-sm font-bold text-slate-700">
-                  지도에서 서울시 공식상권을 클릭하세요.
+                  참고할 공식상권을 직접 선택하세요.
                 </p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  서울시 공식상권을 선택하면 제과점 통계를 조회할 수 있습니다.
+                  지도 Polygon 또는 위 공간관계 목록에서 선택하면 제과점 통계를 조회할 수 있습니다. 자동 선택하지 않습니다.
                 </p>
               </div>
             ) : (
@@ -2013,7 +2075,7 @@ export default function MarketSpatialViewer({
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
-                              선택한 공식상권의 제과점 현황
+                              수동 선택한 공식상권의 제과점 현황
                             </p>
                             <h4 className="mt-1 text-sm font-bold text-slate-950">
                               {referenceNameForFeature(
@@ -2049,6 +2111,13 @@ export default function MarketSpatialViewer({
                               : "제과점 데이터 확인"}
                           </button>
                         </div>
+
+                        {selectedSpatialRelation ? <SpatialRelationNotice result={selectedSpatialRelation} /> : (
+                          <p className="mt-2 text-xs text-slate-600">{executedSpatialAnalysis ? "공간관계 확인 필요" : "분석지점을 먼저 선택해 주세요."}</p>
+                        )}
+                        <p className="mt-2 text-xs leading-5 text-slate-600">
+                          서울시 공식상권 단위의 추정매출·점포 통계입니다. 내부 또는 반경 교차 여부와 무관하게 후보점포 실제매출이나 분석반경 자체의 통계가 아닙니다.
+                        </p>
 
                         {!selectedOfficialMarketCode ? (
                           <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
