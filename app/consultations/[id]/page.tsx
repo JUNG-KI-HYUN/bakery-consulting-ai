@@ -2,10 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DiagnosisResultView } from "@/components/diagnosis/DiagnosisResultView";
 import { FacilityEvidenceReview } from "@/components/diagnosis/FacilityEvidence";
+import { DataConfidencePanel } from "@/components/evidence/DataConfidencePanel";
 import { RiskVerdictBadge } from "@/components/diagnosis/RiskVerdictBadge";
 import { DiagnosisReportPreview } from "@/components/reports/DiagnosisReportPreview";
 import { mockAiDiagnosis } from "@/lib/diagnosis/mockAiDiagnosis";
 import { getConsultationById } from "@/lib/diagnosis/diagnosis-service";
+import { calculateEvidenceCoverage } from "@/lib/evidence/coverage";
+import { EVIDENCE_COVERAGE_POLICY_V1 } from "@/lib/evidence/coverage-policy";
+import { getEvidenceForField } from "@/lib/evidence/field";
 
 export default async function ConsultationDetailPage({
   params,
@@ -16,6 +20,13 @@ export default async function ConsultationDetailPage({
   const record = await getConsultationById(id);
   if (!record) return notFound();
   const diagnosis = mockAiDiagnosis(record);
+  const coverage = calculateEvidenceCoverage(
+    EVIDENCE_COVERAGE_POLICY_V1.fields.map((field) => ({
+      ...field,
+      evidence: getEvidenceForField(record.evidence, field.fieldPath),
+    })),
+    EVIDENCE_COVERAGE_POLICY_V1.policyVersion,
+  );
 
   return (
     <div className="space-y-6">
@@ -43,6 +54,7 @@ export default async function ConsultationDetailPage({
           </Link>
         </div>
       </section>
+      <DataConfidencePanel coverage={coverage} />
       <FacilityEvidenceReview value={record.facilityCheck} evidence={record.evidence} />
       <DiagnosisResultView result={diagnosis} consultationId={id} />
       <DiagnosisReportPreview result={diagnosis} />
