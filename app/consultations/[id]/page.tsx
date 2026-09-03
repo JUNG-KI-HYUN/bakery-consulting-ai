@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DiagnosisResultView } from "@/components/diagnosis/DiagnosisResultView";
+import { FacilityEvidenceReview } from "@/components/diagnosis/FacilityEvidence";
 import { RiskVerdictBadge } from "@/components/diagnosis/RiskVerdictBadge";
 import { DiagnosisReportPreview } from "@/components/reports/DiagnosisReportPreview";
 import { mockAiDiagnosis } from "@/lib/diagnosis/mockAiDiagnosis";
@@ -42,6 +43,7 @@ export default async function ConsultationDetailPage({
           </Link>
         </div>
       </section>
+      <FacilityEvidenceReview value={record.facilityCheck} evidence={record.evidence} />
       <DiagnosisResultView result={diagnosis} consultationId={id} />
       <DiagnosisReportPreview result={diagnosis} />
     </div>

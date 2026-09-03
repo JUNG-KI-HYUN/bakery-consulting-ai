@@ -1,30 +1,43 @@
 "use client";
 
 import { FacilityCheckInput } from "@/lib/diagnosis/types";
+import type { Evidence } from "@/lib/evidence/types";
+import { FacilityEvidenceField } from "./FacilityEvidence";
 
 const tri = ["가능", "불확실", "불가"] as const;
 
 function Field({
   label,
   children,
+  fieldKey,
+  evidence,
 }: {
   label: string;
   children: React.ReactNode;
+  fieldKey?: keyof FacilityCheckInput;
+  evidence?: readonly Evidence[];
 }) {
-  return (
+  const control = (
     <label className="block">
       <span className="field-label">{label}</span>
       {children}
     </label>
   );
+  return fieldKey ? (
+    <FacilityEvidenceField fieldKey={fieldKey} evidence={evidence}>
+      {control}
+    </FacilityEvidenceField>
+  ) : control;
 }
 
 export function FacilityCheckForm({
   value,
   onChange,
+  evidence,
 }: {
   value: FacilityCheckInput;
   onChange: (next: FacilityCheckInput) => void;
+  evidence?: readonly Evidence[];
 }) {
   const update = <K extends keyof FacilityCheckInput>(
     key: K,
@@ -32,7 +45,7 @@ export function FacilityCheckForm({
   ) => onChange({ ...value, [key]: next });
 
   const triSelect = (key: keyof FacilityCheckInput, label: string) => (
-    <Field label={label}>
+    <Field label={label} fieldKey={key} evidence={evidence}>
       <select
         className="input"
         value={String(value[key])}
@@ -63,7 +76,7 @@ export function FacilityCheckForm({
         상권이 좋아도, 전기·배기·급배수가 막히면 계약은 보류입니다.
       </p>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <Field label="전기 용량">
+        <Field label="전기 용량" fieldKey="electricCapacity" evidence={evidence}>
           <input
             className="input"
             value={value.electricCapacity}
@@ -101,14 +114,16 @@ export function FacilityCheckForm({
         {triSelect("showcasePlacementPossible", "쇼케이스 배치 가능성")}
         {triSelect("productionSpaceSecured", "제조공간 확보 가능성")}
         {triSelect("salesSpaceSecured", "판매공간 확보 가능성")}
-        <label className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
-          <input
-            type="checkbox"
-            checked={value.fireSafetyChecked}
-            onChange={(e) => update("fireSafetyChecked", e.target.checked)}
-          />
-          소방 확인 여부
-        </label>
+        <FacilityEvidenceField fieldKey="fireSafetyChecked" evidence={evidence}>
+          <label className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={value.fireSafetyChecked}
+              onChange={(e) => update("fireSafetyChecked", e.target.checked)}
+            />
+            소방 확인 여부
+          </label>
+        </FacilityEvidenceField>
         <label className="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
           <input
             type="checkbox"

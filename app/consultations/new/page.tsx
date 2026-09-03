@@ -104,6 +104,7 @@ export default function NewConsultationPage() {
       />
       <FacilityCheckForm
         value={record.facilityCheck}
+        evidence={record.evidence}
         onChange={(next) => setRecord({ ...record, facilityCheck: next })}
       />
       <BreakEvenForm
