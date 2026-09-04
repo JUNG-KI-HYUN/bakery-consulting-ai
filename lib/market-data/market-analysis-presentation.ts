@@ -82,7 +82,7 @@ export function buildMarketSummaryPresentation(
   if (!context?.target) return {
     status: "empty" as const,
     viewMode,
-    message: "후보점포 주소를 입력하거나 지도에서 위치를 선택한 뒤 분석을 실행해 주세요.",
+    message: "먼저 분석 설정에서 후보점포 분석을 실행해 주세요.",
     staffDetails: null,
   };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { MarketAnalysisContext } from "@/lib/market-data/market-analysis-context";
 import {
   buildMarketSummaryPresentation,
@@ -56,18 +56,24 @@ function RawField({ label, value }: { label: string; value: unknown }) {
   return <div className="min-w-0"><dt className="text-xs font-semibold text-slate-500">{label}</dt><dd className="mt-1"><RawValue value={value} /></dd></div>;
 }
 
-/** Context is the only source of displayed data. The callback opens existing controls. */
-export default function MarketAnalysisSummary({ context, onEditConditions }: {
+/** Context is the only source of displayed data. The callbacks change presentation or open existing controls. */
+export default function MarketAnalysisSummary({
+  context,
+  onEditConditions,
+  viewMode = "customer",
+  onViewModeChange = () => {},
+}: {
   context: MarketAnalysisContext | null;
   onEditConditions: () => void;
+  viewMode?: MarketAnalysisViewMode;
+  onViewModeChange?: (mode: MarketAnalysisViewMode) => void;
 }) {
-  const [viewMode, setViewMode] = useState<MarketAnalysisViewMode>("customer");
   const summary = buildMarketSummaryPresentation(context, viewMode);
   if (summary.status === "empty") return (
     <section aria-label="후보점포 종합 진단" className="m-4 min-w-0 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-bold text-slate-900">후보점포 종합 진단</h2>
-        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+        <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
       </div>
       <p className="mt-2 text-sm leading-6 text-slate-600">{summary.message}</p>
     </section>
@@ -87,7 +93,7 @@ export default function MarketAnalysisSummary({ context, onEditConditions }: {
             </div>
           </div>
           <div className="grid shrink-0 gap-2 sm:min-w-80">
-            <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+            <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
             <button type="button" onClick={onEditConditions} className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">분석조건 변경</button>
           </div>
         </div>

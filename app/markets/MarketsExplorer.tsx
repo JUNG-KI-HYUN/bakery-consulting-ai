@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
 import MarketAnalysisSummary from "./MarketAnalysisSummary";
 import type { MarketAnalysisContext } from "@/lib/market-data/market-analysis-context";
+import type { MarketAnalysisViewMode } from "@/lib/market-data/market-analysis-presentation";
 
 export type MarketsWorkspaceTab =
   | "briefing"
@@ -15,10 +16,10 @@ const WORKSPACE_TABS: ReadonlyArray<{
   id: MarketsWorkspaceTab;
   label: string;
 }> = [
-  { id: "briefing", label: "브리핑" },
-  { id: "market-map", label: "상권지도" },
-  { id: "competition", label: "경쟁점" },
-  { id: "public-data", label: "공공데이터" },
+  { id: "briefing", label: "분석 설정" },
+  { id: "market-map", label: "종합 진단" },
+  { id: "competition", label: "경쟁 환경" },
+  { id: "public-data", label: "데이터 근거" },
 ];
 
 export interface MarketNode {
@@ -154,6 +155,7 @@ export default function MarketsExplorer({
     useState<MarketsWorkspaceTab>("briefing");
   const [analysisContext, setAnalysisContext] = useState<MarketAnalysisContext | null>(null);
   const [analysisConditionsRequest, setAnalysisConditionsRequest] = useState(0);
+  const [viewMode, setViewMode] = useState<MarketAnalysisViewMode>("customer");
 
   const allMarkets = useMemo(
     () => hierarchy.districts.flatMap((district) => district.markets),
@@ -255,7 +257,7 @@ export default function MarketsExplorer({
             type="button"
             onClick={() => setActiveTab(tab.id)}
             aria-current={activeTab === tab.id ? "page" : undefined}
-            className={`shrink-0 rounded-lg px-4 py-2.5 text-sm font-bold ${
+            className={`min-h-11 shrink-0 rounded-lg px-4 py-2.5 text-sm font-bold ${
               activeTab === tab.id
                 ? "bg-slate-900 text-white"
                 : "text-slate-600 hover:bg-slate-100"
@@ -278,7 +280,7 @@ export default function MarketsExplorer({
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 aria-current={activeTab === tab.id ? "page" : undefined}
-                className={`w-full rounded-lg px-3 py-3 text-left text-sm font-bold ${
+                className={`min-h-11 w-full rounded-lg px-3 py-3 text-left text-sm font-bold ${
                   activeTab === tab.id
                     ? "bg-slate-900 text-white"
                     : "text-slate-600 hover:bg-slate-100"
@@ -297,13 +299,13 @@ export default function MarketsExplorer({
         <div className="p-5 md:p-6">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F59E0B]">
-              상권분석 브리핑
+              분석 설정
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0B1220] md:text-3xl">
-              서울 베이커리 상권 브리핑
+              후보점포 분석 설정
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              주요상권과 후보점포 주소, 반경을 정한 뒤 주변 경쟁환경을 확인하세요.
+              주요상권과 후보점포 주소, 반경을 정한 뒤 분석을 실행하세요.
               주소가 없으면 지도를 열어 분석할 위치를 직접 선택할 수 있습니다.
             </p>
           </div>
@@ -318,7 +320,7 @@ export default function MarketsExplorer({
           {[
             ["1", "분석 대상 선택"],
             ["2", "주소 또는 지도 위치 분석"],
-            ["3", "지도와 분석결과 확인"],
+            ["3", "종합 진단 확인"],
           ].map(([step, label], index) => (
             <li key={step} className="contents">
               <span className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
@@ -342,28 +344,40 @@ export default function MarketsExplorer({
         </>
       ) : (
         <section className="panel-card px-5 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-            직원용 업무 화면
-          </p>
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">상권분석 업무</p>
           <h2 className="mt-1 text-xl font-bold text-slate-950">
             {WORKSPACE_TABS.find((tab) => tab.id === activeTab)?.label}
           </h2>
         </section>
       )}
 
+      {activeTab === "market-map" ? (
+        <MarketAnalysisSummary
+          context={analysisContext}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          onEditConditions={() => {
+            setActiveTab("briefing");
+            setAnalysisConditionsRequest((request) => request + 1);
+          }}
+        />
+      ) : null}
+
+      {activeTab === "public-data" && !analysisContext?.target ? (
+        <section className="panel-card border-dashed p-5 text-sm leading-6 text-slate-600">
+          분석 실행 후 데이터 근거를 확인할 수 있습니다. 먼저 분석 설정에서 후보점포 분석을 실행해 주세요.
+        </section>
+      ) : null}
+
+      <div className={activeTab === "market-map" || (activeTab === "public-data" && !analysisContext?.target) ? "hidden" : ""}>
       <MarketSpatialViewer
         selectedMarket={selectedMarketSpatialSummary}
         selectedSubmarket={selectedSubmarketSpatialSummary}
         activeTab={activeTab}
-        onOpenMarketMap={() => setActiveTab("market-map")}
+        onOpenMarketMap={() => setActiveTab("briefing")}
         onAnalysisContextChange={setAnalysisContext}
         analysisConditionsRequest={analysisConditionsRequest}
-        analysisSummary={activeTab === "briefing" ? (
-          <MarketAnalysisSummary
-            context={analysisContext}
-            onEditConditions={() => setAnalysisConditionsRequest((request) => request + 1)}
-          />
-        ) : null}
+        analysisSummary={null}
         marketSelector={
           <label className="block min-w-0 text-xs font-bold text-slate-700">
             FRAMEONE 주요상권
@@ -387,8 +401,9 @@ export default function MarketsExplorer({
           </label>
         }
       />
+      </div>
 
-      {activeTab === "market-map" ? (
+      {activeTab === "public-data" ? (
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.4fr)]">
         <aside
           id="frameone-market-selector"

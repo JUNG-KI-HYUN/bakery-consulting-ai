@@ -739,6 +739,10 @@ export default function KakaoBaseMap({
     }));
   }
 
+  // Keep the component instance and its analysis state mounted between workspace
+  // tabs without leaving the map's hidden technical DOM in the diagnosis view.
+  if (view === "hidden") return <div aria-hidden="true" />;
+
   return (
     <div>
       <div className={view === "briefing" ? "" : "hidden"}>
@@ -860,7 +864,7 @@ export default function KakaoBaseMap({
       </div>
       </div>
 
-      {view !== "hidden" && analysisPoint ? (
+      {analysisPoint ? (
       <section
         className="border-t border-slate-200 bg-white px-4 py-4"
         aria-labelledby="nearby-place-title"
@@ -969,7 +973,7 @@ export default function KakaoBaseMap({
         </div>
       </section>
       ) : view === "competition" ? (
-        <p className="p-5 text-sm text-slate-600">분석 대상을 선택한 후 주변 경쟁환경을 확인할 수 있습니다. 브리핑에서 주소 또는 지도 위치를 분석해 주세요.</p>
+        <p className="p-5 text-sm text-slate-600">분석 실행 후 경쟁 환경을 확인할 수 있습니다. 먼저 분석 설정에서 주소 또는 지도 위치를 분석해 주세요.</p>
       ) : null}
     </div>
   );

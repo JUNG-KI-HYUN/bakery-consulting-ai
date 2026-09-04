@@ -1426,7 +1426,7 @@ export default function MarketSpatialViewer({
 
   return (
     <section className="panel-card overflow-hidden" aria-labelledby="spatial-viewer-title">
-      <div className={`${activeTab === "briefing" || activeTab === "competition" ? "hidden" : ""} border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-6`}>
+      {activeTab === "public-data" ? <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">
@@ -1446,10 +1446,10 @@ export default function MarketSpatialViewer({
             <p className="mt-1">드래그 이동 · 휠 확대/축소 · 클릭 상세보기</p>
           </div>
         </div>
-      </div>
+      </div> : null}
 
       <div className="space-y-3 p-4 md:p-6">
-        {activeTab === "market-map" ? (
+        {activeTab === "public-data" ? (
         <details className="rounded-xl border border-slate-200 bg-slate-50/80">
           <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap">
             <span>
@@ -1592,7 +1592,7 @@ export default function MarketSpatialViewer({
         ) : null}
 
         <div className="min-w-0 space-y-3">
-          {selectedMarket && activeTab === "market-map" ? (
+          {selectedMarket && activeTab === "public-data" ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -1626,7 +1626,7 @@ export default function MarketSpatialViewer({
               <p className="mt-2 text-xs font-semibold text-amber-800">
                 자치구 {selectedMarket.district}
               </p>
-              {activeTab === "market-map" ? (
+              {activeTab === "public-data" ? (
               <details className="mt-3 rounded-lg border border-amber-200 bg-white/70 px-3 py-2 text-[10px] text-slate-600">
                 <summary className="cursor-pointer font-bold text-slate-700">
                   데이터 상세정보
@@ -1659,7 +1659,7 @@ export default function MarketSpatialViewer({
                 </dl>
               </details>
               ) : null}
-              {activeTab === "market-map" ? (
+              {activeTab === "public-data" ? (
               <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-bold">
                 <span className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-amber-800">
                   FRAMEONE 지도 경계 미확정
@@ -1683,7 +1683,7 @@ export default function MarketSpatialViewer({
                 ) : null}
               </div>
               ) : null}
-              {activeTab === "market-map" && crosswalkError ? (
+              {activeTab === "public-data" && crosswalkError ? (
                 <p className="mt-2 text-[10px] font-semibold text-red-700">
                   연결 검토 정보를 불러오지 못했습니다: {crosswalkError}
                 </p>
@@ -1790,7 +1790,7 @@ export default function MarketSpatialViewer({
             </div>
           ) : null}
 
-          <section
+          {activeTab !== "market-map" ? <section
             aria-label="선택 상권 정보"
             className={`${activeTab === "competition" ? "hidden" : ""} rounded-xl border border-slate-200 bg-white p-4`}
           >
@@ -2122,7 +2122,7 @@ export default function MarketSpatialViewer({
                       )}
                     </article>
 
-                    {isOfficialMarketReference && activeTab !== "market-map" ? (
+                    {isOfficialMarketReference ? (
                       <article
                         aria-label="서울시 공식상권 제과점 현황"
                         className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 lg:col-span-2"
@@ -2438,7 +2438,7 @@ export default function MarketSpatialViewer({
                 </div>
               </div>
             ) : null}
-          </section>
+          </section> : null}
 
           {activeTab === "public-data" ? (
           <div className="grid gap-2 md:grid-cols-3">

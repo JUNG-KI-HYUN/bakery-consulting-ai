@@ -72,7 +72,7 @@ test("presentation CASE A: pre-analysis renders only neutral instruction, no zer
   for (const value of [null, context((input) => { input.executedAnalysis = null; })]) {
     assert.equal(present(value).status, "empty");
     const rendered = html(value);
-    assert.ok(rendered.includes("후보점포 주소를 입력하거나 지도에서 위치를 선택한 뒤 분석을 실행해 주세요."));
+    assert.ok(rendered.includes("먼저 분석 설정에서 후보점포 분석을 실행해 주세요."));
     assert.doesNotMatch(rendered, /0곳|0원|데이터 없음|월 추정매출|주변 경쟁환경|500m/);
   }
 });
