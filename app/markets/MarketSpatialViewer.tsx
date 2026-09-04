@@ -557,6 +557,8 @@ export default function MarketSpatialViewer({
   onOpenMarketMap,
   marketSelector,
   onAnalysisContextChange,
+  analysisSummary,
+  analysisConditionsRequest,
 }: {
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
@@ -564,6 +566,8 @@ export default function MarketSpatialViewer({
   onOpenMarketMap: () => void;
   marketSelector: React.ReactNode;
   onAnalysisContextChange?: (context: MarketAnalysisContext) => void;
+  analysisSummary?: React.ReactNode;
+  analysisConditionsRequest?: number;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -1690,6 +1694,8 @@ export default function MarketSpatialViewer({
           <section className={`${activeTab === "market-map" || activeTab === "public-data" ? "hidden" : ""} overflow-hidden rounded-xl border border-slate-300 bg-white`}>
             <KakaoBaseMap
               marketSelector={marketSelector}
+              analysisSummary={analysisSummary}
+              analysisConditionsRequest={analysisConditionsRequest}
               marketName={selectedMarket?.marketName ?? "주요상권 미선택"}
               officialMarketPolygons={kakaoOfficialMarketPolygons}
               selectedOfficialMarketCode={selectedOfficialMarketCode}

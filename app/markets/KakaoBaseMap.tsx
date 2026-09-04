@@ -242,6 +242,8 @@ export default function KakaoBaseMap({
   view = "briefing",
   marketSelector,
   marketName = "주요상권 미선택",
+  analysisSummary,
+  analysisConditionsRequest = 0,
 }: {
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
@@ -251,8 +253,12 @@ export default function KakaoBaseMap({
   view?: KakaoBaseMapView;
   marketSelector?: ReactNode;
   marketName?: string;
+  analysisSummary?: ReactNode;
+  analysisConditionsRequest?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const conditionsRef = useRef<HTMLElement>(null);
+  const focusedConditionsRequestRef = useRef(0);
   const mapInstanceRef = useRef<KakaoMapInstance | null>(null);
   const circleRef = useRef<KakaoCircleInstance | null>(null);
   const infoWindowRef = useRef<KakaoInfoWindowInstance | null>(null);
@@ -296,6 +302,20 @@ export default function KakaoBaseMap({
   const [conditionsOpen, setConditionsOpen] = useState(true);
   // 편집 중인 조건과 분리해 실행 시점의 분석 대상을 표시한다.
   const [analysisTarget, setAnalysisTarget] = useState<{ label: string; marketName: string } | null>(null);
+
+  const [lastConditionsRequest, setLastConditionsRequest] = useState(analysisConditionsRequest);
+  // An explicit edit request opens the existing form; unrelated context updates do not.
+  if (analysisConditionsRequest !== lastConditionsRequest) {
+    setLastConditionsRequest(analysisConditionsRequest);
+    setConditionsOpen(true);
+  }
+
+  useEffect(() => {
+    if (!conditionsOpen || analysisConditionsRequest <= focusedConditionsRequestRef.current) return;
+    focusedConditionsRequestRef.current = analysisConditionsRequest;
+    conditionsRef.current?.scrollIntoView({ block: "start" });
+    conditionsRef.current?.focus({ preventScroll: true });
+  }, [analysisConditionsRequest, conditionsOpen]);
 
   const enabledPlaceCount = useMemo(
     () =>
@@ -722,7 +742,7 @@ export default function KakaoBaseMap({
   return (
     <div>
       <div className={view === "briefing" ? "" : "hidden"}>
-      {analysisTarget ? (
+      {analysisTarget && !analysisSummary ? (
         <section aria-label="현재 분석" className="border-b border-slate-200 bg-blue-50 px-4 py-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
@@ -734,7 +754,7 @@ export default function KakaoBaseMap({
           </div>
         </section>
       ) : null}
-      <section className={conditionsOpen ? "border-b border-slate-200 bg-white px-4 py-4" : "hidden"} aria-labelledby="candidate-store-title">
+      <section ref={conditionsRef} tabIndex={-1} className={conditionsOpen ? "border-b border-slate-200 bg-white px-4 py-4" : "hidden"} aria-labelledby="candidate-store-title">
         <h3 id="candidate-store-title" className="text-base font-bold text-slate-950">분석 대상</h3>
         <p className="mt-1 text-xs leading-5 text-slate-500">주요상권과 후보점포 주소, 분석 반경을 정해 주세요.</p>
         <form onSubmit={(event) => { event.preventDefault(); void locateCandidateStore(true); }}>
@@ -778,7 +798,8 @@ export default function KakaoBaseMap({
         {candidateStore ? <p className="mt-3 break-words text-xs text-slate-700">확인된 주소: {candidateStore.address}</p> : null}
         {candidateAddressError ? <p role="alert" className="mt-2 text-xs font-semibold text-red-700">{candidateAddressError}</p> : null}
       </section>
-      {!mapVisible ? (
+      {analysisSummary}
+      {!mapVisible && !analysisSummary ? (
         <p className="m-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
           분석 대상을 선택한 후 주변 경쟁환경을 확인할 수 있습니다. 주소를 분석하거나 지도 보기를 눌러 주세요.
         </p>

@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
+import MarketAnalysisSummary from "./MarketAnalysisSummary";
+import type { MarketAnalysisContext } from "@/lib/market-data/market-analysis-context";
 
 export type MarketsWorkspaceTab =
   | "briefing"
@@ -150,6 +152,8 @@ export default function MarketsExplorer({
   );
   const [activeTab, setActiveTab] =
     useState<MarketsWorkspaceTab>("briefing");
+  const [analysisContext, setAnalysisContext] = useState<MarketAnalysisContext | null>(null);
+  const [analysisConditionsRequest, setAnalysisConditionsRequest] = useState(0);
 
   const allMarkets = useMemo(
     () => hierarchy.districts.flatMap((district) => district.markets),
@@ -352,6 +356,14 @@ export default function MarketsExplorer({
         selectedSubmarket={selectedSubmarketSpatialSummary}
         activeTab={activeTab}
         onOpenMarketMap={() => setActiveTab("market-map")}
+        onAnalysisContextChange={setAnalysisContext}
+        analysisConditionsRequest={analysisConditionsRequest}
+        analysisSummary={activeTab === "briefing" ? (
+          <MarketAnalysisSummary
+            context={analysisContext}
+            onEditConditions={() => setAnalysisConditionsRequest((request) => request + 1)}
+          />
+        ) : null}
         marketSelector={
           <label className="block min-w-0 text-xs font-bold text-slate-700">
             FRAMEONE 주요상권

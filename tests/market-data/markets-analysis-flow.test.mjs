@@ -99,7 +99,7 @@ function fixture(component, props) {
     render() {
       activeFixture = instance; this.cursor = 0; this.dirty = false;
       this.tree = component(this.props);
-      for (const node of nodes(this.tree)) if (node.props.ref && typeof node.props.ref === "object") node.props.ref.current ??= {};
+      for (const node of nodes(this.tree)) if (node.props.ref && typeof node.props.ref === "object") node.props.ref.current ??= { scrollIntoView() {}, focus() {} };
       for (const effect of this.effects.splice(0)) effect();
     },
     async flush() {
@@ -456,4 +456,56 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
     assert.equal(context().kakaoNearby.error, "fixture nearby transport failure");
     assert.deepEqual(addressContext.target, { source: "address", confirmedAddress: "fixture resolved address", analysisPoint: { longitude: 127.1, latitude: 37.5 }, executedRadiusMeters: 500 });
   } finally { map?.dispose(); viewer.dispose(); }
+});
+
+test("STEP 4: Explorer consumes Context, inserts summary before map, and edit action preserves execution", async () => {
+  const sdk = installMapFixture();
+  const mapFetch = global.fetch;
+  const source = JSON.parse(fs.readFileSync(path.join(root, "data/seoul-market/v1.1-final/09_GEO/OFFICIAL_SEOUL_MARKETS.geojson"), "utf8"));
+  global.fetch = async (input, options) => input.includes("spatial-layers") ? Response.json(source) : mapFetch(input, options);
+  const explorer = fixture(MarketsExplorer, { hierarchy: { districts: [] } });
+  let viewer, map;
+  const viewerProps = () => explorer.find((node) => node.type === MarketSpatialViewer).props;
+  const mapProps = () => viewer.find((node) => node.type === KakaoBaseMap).props;
+  const summaryHtml = () => renderToStaticMarkup(map.props.analysisSummary);
+  async function flush() {
+    for (let round = 0; round < 3; round++) {
+      await explorer.flush();
+      viewer.props = viewerProps(); viewer.dirty = true; await viewer.flush();
+      map.props = mapProps(); map.dirty = true; await map.flush();
+    }
+  }
+  try {
+    await explorer.flush(); viewer = fixture(MarketSpatialViewer, viewerProps()); await viewer.flush();
+    map = fixture(KakaoBaseMap, mapProps()); await flush();
+    assert.ok(summaryHtml().includes("분석을 실행해 주세요"));
+    const summaryNode = map.props.analysisSummary;
+    assert.ok(nodes(map.tree).indexOf(summaryNode) < nodes(map.tree).findIndex((node) => node.props["aria-busy"] !== undefined));
+    map.find((node) => node.props.id === "kakao-map-sdk").props.onReady(); await flush();
+    map.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture address" } });
+    await flush(); map.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await flush();
+    const executed = map.props.analysisSummary.props.context, requestCount = sdk.requests.length;
+    assert.ok(summaryHtml().includes("fixture resolved address")); assert.ok(summaryHtml().includes("실행 반경 500m"));
+    assert.equal(map.find((node) => node.props["aria-labelledby"] === "candidate-store-title").props.className, "hidden");
+    map.props.analysisSummary.props.onEditConditions(); await flush();
+    assert.ok(!map.find((node) => node.props["aria-labelledby"] === "candidate-store-title").props.className.includes("hidden"));
+    assert.equal(map.props.analysisSummary.props.context, executed);
+    map.button("300m").props.onClick();
+    map.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture edited draft" } });
+    await flush(); assert.equal(map.props.analysisSummary.props.context, executed); assert.ok(summaryHtml().includes("실행 반경 500m"));
+    assert.equal(sdk.requests.length, requestCount);
+    const mapInstance = sdk.maps[0];
+    for (const label of ["경쟁점", "공공데이터", "상권지도", "브리핑"]) {
+      explorer.button(label).props.onClick(); await flush();
+      assert.equal(sdk.maps.length, 1); assert.equal(sdk.maps[0], mapInstance);
+      if (label !== "브리핑") assert.equal(map.props.analysisSummary, null);
+    }
+    assert.equal(map.props.analysisSummary.props.context, executed); assert.equal(sdk.requests.length, requestCount);
+    sdk.emit(mapInstance, "click", { latLng: new sdk.LatLng(37.51, 127.11) }); await flush();
+    map.button("이 위치 분석").props.onClick(); await flush();
+    assert.ok(summaryHtml().includes("지도 선택 위치")); assert.ok(summaryHtml().includes("실행 반경 300m"));
+    assert.ok(!summaryHtml().includes("37.51"));
+    assert.equal(map.props.analysisSummary.props.context.target.confirmedAddress, null);
+    assert.equal(executed.target.executedRadiusMeters, 500);
+  } finally { map?.dispose(); viewer?.dispose(); explorer.dispose(); }
 });
