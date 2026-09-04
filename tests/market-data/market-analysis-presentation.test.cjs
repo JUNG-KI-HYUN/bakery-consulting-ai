@@ -141,7 +141,7 @@ test("presentation CASE L: manual OUTSIDE never becomes a contained market", () 
 });
 test("presentation CASE M: available statistics display geography, quarter and seven source metrics", () => {
   const result = present(context()), rendered = html(context());
-  assert.equal(result.statistics.status, "데이터 확인됨"); assert.equal(result.statistics.period, "2026년 2분기 기준");
+  assert.equal(result.statistics.status, "자료 확인"); assert.equal(result.statistics.period, "2026년 2분기 기준");
   assert.equal(result.statistics.metrics.length, 7);
   assert.ok(rendered.includes("130,218,275원")); assert.ok(rendered.includes("11,603건"));
 });
@@ -149,7 +149,7 @@ test("presentation CASE N: partial keeps available rows and missing source is no
   const result = present(context((input) => { input.publicData.data.dataStatus = "partial"; input.publicData.data.sales = []; }));
   assert.equal(result.statistics.status, "일부 자료 확인"); assert.equal(result.statistics.metrics.length, 5);
   assert.equal(result.sources.find((item) => item.name === "서울시 SALES").status, "해당 기준 자료 없음");
-  assert.equal(result.sources.find((item) => item.name === "서울시 STORES").status, "데이터 확인됨");
+  assert.equal(result.sources.find((item) => item.name === "서울시 STORES").status, "자료 확인");
 });
 test("presentation CASE O: missing statistics contain no synthetic zero metrics", () => {
   const result = present(context((input) => { input.publicData.data.dataStatus = "missing"; input.publicData.data.sales = []; input.publicData.data.stores = []; }));
@@ -190,7 +190,7 @@ test("presentation: API failure and missing/unknown spatial relation remain inde
   assert.equal(result.statistics.status, "조회 실패 · 재확인 필요");
   assert.deepEqual(result.spatial.inside, ["예시 inside 상권"]);
   result = present(context((input) => { input.officialMarkets.status = "error"; input.officialMarkets.results = null; }));
-  assert.equal(result.spatial.status, "조회 실패 · 재확인 필요"); assert.equal(result.statistics.status, "데이터 확인됨");
+  assert.equal(result.spatial.status, "조회 실패 · 재확인 필요"); assert.equal(result.statistics.status, "자료 확인");
   result = present(context((input) => { input.officialMarkets.results = [relation("unknown", "UNKNOWN")]; }));
   assert.deepEqual(result.spatial.unknown, ["예시 unknown 상권"]);
   assert.equal(result.spatial.status, "일부 공간관계 확인 필요");
@@ -210,4 +210,62 @@ test("presentation: deterministic output does not mutate frozen Context", () => 
   const value = context(), before = JSON.stringify(value), first = present(value);
   assert.deepEqual(present(value), first); assert.equal(JSON.stringify(value), before);
   assert.equal(Object.isFrozen(value.publicData.selectedOfficialMarketData), true);
+});
+
+test("STEP 5 CASE A-I: customer mode is default and structurally excludes staff-only identifiers", () => {
+  const value = manualFixture("outside");
+  const result = present(value);
+  assert.equal(result.viewMode, "customer");
+  assert.equal(result.staffDetails, null);
+  assert.deepEqual(result.spatial.inside, ["예시 inside 상권"]);
+  assert.equal(result.spatial.manual.relation, "직접 공간관계 없음");
+  assert.equal(result.statistics.status, "자료 확인");
+  const rendered = html(value);
+  assert.ok(rendered.includes("상담용 보기")); assert.ok(rendered.includes("직원용 상세"));
+  assert.match(rendered, /상담용 보기<\/button>/);
+  assert.doesNotMatch(rendered, /직원용 검증정보|fixture-frameone|fixture-outside|SRC-SEOUL|INSIDE|OUTSIDE|RADIUS_OVERLAP|market-analysis-context-v1|37\.5|127/);
+});
+
+test("STEP 5 CASE J-N: staff mode adds raw Context facts without replacing customer presentation", () => {
+  const value = manualFixture("outside");
+  const customer = present(value, "customer"), staff = present(value, "staff");
+  assert.equal(staff.viewMode, "staff"); assert.ok(staff.staffDetails);
+  assert.deepEqual(staff.target, customer.target);
+  assert.deepEqual(staff.nearby, customer.nearby);
+  assert.deepEqual(staff.spatial, customer.spatial);
+  assert.deepEqual(staff.statistics, customer.statistics);
+  assert.equal(staff.staffDetails.target.frameoneMarketId, "fixture-frameone");
+  assert.deepEqual(staff.staffDetails.target, {
+    frameoneMarketId: "fixture-frameone", source: "address", latitude: 37.5, longitude: 127, executedRadiusMeters: 500,
+  });
+  assert.deepEqual(staff.staffDetails.kakao.categories.map((item) => [item.id, item.status, item.totalCount, item.returnedCount]), [
+    ["bakery", "success", 11, 11], ["confectionery", "success", 11, 11], ["cafe", "success", 63, 15],
+  ]);
+  assert.ok(staff.staffDetails.officialMarkets.relatedMarkets.some((item) => item.marketCode === "fixture-inside" && item.relation === "INSIDE"));
+  assert.deepEqual(staff.staffDetails.officialMarkets.manuallySelected, {
+    selectionType: "manual", marketCode: "fixture-outside", marketName: "예시 outside 상권", relation: "OUTSIDE", analysisRadiusMeters: 500,
+  });
+  assert.equal(staff.staffDetails.publicData.officialMarketCode, "fixture-outside");
+  assert.equal(staff.staffDetails.publicData.dataStatus, "available");
+  assert.ok(staff.staffDetails.publicData.observations.some((item) => item.sourceId === "SRC-SEOUL-SALES" && item.metric === "monthly_sales_amount"));
+});
+
+test("STEP 5 CASE O-T: modes preserve zero, missing/error distinctions, no aggregates, verdicts or mutation", () => {
+  const value = context((input) => {
+    input.kakaoNearby.response.categories[0].totalCount = 0;
+    input.kakaoNearby.response.categories[0].places = [];
+    input.publicData.data.dataStatus = "partial";
+    input.publicData.data.stores[0].dataStatus = "suppressed";
+    input.publicData.data.stores[0].value = null;
+  });
+  const before = JSON.stringify(value);
+  const customer = present(value, "customer"), staff = present(value, "staff");
+  assert.equal(customer.nearby.categories[0].value, "0곳");
+  assert.equal(customer.statistics.status, "일부 자료 확인");
+  assert.equal(customer.statistics.metrics.find((item) => item.metric === "similar_industry_store_count").value, "비공개 자료");
+  assert.equal(staff.staffDetails.kakao.categories[0].totalCount, 0);
+  assert.equal(staff.staffDetails.publicData.observations.find((item) => item.metric === "similar_industry_store_count").dataStatus, "suppressed");
+  assert.doesNotMatch(JSON.stringify(customer), /85곳|14개|추천|조건부 추천|창업하기 좋은/);
+  assert.doesNotMatch(JSON.stringify(staff), /85곳|14개|조건부 추천|창업하기 좋은/);
+  assert.equal(JSON.stringify(value), before);
 });

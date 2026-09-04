@@ -1,6 +1,11 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 import type { MarketAnalysisContext } from "@/lib/market-data/market-analysis-context";
-import { buildMarketSummaryPresentation } from "@/lib/market-data/market-analysis-presentation";
+import {
+  buildMarketSummaryPresentation,
+  type MarketAnalysisViewMode,
+} from "@/lib/market-data/market-analysis-presentation";
 
 function SummarySection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -19,15 +24,51 @@ function TextList({ items, empty }: { items: readonly string[]; empty: string })
   ) : <p className="mt-2 text-sm leading-6 text-slate-500">{empty}</p>;
 }
 
+function ViewModeToggle({ mode, onChange }: {
+  mode: MarketAnalysisViewMode;
+  onChange: (mode: MarketAnalysisViewMode) => void;
+}) {
+  return (
+    <div role="group" aria-label="종합진단 보기" className="grid min-w-0 grid-cols-2 rounded-lg border border-slate-300 bg-white p-1 sm:w-auto">
+      {(["customer", "staff"] as const).map((value) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={mode === value}
+          onClick={() => onChange(value)}
+          className={`min-h-11 rounded-md px-3 py-2 text-sm font-bold transition-colors ${mode === value ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+        >
+          {value === "customer" ? "상담용 보기" : "직원용 상세"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RawValue({ value }: { value: unknown }) {
+  const text = value === null || value === undefined || value === ""
+    ? "미확인"
+    : typeof value === "object" ? JSON.stringify(value) : String(value);
+  return <span className="break-all font-mono text-xs text-slate-700">{text}</span>;
+}
+
+function RawField({ label, value }: { label: string; value: unknown }) {
+  return <div className="min-w-0"><dt className="text-xs font-semibold text-slate-500">{label}</dt><dd className="mt-1"><RawValue value={value} /></dd></div>;
+}
+
 /** Context is the only source of displayed data. The callback opens existing controls. */
 export default function MarketAnalysisSummary({ context, onEditConditions }: {
   context: MarketAnalysisContext | null;
   onEditConditions: () => void;
 }) {
-  const summary = buildMarketSummaryPresentation(context);
+  const [viewMode, setViewMode] = useState<MarketAnalysisViewMode>("customer");
+  const summary = buildMarketSummaryPresentation(context, viewMode);
   if (summary.status === "empty") return (
     <section aria-label="후보점포 종합 진단" className="m-4 min-w-0 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
-      <h2 className="text-base font-bold text-slate-900">후보점포 종합 진단</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-base font-bold text-slate-900">후보점포 종합 진단</h2>
+        <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+      </div>
       <p className="mt-2 text-sm leading-6 text-slate-600">{summary.message}</p>
     </section>
   );
@@ -45,7 +86,10 @@ export default function MarketAnalysisSummary({ context, onEditConditions }: {
               <p className="whitespace-nowrap">{summary.target.source}</p>
             </div>
           </div>
-          <button type="button" onClick={onEditConditions} className="min-h-11 shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">분석조건 변경</button>
+          <div className="grid shrink-0 gap-2 sm:min-w-80">
+            <ViewModeToggle mode={viewMode} onChange={setViewMode} />
+            <button type="button" onClick={onEditConditions} className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">분석조건 변경</button>
+          </div>
         </div>
         <p className="mt-3 text-xs leading-5 text-slate-600">현재 확보된 자료의 요약입니다. 점포 계약에 대한 최종 판단은 포함하지 않습니다.</p>
       </header>
@@ -107,6 +151,104 @@ export default function MarketAnalysisSummary({ context, onEditConditions }: {
             {summary.sources.map((source) => <div key={source.name} className="min-w-0 rounded-lg border border-slate-100 p-3"><dt className="text-sm font-semibold text-slate-800">{source.name}</dt><dd className="mt-1 break-words text-sm text-slate-700">{source.status}</dd><dd className="mt-1 break-words text-xs leading-5 text-slate-500">{source.scope}</dd></div>)}
           </dl>
           <p className="mt-3 text-xs leading-5 text-slate-500">현장조사 데이터는 별도 단계에서 연결 예정입니다.</p>
+          {summary.staffDetails ? (
+            <div aria-label="직원용 검증정보" className="mt-5 border-t border-slate-200 pt-5">
+              <h4 className="text-sm font-bold text-slate-950">직원용 검증정보</h4>
+              <p className="mt-1 text-xs leading-5 text-slate-500">같은 분석 Context의 원본 식별자와 조회 상태입니다.</p>
+
+              <div className="mt-4 space-y-4">
+                <div className="min-w-0 rounded-lg bg-slate-50 p-4">
+                  <h5 className="text-sm font-bold text-slate-800">실행 기준</h5>
+                  <dl className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <RawField label="Context schema" value={summary.staffDetails.schemaVersion} />
+                    <RawField label="FRAMEONE Market ID" value={summary.staffDetails.target.frameoneMarketId} />
+                    <RawField label="실행 source" value={summary.staffDetails.target.source} />
+                    <RawField label="실행 latitude" value={summary.staffDetails.target.latitude} />
+                    <RawField label="실행 longitude" value={summary.staffDetails.target.longitude} />
+                    <RawField label="실행 radiusMeters" value={summary.staffDetails.target.executedRadiusMeters} />
+                  </dl>
+                </div>
+
+                <div className="min-w-0 rounded-lg bg-slate-50 p-4">
+                  <h5 className="text-sm font-bold text-slate-800">Kakao 요청 상태</h5>
+                  <dl className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
+                    <RawField label="requestStatus" value={summary.staffDetails.kakao.requestStatus} />
+                    <RawField label="requestError" value={summary.staffDetails.kakao.error} />
+                  </dl>
+                  <div className="mt-3 grid min-w-0 gap-3 lg:grid-cols-3">
+                    {summary.staffDetails.kakao.categories.map((category) => (
+                      <dl key={category.id} className="min-w-0 rounded-md border border-slate-200 bg-white p-3">
+                        <RawField label="category" value={`${category.label} (${category.id})`} />
+                        <div className="mt-2"><RawField label="status" value={category.status} /></div>
+                        <div className="mt-2"><RawField label="totalCount" value={category.totalCount} /></div>
+                        <div className="mt-2"><RawField label="returnedCount" value={category.returnedCount} /></div>
+                        <div className="mt-2"><RawField label="error" value={category.error} /></div>
+                      </dl>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="min-w-0 rounded-lg bg-slate-50 p-4">
+                  <h5 className="text-sm font-bold text-slate-800">서울시 공식상권 원본 관계</h5>
+                  <dl className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
+                    <RawField label="requestStatus" value={summary.staffDetails.officialMarkets.requestStatus} />
+                    <RawField label="requestError" value={summary.staffDetails.officialMarkets.error} />
+                  </dl>
+                  <div className="mt-3 space-y-2">
+                    {summary.staffDetails.officialMarkets.relatedMarkets.map((market) => (
+                      <dl key={`${market.marketCode}-${market.relation}`} className="grid min-w-0 gap-2 rounded-md border border-slate-200 bg-white p-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <RawField label="상권명" value={market.marketName} />
+                        <RawField label="공식상권 코드" value={market.marketCode} />
+                        <RawField label="relation" value={market.relation} />
+                        <RawField label="radiusMeters" value={market.analysisRadiusMeters} />
+                      </dl>
+                    ))}
+                    {summary.staffDetails.officialMarkets.relatedMarkets.length === 0 ? <p className="text-xs text-slate-500">원본 공간관계 결과 없음</p> : null}
+                  </div>
+                  <div className="mt-3 rounded-md border border-blue-100 bg-blue-50 p-3">
+                    <p className="text-xs font-bold text-blue-900">직원 수동 참고선택</p>
+                    {summary.staffDetails.officialMarkets.manuallySelected ? (
+                      <dl className="mt-2 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                        <RawField label="selectionType" value={summary.staffDetails.officialMarkets.manuallySelected.selectionType} />
+                        <RawField label="공식상권 코드" value={summary.staffDetails.officialMarkets.manuallySelected.marketCode} />
+                        <RawField label="relation" value={summary.staffDetails.officialMarkets.manuallySelected.relation} />
+                        <RawField label="radiusMeters" value={summary.staffDetails.officialMarkets.manuallySelected.analysisRadiusMeters} />
+                      </dl>
+                    ) : <p className="mt-2 text-xs text-slate-500">수동 참고선택 없음</p>}
+                  </div>
+                </div>
+
+                <div className="min-w-0 rounded-lg bg-slate-50 p-4">
+                  <h5 className="text-sm font-bold text-slate-800">서울시 공식통계 원본 상태</h5>
+                  <dl className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <RawField label="requestStatus" value={summary.staffDetails.publicData.requestStatus} />
+                    <RawField label="dataStatus" value={summary.staffDetails.publicData.dataStatus} />
+                    <RawField label="공식상권 코드" value={summary.staffDetails.publicData.officialMarketCode} />
+                    <RawField label="quarterCode" value={summary.staffDetails.publicData.quarterCode} />
+                    <RawField label="referencePeriod" value={summary.staffDetails.publicData.referencePeriod} />
+                    <RawField label="industryCode" value={summary.staffDetails.publicData.industryCode} />
+                    <RawField label="industryName" value={summary.staffDetails.publicData.industryName} />
+                    <RawField label="requestError" value={summary.staffDetails.publicData.error} />
+                  </dl>
+                  <div className="mt-3 space-y-2">
+                    {summary.staffDetails.publicData.observations.map((observation, index) => (
+                      <dl key={`${observation.sourceId}-${observation.metric}-${index}`} className="grid min-w-0 gap-2 rounded-md border border-slate-200 bg-white p-3 sm:grid-cols-2 xl:grid-cols-4">
+                        <RawField label="sourceId" value={observation.sourceId} />
+                        <RawField label="metric" value={observation.metric} />
+                        <RawField label="dataStatus" value={observation.dataStatus} />
+                        <RawField label="value / unit" value={`${observation.value ?? "null"} / ${observation.unit}`} />
+                        <RawField label="geography" value={`${observation.geographyType} / ${observation.geographyId ?? "null"}`} />
+                        <RawField label="geographyName" value={observation.geographyName} />
+                        <RawField label="industry" value={`${observation.industryCode ?? "null"} / ${observation.industryName ?? "null"}`} />
+                        <RawField label="metadata" value={observation.metadata} />
+                      </dl>
+                    ))}
+                    {summary.staffDetails.publicData.observations.length === 0 ? <p className="text-xs text-slate-500">원본 통계 observation 없음</p> : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </SummarySection>
 
         <SummarySection title="현재 해석">

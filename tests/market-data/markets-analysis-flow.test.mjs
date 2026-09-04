@@ -65,6 +65,7 @@ for (const ext of previousLoaders.keys()) {
 const { default: KakaoBaseMap } = require(path.join(root, "app/markets/KakaoBaseMap.tsx"));
 const { default: MarketsExplorer } = require(path.join(root, "app/markets/MarketsExplorer.tsx"));
 const { default: MarketSpatialViewer } = require(path.join(root, "app/markets/MarketSpatialViewer.tsx"));
+const { default: MarketAnalysisSummary } = require(path.join(root, "app/markets/MarketAnalysisSummary.tsx"));
 const { findRelatedOfficialMarkets } = require(path.join(root, "lib/market-data/official-market-spatial-relation.ts"));
 const originalKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
 const originalFetch = global.fetch;
@@ -486,6 +487,20 @@ test("STEP 4: Explorer consumes Context, inserts summary before map, and edit ac
     await flush(); map.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await flush();
     const executed = map.props.analysisSummary.props.context, requestCount = sdk.requests.length;
     assert.ok(summaryHtml().includes("fixture resolved address")); assert.ok(summaryHtml().includes("실행 반경 500m"));
+    const summary = fixture(MarketAnalysisSummary, map.props.analysisSummary.props);
+    await summary.flush();
+    const modeToggle = () => summary.find((node) => typeof node.type === "function" && node.props["onChange"] && node.props.mode);
+    assert.equal(modeToggle().props.mode, "customer");
+    assert.doesNotMatch(text(summary.tree), /직원용 검증정보|market-analysis-context-v1|latitude|longitude/);
+    modeToggle().props.onChange("staff"); await summary.flush();
+    assert.equal(modeToggle().props.mode, "staff");
+    assert.match(text(summary.tree), /직원용 검증정보/);
+    assert.equal(summary.find((node) => typeof node.type === "function" && node.props.label === "Context schema").props.value, "market-analysis-context-v1");
+    assert.equal(summary.props.context, executed); assert.equal(sdk.requests.length, requestCount);
+    modeToggle().props.onChange("customer"); await summary.flush();
+    assert.doesNotMatch(text(summary.tree), /직원용 검증정보|market-analysis-context-v1|latitude|longitude/);
+    assert.equal(summary.props.context, executed); assert.equal(sdk.requests.length, requestCount);
+    summary.dispose();
     assert.equal(map.find((node) => node.props["aria-labelledby"] === "candidate-store-title").props.className, "hidden");
     map.props.analysisSummary.props.onEditConditions(); await flush();
     assert.ok(!map.find((node) => node.props["aria-labelledby"] === "candidate-store-title").props.className.includes("hidden"));

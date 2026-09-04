@@ -4,6 +4,7 @@ import type { OfficialMarketRelation } from "./official-market-spatial-relation"
 
 type OfficialData = NonNullable<MarketAnalysisContext["publicData"]["selectedOfficialMarketData"]>;
 type Observation = OfficialData["sales"][number];
+export type MarketAnalysisViewMode = "customer" | "staff";
 
 const REQUEST_FAILURE = "조회 실패 · 재확인 필요";
 const CATEGORIES: readonly { id: NearbyCategoryId; label: string }[] = [
@@ -44,7 +45,7 @@ function publicStatus(context: MarketAnalysisContext): string {
   if (!officialMarkets.manuallySelected) return "통계 기준 공식상권 선택 필요";
   if (publicData.requestStatus !== "success") return "통계 조회 전";
   switch (publicData.status) {
-    case "available": return "데이터 확인됨";
+    case "available": return "자료 확인";
     case "partial": return "일부 자료 확인";
     case "missing": return "해당 기준 자료 없음";
     default: return "자료 확인 필요";
@@ -53,7 +54,7 @@ function publicStatus(context: MarketAnalysisContext): string {
 
 function sourceStatus(observations: readonly Observation[]): string {
   if (observations.length === 0) return "해당 기준 자료 없음";
-  if (observations.every(hasUsableValue)) return "데이터 확인됨";
+  if (observations.every(hasUsableValue)) return "자료 확인";
   if (observations.some(hasUsableValue)) return "일부 수치 확인";
   return "수치 확인 필요";
 }
@@ -74,10 +75,15 @@ const MANUAL_RELATION_DESCRIPTIONS: Record<OfficialMarketRelation, string> = {
 /** Presentation only: no I/O, geometry, aggregate counts, scores or new facts.
  * All dynamic statements are derived from the supplied immutable Context.
  */
-export function buildMarketSummaryPresentation(context: MarketAnalysisContext | null) {
+export function buildMarketSummaryPresentation(
+  context: MarketAnalysisContext | null,
+  viewMode: MarketAnalysisViewMode = "customer",
+) {
   if (!context?.target) return {
     status: "empty" as const,
+    viewMode,
     message: "후보점포 주소를 입력하거나 지도에서 위치를 선택한 뒤 분석을 실행해 주세요.",
+    staffDetails: null,
   };
 
   const radius = `${context.target.executedRadiusMeters}m`;
@@ -144,8 +150,73 @@ export function buildMarketSummaryPresentation(context: MarketAnalysisContext | 
   needsCheck.push("Kakao 검색결과는 실제 영업점 전수 데이터가 아닙니다. 현장에서 경쟁점의 영업 여부를 확인해 주세요.");
   needsCheck.push("계약 판단에는 임대차·시설·손익 자료 등의 별도 확인이 필요합니다.");
 
+  const staffDetails = viewMode === "staff" ? {
+    schemaVersion: context.schemaVersion,
+    target: {
+      frameoneMarketId: context.frameone.selectedMarketId,
+      source: context.target.source,
+      latitude: context.target.analysisPoint.latitude,
+      longitude: context.target.analysisPoint.longitude,
+      executedRadiusMeters: context.target.executedRadiusMeters,
+    },
+    kakao: {
+      requestStatus: nearby.status,
+      error: nearby.error,
+      categories: CATEGORIES.map(({ id, label }) => ({
+        id,
+        label,
+        status: nearby[id]?.status ?? null,
+        totalCount: nearby[id]?.totalCount ?? null,
+        returnedCount: nearby[id]?.places.length ?? null,
+        error: nearby[id]?.error ?? null,
+      })),
+    },
+    officialMarkets: {
+      requestStatus: official.status,
+      error: official.error,
+      relatedMarkets: [...(official.relatedMarkets ?? []), ...(official.unknownMarkets ?? [])].map((market) => ({
+        marketCode: market.marketCode,
+        marketName: market.marketName,
+        relation: market.relation,
+        analysisRadiusMeters: market.analysisRadiusMeters,
+      })),
+      manuallySelected: manual ? {
+        selectionType: "manual" as const,
+        marketCode: manual.marketCode,
+        marketName: manual.marketName,
+        relation: manual.spatialRelation?.relation ?? null,
+        analysisRadiusMeters: manual.spatialRelation?.analysisRadiusMeters ?? null,
+      } : null,
+    },
+    publicData: {
+      requestStatus: context.publicData.requestStatus,
+      dataStatus: context.publicData.status,
+      error: context.publicData.error,
+      officialMarketCode: data?.officialMarketCode ?? manual?.marketCode ?? null,
+      quarterCode: data?.quarterCode ?? null,
+      referencePeriod: data?.referencePeriod ?? null,
+      industryCode: data?.industryCode ?? null,
+      industryName: data?.industryName ?? null,
+      observations: data ? [...data.sales, ...data.stores].map((observation) => ({
+        sourceId: observation.sourceId,
+        metric: observation.metric,
+        dataStatus: observation.dataStatus,
+        value: observation.value,
+        unit: observation.unit,
+        referencePeriod: observation.referencePeriod,
+        geographyType: observation.geographyType,
+        geographyId: observation.geographyId,
+        geographyName: observation.geographyName ?? null,
+        industryCode: observation.industryCode ?? null,
+        industryName: observation.industryName ?? null,
+        metadata: observation.metadata ?? null,
+      })) : [],
+    },
+  } : null;
+
   return {
     status: "ready" as const,
+    viewMode,
     target: {
       address: context.target.confirmedAddress ?? (context.target.source === "map" ? "지도 선택 위치" : "확인주소 미제공"),
       radius, source: context.target.source === "address" ? "주소 분석" : "지도 분석",
@@ -171,5 +242,6 @@ export function buildMarketSummaryPresentation(context: MarketAnalysisContext | 
       { name: "서울시 STORES", status: data ? sourceStatus(data.stores) : statisticsStatus, scope: `${statisticsMarket} · ${period}` },
     ],
     interpretation: { confirmed, reference, needsCheck },
+    staffDetails,
   };
 }
