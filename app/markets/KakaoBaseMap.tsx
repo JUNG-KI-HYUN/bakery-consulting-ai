@@ -13,7 +13,6 @@ import type {
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -244,6 +243,7 @@ export default function KakaoBaseMap({
   marketName = "주요상권 미선택",
   analysisSummary,
   analysisConditionsRequest = 0,
+  onOpenAnalysisSummary,
 }: {
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
@@ -255,6 +255,7 @@ export default function KakaoBaseMap({
   marketName?: string;
   analysisSummary?: ReactNode;
   analysisConditionsRequest?: number;
+  onOpenAnalysisSummary?: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const conditionsRef = useRef<HTMLElement>(null);
@@ -317,19 +318,6 @@ export default function KakaoBaseMap({
     conditionsRef.current?.focus({ preventScroll: true });
   }, [analysisConditionsRequest, conditionsOpen]);
 
-  const enabledPlaceCount = useMemo(
-    () =>
-      NEARBY_CATEGORIES.reduce(
-        (total, category) =>
-          total +
-          (enabledCategories[category.id]
-            ? nearbyPlaces[category.id].places.length
-            : 0),
-        0,
-      ),
-    [enabledCategories, nearbyPlaces],
-  );
-
   const initializeMap = useCallback(() => {
     const kakaoMaps = (window as KakaoWindow).kakao?.maps;
     const container = containerRef.current;
@@ -341,7 +329,8 @@ export default function KakaoBaseMap({
     }
 
     kakaoMaps.load(() => {
-      if (!containerRef.current || mapInstanceRef.current) {
+      const currentContainer = containerRef.current;
+      if (!currentContainer?.isConnected || mapInstanceRef.current) {
         return;
       }
 
@@ -349,7 +338,7 @@ export default function KakaoBaseMap({
         SEOUL_CENTER.latitude,
         SEOUL_CENTER.longitude,
       );
-      mapInstanceRef.current = new kakaoMaps.Map(containerRef.current, {
+      mapInstanceRef.current = new kakaoMaps.Map(currentContainer, {
         center,
         level: 5,
       });
@@ -739,12 +728,8 @@ export default function KakaoBaseMap({
     }));
   }
 
-  // Keep the component instance and its analysis state mounted between workspace
-  // tabs without leaving the map's hidden technical DOM in the diagnosis view.
-  if (view === "hidden") return <div aria-hidden="true" />;
-
   return (
-    <div>
+    <div className={view === "hidden" ? "hidden" : ""} aria-hidden={view === "hidden" || undefined}>
       <div className={view === "briefing" ? "" : "hidden"}>
       {analysisTarget && !analysisSummary ? (
         <section aria-label="현재 분석" className="border-b border-slate-200 bg-blue-50 px-4 py-4">
@@ -754,7 +739,17 @@ export default function KakaoBaseMap({
               <p className="mt-2 break-words text-sm font-semibold text-slate-900">{analysisTarget.label}</p>
               <p className="mt-1 text-xs text-slate-600">FRAMEONE 주요상권 {analysisTarget.marketName} · {analysisRadiusM}m</p>
             </div>
-            <button type="button" onClick={() => setConditionsOpen(true)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">분석조건 변경</button>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {nearbySearchStatus === "success" ? (
+                <>
+                  <span role="status" className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">분석 완료</span>
+                  {onOpenAnalysisSummary ? (
+                    <button type="button" onClick={onOpenAnalysisSummary} className="min-h-11 rounded-lg bg-slate-900 px-4 text-xs font-bold text-white">종합 진단 보기</button>
+                  ) : null}
+                </>
+              ) : null}
+              <button type="button" onClick={() => setConditionsOpen(true)} className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700">분석조건 변경</button>
+            </div>
           </div>
         </section>
       ) : null}
@@ -784,6 +779,7 @@ export default function KakaoBaseMap({
                 </button>
               ))}
             </div>
+            <p className="text-[11px] leading-5 text-slate-500">300m는 점포 가까운 주변을, 500m는 조금 넓은 주변 상권까지 참고합니다.</p>
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button type="submit" disabled={status !== "ready" || !candidateAddress.trim() || nearbySearchStatus === "loading"}
                 className="min-h-11 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">
@@ -884,7 +880,7 @@ export default function KakaoBaseMap({
           >
             {nearbySearchStatus === "loading"
               ? "주변 장소 검색 중…"
-              : nearbySearchStatus === "success" ? `지도 표시 ${enabledPlaceCount}곳` : "조회 상태 확인 필요"}
+              : nearbySearchStatus === "success" ? "카테고리별 결과" : "조회 상태 확인 필요"}
           </span>
         </div>
 

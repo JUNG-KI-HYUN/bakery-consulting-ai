@@ -559,6 +559,7 @@ export default function MarketSpatialViewer({
   onAnalysisContextChange,
   analysisSummary,
   analysisConditionsRequest,
+  onOpenAnalysisSummary,
 }: {
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
@@ -568,6 +569,7 @@ export default function MarketSpatialViewer({
   onAnalysisContextChange?: (context: MarketAnalysisContext) => void;
   analysisSummary?: React.ReactNode;
   analysisConditionsRequest?: number;
+  onOpenAnalysisSummary?: () => void;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -1702,6 +1704,7 @@ export default function MarketSpatialViewer({
               onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
               onAnalysisExecuted={handleAnalysisExecuted}
               onNearbySearchChange={setKakaoNearby}
+              onOpenAnalysisSummary={onOpenAnalysisSummary}
               view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
             />
             {activeTab === "briefing" ? (

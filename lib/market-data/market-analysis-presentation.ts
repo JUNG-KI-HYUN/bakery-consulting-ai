@@ -68,7 +68,7 @@ const MANUAL_RELATION_LABELS: Record<OfficialMarketRelation, string> = {
 const MANUAL_RELATION_DESCRIPTIONS: Record<OfficialMarketRelation, string> = {
   INSIDE: "후보점포가 이 공식상권 내부에 있습니다.",
   RADIUS_OVERLAP: "후보점포는 상권 밖에 있지만, 분석반경과 공식상권이 겹칩니다.",
-  OUTSIDE: "분석지점과 직접적인 공간관계가 확인되지 않은 직원 참고선택 상권입니다.",
+  OUTSIDE: "분석지점과 직접적인 공간관계가 확인되지 않은 통계 참고 공식상권입니다.",
   UNKNOWN: "공간관계를 확인할 수 없습니다.",
 };
 
@@ -122,7 +122,13 @@ export function buildMarketSummaryPresentation(
   const period = data ? periodLabel(data.referencePeriod) : "기준분기 미확인";
   const metrics = data && context.publicData.status !== "missing" ? METRICS.flatMap((definition) => {
     const observation = data[definition.source].find((item) => item.metric === definition.metric);
-    return observation ? [{ metric: definition.metric, label: definition.label, value: formatMarketMetric(observation, definition.suffix) }] : [];
+    return observation ? [{
+      metric: definition.metric,
+      label: viewMode === "customer" && definition.metric === "monthly_sales_amount"
+        ? "공식상권 전체 월 추정매출"
+        : definition.label,
+      value: formatMarketMetric(observation, definition.suffix),
+    }] : [];
   }) : [];
   const statisticsWarning = manual && manualRelation !== "INSIDE"
     ? `현재 통계 기준은 직원이 참고 선택한 ‘${manual.marketName}’ 공식상권입니다. 후보점포가 직접 포함된 공식상권 통계와 다를 수 있습니다.` : null;

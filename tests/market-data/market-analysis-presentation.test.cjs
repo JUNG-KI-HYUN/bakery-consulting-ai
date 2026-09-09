@@ -26,6 +26,7 @@ const { buildMarketAnalysisContext: buildContext } = require("../../lib/market-d
 const { buildMarketSummaryPresentation: present } = require("../../lib/market-data/market-analysis-presentation.ts");
 const { default: Summary } = require("../../app/markets/MarketAnalysisSummary.tsx");
 const html = (context) => renderToStaticMarkup(createElement(Summary, { context, onEditConditions() {} }));
+const htmlMode = (context, viewMode) => renderToStaticMarkup(createElement(Summary, { context, viewMode, onEditConditions() {} }));
 
 // All names, points and observations below are synthetic test fixtures, not real business data.
 function relation(code, value) {
@@ -135,7 +136,7 @@ test("presentation CASE K: manual overlap statistics carry reference-selection w
 test("presentation CASE L: manual OUTSIDE never becomes a contained market", () => {
   const value = manualFixture("outside"), result = present(value);
   assert.equal(result.spatial.manual.relation, "직접 공간관계 없음");
-  assert.ok(result.spatial.manual.description.includes("직원 참고선택 상권"));
+  assert.ok(result.spatial.manual.description.includes("통계 참고 공식상권"));
   assert.ok(result.statistics.warning.includes("직접 포함된 공식상권 통계와 다를 수 있습니다"));
   assert.deepEqual(result.spatial.inside, ["예시 inside 상권"]);
 });
@@ -170,7 +171,7 @@ test("presentation CASE Q: three store metrics are independent, without an aggre
 });
 test("presentation CASE R: sales retain estimated label and adjacent official geography disclaimer", () => {
   const result = present(context()), rendered = html(context());
-  assert.equal(result.statistics.metrics[0].label, "월 추정매출");
+  assert.equal(result.statistics.metrics[0].label, "공식상권 전체 월 추정매출");
   assert.ok(rendered.includes("서울시 공식상권 단위의 추정통계입니다."));
   assert.ok(rendered.includes("후보점포 자체의 예상매출이나 500m 분석반경 통계가 아닙니다."));
   assert.ok(!result.statistics.metrics.some((item) => item.label.includes("예상매출")));
@@ -222,6 +223,8 @@ test("STEP 5 CASE A-I: customer mode is default and structurally excludes staff-
   assert.equal(result.statistics.status, "자료 확인");
   const rendered = html(value);
   assert.ok(rendered.includes("상담용 보기")); assert.ok(rendered.includes("직원용 상세"));
+  assert.ok(rendered.includes("통계 참고 공식상권"));
+  assert.ok(!rendered.includes("직원 참고선택"));
   assert.match(rendered, /상담용 보기<\/button>/);
   assert.doesNotMatch(rendered, /직원용 검증정보|fixture-frameone|fixture-outside|SRC-SEOUL|INSIDE|OUTSIDE|RADIUS_OVERLAP|market-analysis-context-v1|37\.5|127/);
 });
@@ -233,7 +236,9 @@ test("STEP 5 CASE J-N: staff mode adds raw Context facts without replacing custo
   assert.deepEqual(staff.target, customer.target);
   assert.deepEqual(staff.nearby, customer.nearby);
   assert.deepEqual(staff.spatial, customer.spatial);
-  assert.deepEqual(staff.statistics, customer.statistics);
+  assert.deepEqual(staff.statistics.metrics.map((item) => item.value), customer.statistics.metrics.map((item) => item.value));
+  assert.equal(customer.statistics.metrics[0].label, "공식상권 전체 월 추정매출");
+  assert.equal(staff.statistics.metrics[0].label, "월 추정매출");
   assert.equal(staff.staffDetails.target.frameoneMarketId, "fixture-frameone");
   assert.deepEqual(staff.staffDetails.target, {
     frameoneMarketId: "fixture-frameone", source: "address", latitude: 37.5, longitude: 127, executedRadiusMeters: 500,
@@ -248,6 +253,25 @@ test("STEP 5 CASE J-N: staff mode adds raw Context facts without replacing custo
   assert.equal(staff.staffDetails.publicData.officialMarketCode, "fixture-outside");
   assert.equal(staff.staffDetails.publicData.dataStatus, "available");
   assert.ok(staff.staffDetails.publicData.observations.some((item) => item.sourceId === "SRC-SEOUL-SALES" && item.metric === "monthly_sales_amount"));
+  const rendered = htmlMode(value, "staff");
+  assert.ok(rendered.includes("직원 참고선택"));
+  assert.ok(rendered.includes("오류 없음"));
+  assert.ok(!rendered.includes("requestError</dt><dd class=\"mt-1\"><span class=\"break-all font-mono text-xs text-slate-700\">미확인"));
+});
+
+test("stabilization: actual request failures keep failure policy and never become no-error", () => {
+  const value = context((input) => {
+    input.kakaoNearby = { status: "error", response: null, error: "fixture transport error" };
+    input.publicData.requestStatus = "error";
+    input.publicData.error = "fixture Seoul failure";
+    input.publicData.data = null;
+  });
+  const result = present(value, "staff");
+  const rendered = htmlMode(value, "staff");
+  assert.equal(result.nearby.status, "조회 실패 · 재확인 필요");
+  assert.equal(result.statistics.status, "조회 실패 · 재확인 필요");
+  assert.ok(rendered.includes("fixture transport error"));
+  assert.ok(rendered.includes("fixture Seoul failure"));
 });
 
 test("STEP 5 CASE O-T: modes preserve zero, missing/error distinctions, no aggregates, verdicts or mutation", () => {

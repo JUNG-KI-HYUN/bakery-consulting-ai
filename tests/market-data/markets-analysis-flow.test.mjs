@@ -100,7 +100,7 @@ function fixture(component, props) {
     render() {
       activeFixture = instance; this.cursor = 0; this.dirty = false;
       this.tree = component(this.props);
-      for (const node of nodes(this.tree)) if (node.props.ref && typeof node.props.ref === "object") node.props.ref.current ??= { scrollIntoView() {}, focus() {} };
+      for (const node of nodes(this.tree)) if (node.props.ref && typeof node.props.ref === "object") node.props.ref.current ??= { isConnected: true, scrollIntoView() {}, focus() {} };
       for (const effect of this.effects.splice(0)) effect();
     },
     async flush() {
@@ -213,8 +213,12 @@ test("markets CASE A, C–I: explicit target analysis preserves map events and e
     });
     await t.test("CASE G: pan and tab switches do not alter analysis point, radius or results", async () => {
       const requestCount = sdk.requests.length, circle = sdk.circles.at(-1);
+      const mapContainerRef = view.find((node) => node.props["aria-label"] === "서울 중심 Kakao 기본 지도").props.ref;
       sdk.emit(sdk.maps[0], "dragend"); sdk.emit(sdk.maps[0], "center_changed");
-      for (const mode of ["competition", "hidden", "briefing"]) { view.props = { ...view.props, view: mode }; view.dirty = true; await view.flush(); }
+      for (const mode of ["competition", "hidden", "briefing"]) {
+        view.props = { ...view.props, view: mode }; view.dirty = true; await view.flush();
+        assert.equal(view.find((node) => node.props["aria-label"] === "서울 중심 Kakao 기본 지도").props.ref, mapContainerRef);
+      }
       assert.equal(sdk.requests.length, requestCount); assert.equal(sdk.circles.at(-1), circle);
     });
     await t.test("CASE H: polygon click suppresses bubbled map click without changing analysis", async () => {
@@ -506,7 +510,14 @@ test("STEP 6 CASE D-I/L-Q/S-T: tabs reuse Context, requests, map, selection, pub
     map.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture address" } });
     await flush(); map.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await flush();
     const requestCount = sdk.requests.length, mapInstance = sdk.maps[0];
-    explorer.button("종합 진단").props.onClick(); await flush();
+    const completedMapHtml = renderToStaticMarkup(map.tree);
+    assert.ok(completedMapHtml.includes("분석 완료"));
+    assert.ok(completedMapHtml.includes("종합 진단 보기"));
+    assert.ok(completedMapHtml.includes("카테고리별 결과"));
+    assert.doesNotMatch(completedMapHtml, /지도 표시 \d+곳<\/span>/);
+    map.button("종합 진단 보기").props.onClick(); await flush();
+    assert.equal(viewerProps().activeTab, "market-map");
+    assert.equal(sdk.requests.length, requestCount);
     const executedContext = summaryNode().props.context;
     assert.ok(summaryHtml().includes("fixture resolved address")); assert.ok(summaryHtml().includes("실행 반경 500m"));
     assert.equal(summaryNode().props.viewMode, "customer");
@@ -518,9 +529,20 @@ test("STEP 6 CASE D-I/L-Q/S-T: tabs reuse Context, requests, map, selection, pub
       assert.equal(sdk.maps.length, 1); assert.equal(sdk.maps[0], mapInstance);
       assert.equal(sdk.requests.length, requestCount);
     }
+    explorer.button("데이터 근거").props.onClick(); await flush();
+    const explorerNodes = nodes(explorer.tree);
+    const evidenceNode = explorer.find((node) => typeof node.type === "function" && node.type.name === "CurrentAnalysisEvidence");
+    const hierarchyNode = explorer.find((node) => node.type === "details" && text(node).includes("전체 FRAMEONE 상권 계층 · 내부 상세정보"));
+    const evidenceHtml = renderToStaticMarkup(evidenceNode);
+    assert.ok(explorerNodes.indexOf(evidenceNode) < explorerNodes.indexOf(hierarchyNode));
+    assert.ok(evidenceHtml.includes("SALES/STORES 기준분기"));
+    assert.ok(evidenceHtml.includes("SRC-SEOUL-SALES"));
+    explorer.button("종합 진단").props.onClick(); await flush();
     assert.equal(summaryNode().props.viewMode, "staff"); assert.equal(summaryNode().props.context, executedContext);
     assert.ok(summaryHtml().includes("fixture resolved address"));
-    assert.ok(!nodes(map.tree).some((node) => node.props["aria-labelledby"] === "candidate-store-title"));
+    assert.equal(map.tree.props["aria-hidden"], true);
+    assert.ok(map.tree.props.className.includes("hidden"));
+    assert.ok(nodes(map.tree).some((node) => node.props["aria-label"] === "서울 중심 Kakao 기본 지도"));
     summaryNode().props.onEditConditions(); await flush();
     assert.equal(viewerProps().activeTab, "briefing");
     assert.ok(!map.find((node) => node.props["aria-labelledby"] === "candidate-store-title").props.className.includes("hidden"));

@@ -4,7 +4,10 @@ import { useMemo, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
 import MarketAnalysisSummary from "./MarketAnalysisSummary";
 import type { MarketAnalysisContext } from "@/lib/market-data/market-analysis-context";
-import type { MarketAnalysisViewMode } from "@/lib/market-data/market-analysis-presentation";
+import {
+  buildMarketSummaryPresentation,
+  type MarketAnalysisViewMode,
+} from "@/lib/market-data/market-analysis-presentation";
 
 export type MarketsWorkspaceTab =
   | "briefing"
@@ -131,6 +134,72 @@ function GradeBadge({ label, value }: { label: string; value: string }) {
     >
       {label} {value}
     </span>
+  );
+}
+
+function requestStatusLabel(status: MarketAnalysisContext["kakaoNearby"]["status"]) {
+  if (status === "success") return "조회 성공";
+  if (status === "error") return "조회 실패 · 재확인 필요";
+  if (status === "loading") return "조회 중";
+  return "조회 전";
+}
+
+function CurrentAnalysisEvidence({ context }: { context: MarketAnalysisContext }) {
+  const target = context.target;
+  if (!target) return null;
+  const related = context.officialMarkets.relatedMarkets ?? [];
+  const inside = related.filter((market) => market.relation === "INSIDE");
+  const overlaps = related.filter((market) => market.relation === "RADIUS_OVERLAP");
+  const manual = context.officialMarkets.manuallySelected;
+  const statistics = context.publicData.selectedOfficialMarketData;
+  const presentation = buildMarketSummaryPresentation(context, "staff");
+  const statisticsMarket = statistics?.officialMarketName ?? manual?.marketName ?? "미선택";
+  const referencePeriod = statistics?.referencePeriod ?? "미확인";
+  const sourceStatus = (name: string) => presentation.status === "ready"
+    ? presentation.sources.find((source) => source.name === name)?.status ?? "자료 확인 필요"
+    : "자료 확인 필요";
+
+  return (
+    <section aria-label="현재 분석 근거" className="panel-card p-5 md:p-6">
+      <div>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">현재 상담 분석 근거</p>
+        <h3 className="mt-2 text-xl font-bold text-slate-950">{target.confirmedAddress ?? "지도 선택 위치"}</h3>
+        <p className="mt-1 text-sm text-slate-600">실행 반경 {target.executedRadiusMeters}m · {target.source === "address" ? "주소 분석" : "지도 분석"}</p>
+      </div>
+
+      <dl className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="rounded-xl bg-slate-50 p-3">
+          <dt className="text-xs font-semibold text-slate-500">현재 관련 공식상권</dt>
+          <dd className="mt-1 text-sm font-bold text-slate-900">내부 {inside.length}개 · 반경 교차 {overlaps.length}개</dd>
+          <dd className="mt-1 text-xs leading-5 text-slate-600">{[...inside, ...overlaps].map((market) => market.marketName).join(" · ") || "확인된 관계 없음"}</dd>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3">
+          <dt className="text-xs font-semibold text-slate-500">통계 기준 공식상권</dt>
+          <dd className="mt-1 text-sm font-bold text-slate-900">{statisticsMarket}</dd>
+          <dd className="mt-1 text-xs text-slate-600">SALES/STORES 기준분기 {referencePeriod}</dd>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3">
+          <dt className="text-xs font-semibold text-slate-500">수동선택 / 공간관계</dt>
+          <dd className="mt-1 text-sm font-bold text-slate-900">{manual ? `${manual.marketName} · manual` : "수동선택 없음"}</dd>
+          <dd className="mt-1 text-xs text-slate-600">{manual?.spatialRelation?.relation ?? "공간관계 미확인"}</dd>
+        </div>
+      </dl>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ["Kakao 장소검색", "Kakao", requestStatusLabel(context.kakaoNearby.status)],
+          ["서울시 공식상권", "서울시 경계", requestStatusLabel(context.officialMarkets.status)],
+          ["SALES", "SRC-SEOUL-SALES", sourceStatus("서울시 SALES")],
+          ["STORES", "SRC-SEOUL-STORES", sourceStatus("서울시 STORES")],
+        ].map(([name, source, status]) => (
+          <div key={name} className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-xs font-bold text-slate-900">{name}</p>
+            <p className="mt-1 break-all font-mono text-[10px] text-slate-500">{source}</p>
+            <p className="mt-1 text-xs font-semibold text-slate-700">{status}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -369,6 +438,10 @@ export default function MarketsExplorer({
         </section>
       ) : null}
 
+      {activeTab === "public-data" && analysisContext?.target ? (
+        <CurrentAnalysisEvidence context={analysisContext} />
+      ) : null}
+
       <div className={activeTab === "market-map" || (activeTab === "public-data" && !analysisContext?.target) ? "hidden" : ""}>
       <MarketSpatialViewer
         selectedMarket={selectedMarketSpatialSummary}
@@ -377,6 +450,7 @@ export default function MarketsExplorer({
         onOpenMarketMap={() => setActiveTab("briefing")}
         onAnalysisContextChange={setAnalysisContext}
         analysisConditionsRequest={analysisConditionsRequest}
+        onOpenAnalysisSummary={() => setActiveTab("market-map")}
         analysisSummary={null}
         marketSelector={
           <label className="block min-w-0 text-xs font-bold text-slate-700">
@@ -404,6 +478,10 @@ export default function MarketsExplorer({
       </div>
 
       {activeTab === "public-data" ? (
+      <details className="panel-card overflow-hidden">
+        <summary className="cursor-pointer px-5 py-4 text-sm font-bold text-slate-800">
+          전체 FRAMEONE 상권 계층 · 내부 상세정보
+        </summary>
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.4fr)]">
         <aside
           id="frameone-market-selector"
@@ -719,6 +797,7 @@ export default function MarketsExplorer({
           )}
         </section>
       </div>
+      </details>
       ) : null}
 
         </div>

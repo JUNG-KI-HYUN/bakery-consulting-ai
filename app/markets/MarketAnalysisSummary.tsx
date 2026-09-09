@@ -56,6 +56,18 @@ function RawField({ label, value }: { label: string; value: unknown }) {
   return <div className="min-w-0"><dt className="text-xs font-semibold text-slate-500">{label}</dt><dd className="mt-1"><RawValue value={value} /></dd></div>;
 }
 
+function RequestErrorField({
+  label = "requestError",
+  requestStatus,
+  error,
+}: {
+  label?: string;
+  requestStatus: unknown;
+  error: unknown;
+}) {
+  return <RawField label={label} value={requestStatus === "success" && (error === null || error === undefined || error === "") ? "오류 없음" : error} />;
+}
+
 /** Context is the only source of displayed data. The callbacks change presentation or open existing controls. */
 export default function MarketAnalysisSummary({
   context,
@@ -134,7 +146,7 @@ export default function MarketAnalysisSummary({
           ) : <p className="mt-3 text-sm text-slate-600">{summary.spatial.status}</p>}
           {summary.spatial.unknown.length > 0 ? <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-sm font-semibold text-amber-900">공간관계를 확인할 수 없습니다.</p><TextList items={summary.spatial.unknown} empty="" /></div> : null}
           <div className="mt-4 border-t border-slate-200 pt-3">
-            <h4 className="text-sm font-bold text-slate-900">직원 참고선택</h4>
+            <h4 className="text-sm font-bold text-slate-900">{viewMode === "customer" ? "통계 참고 공식상권" : "직원 참고선택"}</h4>
             {summary.spatial.manual ? <><p className="mt-2 break-words text-sm font-semibold text-slate-800">{summary.spatial.manual.name} · {summary.spatial.manual.relation}</p><p className="mt-1 text-xs leading-5 text-slate-600">{summary.spatial.manual.description}</p></> : <p className="mt-2 text-sm text-slate-500">참고선택 상권 없음</p>}
           </div>
         </SummarySection>
@@ -179,7 +191,7 @@ export default function MarketAnalysisSummary({
                   <h5 className="text-sm font-bold text-slate-800">Kakao 요청 상태</h5>
                   <dl className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
                     <RawField label="requestStatus" value={summary.staffDetails.kakao.requestStatus} />
-                    <RawField label="requestError" value={summary.staffDetails.kakao.error} />
+                    <RequestErrorField requestStatus={summary.staffDetails.kakao.requestStatus} error={summary.staffDetails.kakao.error} />
                   </dl>
                   <div className="mt-3 grid min-w-0 gap-3 lg:grid-cols-3">
                     {summary.staffDetails.kakao.categories.map((category) => (
@@ -188,7 +200,7 @@ export default function MarketAnalysisSummary({
                         <div className="mt-2"><RawField label="status" value={category.status} /></div>
                         <div className="mt-2"><RawField label="totalCount" value={category.totalCount} /></div>
                         <div className="mt-2"><RawField label="returnedCount" value={category.returnedCount} /></div>
-                        <div className="mt-2"><RawField label="error" value={category.error} /></div>
+                        <div className="mt-2"><RequestErrorField label="error" requestStatus={category.status} error={category.error} /></div>
                       </dl>
                     ))}
                   </div>
@@ -198,7 +210,7 @@ export default function MarketAnalysisSummary({
                   <h5 className="text-sm font-bold text-slate-800">서울시 공식상권 원본 관계</h5>
                   <dl className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2">
                     <RawField label="requestStatus" value={summary.staffDetails.officialMarkets.requestStatus} />
-                    <RawField label="requestError" value={summary.staffDetails.officialMarkets.error} />
+                    <RequestErrorField requestStatus={summary.staffDetails.officialMarkets.requestStatus} error={summary.staffDetails.officialMarkets.error} />
                   </dl>
                   <div className="mt-3 space-y-2">
                     {summary.staffDetails.officialMarkets.relatedMarkets.map((market) => (
@@ -234,7 +246,7 @@ export default function MarketAnalysisSummary({
                     <RawField label="referencePeriod" value={summary.staffDetails.publicData.referencePeriod} />
                     <RawField label="industryCode" value={summary.staffDetails.publicData.industryCode} />
                     <RawField label="industryName" value={summary.staffDetails.publicData.industryName} />
-                    <RawField label="requestError" value={summary.staffDetails.publicData.error} />
+                    <RequestErrorField requestStatus={summary.staffDetails.publicData.requestStatus} error={summary.staffDetails.publicData.error} />
                   </dl>
                   <div className="mt-3 space-y-2">
                     {summary.staffDetails.publicData.observations.map((observation, index) => (
