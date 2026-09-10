@@ -21,6 +21,7 @@ const BAKERY_INDUSTRY_CODE = "CS100005";
 const BAKERY_INDUSTRY_NAME = "제과점";
 const SEOUL_API_PAGE_SIZE = 1_000;
 const LATEST_QUARTER_LOOKBACK = 8;
+const OFFICIAL_TREND_PERIOD_LIMIT = 4;
 const SEOUL_API_NO_DATA_CODE = "INFO-200";
 const SALES_QUARTER_CACHE_TTL_MS = 5 * 60 * 1_000;
 
@@ -51,11 +52,39 @@ export interface BakeryOfficialMarketData {
   sales: MarketDataObservation[];
   stores: MarketDataObservation[];
   dataStatus: BakeryOfficialMarketDataStatus;
+  officialTrend?: BakeryOfficialMarketTrend;
+}
+
+export interface BakeryOfficialMarketTrendPeriod {
+  quarterCode: string;
+  referencePeriod: string;
+  estimatedSalesAmount: number | null;
+  storeCount: number | null;
+  salesQoqRate: number | null;
+  storeCountDelta: number | null;
+  dataStatus: BakeryOfficialMarketDataStatus;
+}
+
+export interface BakeryOfficialMarketTrend {
+  officialMarketCode: string;
+  officialMarketName: string | null;
+  industryCode: typeof BAKERY_INDUSTRY_CODE;
+  industryName: string;
+  latestQuarterCode: string;
+  latestReferencePeriod: string;
+  periods: BakeryOfficialMarketTrendPeriod[];
+  dataStatus: BakeryOfficialMarketDataStatus;
 }
 
 export interface BakeryOfficialMarketDataRequest {
   marketCode: string;
   quarterCode?: string | number;
+  signal?: AbortSignal;
+}
+
+export interface BakeryOfficialMarketTrendRequest {
+  marketCode: string;
+  latestData?: BakeryOfficialMarketData;
   signal?: AbortSignal;
 }
 
@@ -115,6 +144,17 @@ function previousQuarterCode(
   const targetQuarter = (quarterIndex % 4) + 1;
 
   return `${targetYear}${targetQuarter}`;
+}
+
+function quarterCodeAtOffset(quarterCode: string, offset: number): string {
+  const quarter = requireQuarter(quarterCode);
+  const year = Number(quarter.quarterCode.slice(0, 4));
+  const quarterNumber = Number(quarter.quarterCode.slice(4));
+  return previousQuarterCode(year, quarterNumber, offset);
+}
+
+function immediatelyFollows(previous: string, current: string): boolean {
+  return quarterCodeAtOffset(current, 1) === previous;
 }
 
 async function sourceHasQuarter(
@@ -316,6 +356,101 @@ function combinedDataStatus(
   return "missing";
 }
 
+function availableMetricValue(
+  observations: MarketDataObservation[],
+  metric: string,
+): number | null {
+  const observation = observations.find((item) => item.metric === metric);
+  return observation?.dataStatus === "available" &&
+    observation.value !== null &&
+    Number.isFinite(observation.value)
+    ? observation.value
+    : null;
+}
+
+function trendPeriodStatus(
+  estimatedSalesAmount: number | null,
+  storeCount: number | null,
+): BakeryOfficialMarketDataStatus {
+  if (estimatedSalesAmount !== null && storeCount !== null) {
+    return "available";
+  }
+  if (estimatedSalesAmount !== null || storeCount !== null) {
+    return "partial";
+  }
+  return "missing";
+}
+
+function safeQoqRate(current: number | null, previous: number | null) {
+  if (current === null || previous === null || previous === 0) {
+    return null;
+  }
+  return ((current - previous) / previous) * 100;
+}
+
+export function buildBakeryOfficialMarketTrend(
+  marketCode: string,
+  data: BakeryOfficialMarketData[],
+): BakeryOfficialMarketTrend {
+  const normalizedMarketCode = normalizeOfficialMarketCode(marketCode);
+  const chronological = [...data]
+    .filter((item) => item.dataStatus !== "missing")
+    .sort((left, right) => left.quarterCode.localeCompare(right.quarterCode))
+    .slice(-OFFICIAL_TREND_PERIOD_LIMIT);
+  const periods = chronological.map((item, index) => {
+    const estimatedSalesAmount = availableMetricValue(
+      item.sales,
+      "monthly_sales_amount",
+    );
+    const storeCount = availableMetricValue(item.stores, "store_count");
+    const previous = index > 0 ? chronological[index - 1] : null;
+    const previousSales = previous
+      ? availableMetricValue(previous.sales, "monthly_sales_amount")
+      : null;
+    const previousStoreCount = previous
+      ? availableMetricValue(previous.stores, "store_count")
+      : null;
+    const comparable = previous
+      ? immediatelyFollows(previous.quarterCode, item.quarterCode)
+      : false;
+
+    return {
+      quarterCode: item.quarterCode,
+      referencePeriod: item.referencePeriod,
+      estimatedSalesAmount,
+      storeCount,
+      salesQoqRate: comparable
+        ? safeQoqRate(estimatedSalesAmount, previousSales)
+        : null,
+      storeCountDelta:
+        comparable && storeCount !== null && previousStoreCount !== null
+          ? storeCount - previousStoreCount
+          : null,
+      dataStatus: trendPeriodStatus(estimatedSalesAmount, storeCount),
+    };
+  });
+  const latest = chronological.at(-1);
+  const availableCount = periods.filter(
+    (period) => period.dataStatus === "available",
+  ).length;
+
+  return {
+    officialMarketCode: normalizedMarketCode,
+    officialMarketName: latest?.officialMarketName ?? null,
+    industryCode: BAKERY_INDUSTRY_CODE,
+    industryName: latest?.industryName ?? BAKERY_INDUSTRY_NAME,
+    latestQuarterCode: latest?.quarterCode ?? "",
+    latestReferencePeriod: latest?.referencePeriod ?? "",
+    periods,
+    dataStatus:
+      periods.length === 0
+        ? "missing"
+        : availableCount === periods.length
+          ? "available"
+          : "partial",
+  };
+}
+
 export async function getBakeryOfficialMarketData({
   marketCode,
   quarterCode,
@@ -359,4 +494,41 @@ export async function getBakeryOfficialMarketData({
     stores,
     dataStatus: combinedDataStatus(sales, stores),
   };
+}
+
+export async function getBakeryOfficialMarketTrend({
+  marketCode,
+  latestData,
+  signal,
+}: BakeryOfficialMarketTrendRequest): Promise<BakeryOfficialMarketTrend> {
+  const normalizedMarketCode = normalizeOfficialMarketCode(marketCode);
+  const latest =
+    latestData ??
+    (await getBakeryOfficialMarketData({
+      marketCode: normalizedMarketCode,
+      signal,
+    }));
+  const data: BakeryOfficialMarketData[] = [];
+
+  for (
+    let offset = 0;
+    offset < LATEST_QUARTER_LOOKBACK && data.length < OFFICIAL_TREND_PERIOD_LIMIT;
+    offset += 1
+  ) {
+    const quarterCode = quarterCodeAtOffset(latest.quarterCode, offset);
+    const periodData =
+      offset === 0
+        ? latest
+        : await getBakeryOfficialMarketData({
+            marketCode: normalizedMarketCode,
+            quarterCode,
+            signal,
+          });
+
+    if (periodData.dataStatus !== "missing") {
+      data.push(periodData);
+    }
+  }
+
+  return buildBakeryOfficialMarketTrend(normalizedMarketCode, data);
 }

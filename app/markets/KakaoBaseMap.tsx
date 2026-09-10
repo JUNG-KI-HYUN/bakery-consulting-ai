@@ -281,6 +281,7 @@ export default function KakaoBaseMap({
     useState<RadiusM>(DEFAULT_RADIUS_M);
   const [nearbyPlaces, setNearbyPlaces] =
     useState<NearbyPlacesByCategory>(emptyNearbyPlaces);
+  const [uniqueNearbyPlaces, setUniqueNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [enabledCategories, setEnabledCategories] =
     useState<EnabledCategories>({
       bakery: true,
@@ -503,6 +504,7 @@ export default function KakaoBaseMap({
     setNearbySearchError("");
     onNearbySearchChange?.({ status: "loading", response: null, error: null });
     setNearbyPlaces(emptyNearbyPlaces());
+    setUniqueNearbyPlaces([]);
     setSelectedNearbyPlace(null);
     infoWindowRef.current?.close();
 
@@ -540,6 +542,10 @@ export default function KakaoBaseMap({
         }
 
         setNearbyPlaces(nextPlaces);
+        setUniqueNearbyPlaces(
+          payload.uniquePlaces ??
+            (payload.categories ?? []).flatMap((category) => category.places),
+        );
         onNearbySearchChange?.({
           status: errors.length > 0 ? "error" : "success",
           response: payload,
@@ -593,12 +599,11 @@ export default function KakaoBaseMap({
       clickHandler: () => void;
     }> = [];
 
-    for (const category of NEARBY_CATEGORIES) {
-      if (!enabledCategories[category.id]) {
+    for (const place of uniqueNearbyPlaces) {
+      const categoryIds = place.matchedCategoryIds ?? [place.categoryId];
+      if (!categoryIds.some((categoryId) => enabledCategories[categoryId])) {
         continue;
       }
-
-      for (const place of nearbyPlaces[category.id].places) {
         const marker = new kakaoMaps.Marker({
           map,
           position: new kakaoMaps.LatLng(place.latitude, place.longitude),
@@ -611,7 +616,6 @@ export default function KakaoBaseMap({
         };
         kakaoMaps.event.addListener(marker, "click", clickHandler);
         markers.push({ marker, clickHandler });
-      }
     }
 
     return () => {
@@ -621,7 +625,7 @@ export default function KakaoBaseMap({
         marker.setMap(null);
       }
     };
-  }, [enabledCategories, nearbyPlaces, status]);
+  }, [enabledCategories, status, uniqueNearbyPlaces]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -880,9 +884,15 @@ export default function KakaoBaseMap({
           >
             {nearbySearchStatus === "loading"
               ? "주변 장소 검색 중…"
-              : nearbySearchStatus === "success" ? "카테고리별 결과" : "조회 상태 확인 필요"}
+              : nearbySearchStatus === "success" ? `중복정규화 ${uniqueNearbyPlaces.length}곳` : "조회 상태 확인 필요"}
           </span>
         </div>
+
+        {nearbySearchStatus === "success" ? (
+          <p className="mt-2 text-[11px] leading-4 text-slate-500">
+            Kakao 검색 결과를 보수적인 규칙으로 중복 제거한 수이며 공식 점포 수나 전체 영업점 수가 아닙니다.
+          </p>
+        ) : null}
 
         <p className="mt-2 text-xs font-semibold text-slate-600" role="status">
           현재 분석 위치 기준 {analysisRadiusM}m 주변 장소입니다. 지도 이동이나 새 위치 선택은 다시 분석하기 전까지 이 결과를 바꾸지 않습니다.

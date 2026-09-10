@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import type { BakeryOfficialMarketData } from "@/lib/market-data/services/bakery-official-market";
+import OfficialMarketTrend from "./OfficialMarketTrend";
 import {
   buildMarketAnalysisContext,
   type ExecutedMarketAnalysis,
@@ -478,6 +479,26 @@ function parseBakeryDataResponse(
   }
 
   const candidate = value as Partial<BakeryOfficialMarketData>;
+  const trend = candidate.officialTrend;
+  const validTrend =
+    trend === undefined ||
+    (trend.officialMarketCode === expectedMarketCode &&
+      typeof trend.latestQuarterCode === "string" &&
+      typeof trend.latestReferencePeriod === "string" &&
+      Array.isArray(trend.periods) &&
+      trend.periods.every(
+        (period) =>
+          typeof period.quarterCode === "string" &&
+          typeof period.referencePeriod === "string" &&
+          (period.estimatedSalesAmount === null ||
+            typeof period.estimatedSalesAmount === "number") &&
+          (period.storeCount === null || typeof period.storeCount === "number") &&
+          (period.salesQoqRate === null ||
+            typeof period.salesQoqRate === "number") &&
+          (period.storeCountDelta === null ||
+            typeof period.storeCountDelta === "number") &&
+          ["available", "partial", "missing"].includes(period.dataStatus),
+      ));
   if (
     candidate.officialMarketCode !== expectedMarketCode ||
     typeof candidate.industryCode !== "string" ||
@@ -486,9 +507,8 @@ function parseBakeryDataResponse(
     typeof candidate.referencePeriod !== "string" ||
     !Array.isArray(candidate.sales) ||
     !Array.isArray(candidate.stores) ||
-    !["available", "partial", "missing"].includes(
-      candidate.dataStatus ?? "",
-    )
+    !["available", "partial", "missing"].includes(candidate.dataStatus ?? "") ||
+    !validTrend
   ) {
     throw new Error("제과점 데이터 응답 형식이 올바르지 않습니다.");
   }
@@ -1360,7 +1380,7 @@ export default function MarketSpatialViewer({
 
     try {
       const response = await fetch(
-        `/api/markets/bakery-data?marketCode=${encodeURIComponent(selectedOfficialMarketCode)}`,
+        `/api/markets/bakery-data?marketCode=${encodeURIComponent(selectedOfficialMarketCode)}&includeTrend=1`,
         {
           headers: { Accept: "application/json" },
           signal: controller.signal,
@@ -2360,6 +2380,13 @@ export default function MarketSpatialViewer({
                                 </dl>
                               </div>
                             </section>
+
+                            {activeTab === "public-data" &&
+                            bakeryData.officialTrend ? (
+                              <OfficialMarketTrend
+                                trend={bakeryData.officialTrend}
+                              />
+                            ) : null}
 
                             <p className="border-t border-emerald-100 pt-3 text-[10px] leading-5 text-slate-500">
                               이 데이터는 해당 서울시 공식상권 전체의 제과점 통계이며 후보점포의 예상매출이 아닙니다.

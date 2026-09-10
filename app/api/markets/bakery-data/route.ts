@@ -1,5 +1,8 @@
 import { SeoulOpenDataClientError } from "@/lib/market-data/clients/seoul-open-data";
-import { getBakeryOfficialMarketData } from "@/lib/market-data/services/bakery-official-market";
+import {
+  getBakeryOfficialMarketData,
+  getBakeryOfficialMarketTrend,
+} from "@/lib/market-data/services/bakery-official-market";
 
 export const runtime = "nodejs";
 
@@ -27,6 +30,7 @@ export async function GET(request: Request) {
   const rawQuarterCode = searchParams.get("quarterCode");
   const quarterCode =
     rawQuarterCode === null ? undefined : rawQuarterCode.trim();
+  const includeTrend = searchParams.get("includeTrend") === "1";
 
   if (!marketCode || !/^\d+$/.test(marketCode)) {
     return Response.json(
@@ -41,10 +45,20 @@ export async function GET(request: Request) {
       ...(quarterCode === undefined ? {} : { quarterCode }),
       signal: request.signal,
     });
+    const officialTrend = includeTrend
+      ? await getBakeryOfficialMarketTrend({
+          marketCode,
+          latestData: data,
+          signal: request.signal,
+        })
+      : undefined;
 
-    return Response.json(data, {
-      headers: { "Cache-Control": "no-store" },
-    });
+    return Response.json(
+      { ...data, ...(officialTrend ? { officialTrend } : {}) },
+      {
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
   } catch (error) {
     if (error instanceof SeoulOpenDataClientError) {
       return clientErrorResponse(error);

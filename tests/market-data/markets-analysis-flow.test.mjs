@@ -513,7 +513,8 @@ test("STEP 6 CASE D-I/L-Q/S-T: tabs reuse Context, requests, map, selection, pub
     const completedMapHtml = renderToStaticMarkup(map.tree);
     assert.ok(completedMapHtml.includes("분석 완료"));
     assert.ok(completedMapHtml.includes("종합 진단 보기"));
-    assert.ok(completedMapHtml.includes("카테고리별 결과"));
+    assert.ok(completedMapHtml.includes("중복정규화"));
+    assert.ok(completedMapHtml.includes("공식 점포 수나 전체 영업점 수가 아닙니다"));
     assert.doesNotMatch(completedMapHtml, /지도 표시 \d+곳<\/span>/);
     map.button("종합 진단 보기").props.onClick(); await flush();
     assert.equal(viewerProps().activeTab, "market-map");

@@ -27,6 +27,8 @@ export interface NearbyPlace {
   latitude: number;
   longitude: number;
   distanceM: number;
+  matchedCategoryIds?: NearbyCategoryId[];
+  matchedCategoryLabels?: string[];
 }
 
 export interface NearbyCategoryResult {
@@ -37,6 +39,8 @@ export interface NearbyCategoryResult {
 
 export interface NearbyPlacesResponse {
   categories?: Array<NearbyCategoryResult & { id: NearbyCategoryId }>;
+  uniquePlaceCount?: number;
+  uniquePlaces?: NearbyPlace[];
   message?: string;
 }
 

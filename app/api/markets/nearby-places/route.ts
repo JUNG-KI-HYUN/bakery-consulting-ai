@@ -1,3 +1,8 @@
+import {
+  dedupeKakaoPlaces,
+  type DedupedKakaoPlace,
+} from "@/lib/market-data/kakao-place-dedupe";
+
 const KAKAO_LOCAL_API_BASE = "https://dapi.kakao.com";
 const MAX_PLACES_PER_CATEGORY = 15;
 
@@ -9,6 +14,7 @@ type KakaoPlaceDocument = {
   category_name?: string;
   address_name?: string;
   road_address_name?: string;
+  phone?: string;
   x?: string;
   y?: string;
   distance?: string;
@@ -28,13 +34,24 @@ type NearbyPlace = {
   latitude: number;
   longitude: number;
   distanceM: number;
+  matchedCategoryIds?: NearbyCategoryId[];
+  matchedCategoryLabels?: string[];
+};
+
+type NearbyPlaceCandidate = NearbyPlace & {
+  kakaoPlaceId: string | null;
+  phone: string | null;
+  roadAddress: string | null;
+  addressName: string | null;
+  sourceCategoryId: NearbyCategoryId;
+  sourceCategoryLabel: string;
 };
 
 type NearbyCategoryResult = {
   id: NearbyCategoryId;
   label: string;
   totalCount: number;
-  places: NearbyPlace[];
+  places: NearbyPlaceCandidate[];
   error?: string;
 };
 
@@ -82,7 +99,7 @@ function normalizePlace(
   document: KakaoPlaceDocument,
   category: (typeof NEARBY_CATEGORIES)[number],
   center: { latitude: number; longitude: number },
-): NearbyPlace | null {
+): NearbyPlaceCandidate | null {
   const name = document.place_name?.trim();
   const latitude = parseNumber(document.y);
   const longitude = parseNumber(document.x);
@@ -93,7 +110,7 @@ function normalizePlace(
   const rawDistance = parseNumber(document.distance);
   return {
     id:
-      document.id?.trim() ??
+      document.id?.trim() ||
       `${category.id}|${name}|${latitude}|${longitude}`,
     name,
     categoryId: category.id,
@@ -108,6 +125,35 @@ function normalizePlace(
       rawDistance === null
         ? distanceInMeters(center, { latitude, longitude })
         : Math.round(rawDistance),
+    kakaoPlaceId: document.id?.trim() || null,
+    phone: document.phone?.trim() || null,
+    roadAddress: document.road_address_name?.trim() || null,
+    addressName: document.address_name?.trim() || null,
+    sourceCategoryId: category.id,
+    sourceCategoryLabel: category.label,
+  };
+}
+
+function toNearbyPlace(
+  place: NearbyPlaceCandidate | DedupedKakaoPlace<NearbyPlaceCandidate>,
+): NearbyPlace {
+  const matchedCategoryIds = "matchedCategoryIds" in place
+    ? place.matchedCategoryIds as NearbyCategoryId[]
+    : undefined;
+  const matchedCategoryLabels = "matchedCategoryLabels" in place
+    ? place.matchedCategoryLabels
+    : undefined;
+  return {
+    id: place.id,
+    name: place.name,
+    categoryId: place.categoryId,
+    categoryLabel: place.categoryLabel,
+    address: place.address,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    distanceM: place.distanceM,
+    ...(matchedCategoryIds ? { matchedCategoryIds } : {}),
+    ...(matchedCategoryLabels ? { matchedCategoryLabels } : {}),
   };
 }
 
@@ -160,7 +206,7 @@ async function searchNearbyCategory(
 
     const payload = (await response.json()) as KakaoSearchResponse;
     const seen = new Set<string>();
-    const places: NearbyPlace[] = [];
+    const places: NearbyPlaceCandidate[] = [];
     for (const document of (payload.documents ?? []).slice(0, MAX_PLACES_PER_CATEGORY)) {
       const place = normalizePlace(document, category, center);
       if (!place || seen.has(place.id)) {
@@ -212,14 +258,22 @@ export async function GET(request: Request) {
   }
 
   const center = { latitude, longitude };
-  const categories = await Promise.all(
+  const searchResults = await Promise.all(
     NEARBY_CATEGORIES.map((category) =>
       searchNearbyCategory(apiKey, category, center, radiusM),
     ),
   );
 
+  const uniquePlaces = dedupeKakaoPlaces(
+    searchResults.flatMap((category) => category.places),
+  ).map(toNearbyPlace);
+  const categories = searchResults.map((category) => ({
+    ...category,
+    places: category.places.map(toNearbyPlace),
+  }));
+
   return Response.json(
-    { center, radiusM, categories },
+    { center, radiusM, categories, uniquePlaceCount: uniquePlaces.length, uniquePlaces },
     { headers: { "Cache-Control": "no-store" } },
   );
 }
