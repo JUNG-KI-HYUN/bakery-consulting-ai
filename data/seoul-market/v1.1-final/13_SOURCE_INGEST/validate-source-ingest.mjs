@@ -48,6 +48,19 @@ const expectedSourceIds = [
   "SRC-SEOUL-CROSSWALK",
 ];
 
+const spatialSourceMetadata = {
+  "SRC-SEOUL-PEDESTRIAN-NETWORK": {
+    dataset_name: "서울시 자치구별 도보 네트워크 공간정보",
+    service_name: "TbTraficWlkNet",
+    source_reference: "https://data.seoul.go.kr/dataList/OA-21208/S/1/datasetView.do",
+  },
+  "SRC-SEOUL-CROSSWALK": {
+    dataset_name: "서울시 대로변 횡단보도 위치정보",
+    service_name: "tbTraficCrsng",
+    source_reference: "https://data.seoul.go.kr/dataList/OA-21209/S/1/datasetView.do",
+  },
+};
+
 const sourceIntegrityPaths = {
   hierarchy: join(dataRoot, "MARKET_HIERARCHY.json"),
   officialMarkets: join(geoDirectory, "OFFICIAL_SEOUL_MARKETS.geojson"),
@@ -341,6 +354,37 @@ function validateContractShape(contract) {
     !Array.isArray(compatibility.requirements)
   ) {
     errors.push("INVALID_COMPATIBILITY_REQUIREMENT");
+  }
+  return errors;
+}
+
+function validateSpatialSourceMetadata(contract) {
+  const sourceMetadata = spatialSourceMetadata[contract.source_id];
+  if (!sourceMetadata) return [];
+
+  const expected = {
+    ...sourceMetadata,
+    institution: "서울특별시",
+    source_system: "교통운영 및 정보서비스시스템",
+    source_date: "2020 기준",
+    coordinate_system: "WGS84",
+    license_status: "CONFIRMED",
+    license_name: "공공누리 제1유형",
+    attribution_required: true,
+    commercial_use_allowed: true,
+    modification_allowed: true,
+    third_party_copyright: "없음",
+    status: "READY",
+  };
+  const errors = Object.entries(expected)
+    .filter(([field, value]) => contract[field] !== value)
+    .map(([field]) => `INVALID_SPATIAL_SOURCE_METADATA:${field}`);
+
+  if (contract.compatibility_requirement?.status !== "PASS") {
+    errors.push("SPATIAL_SOURCE_METADATA_GATE_NOT_PASSED");
+  }
+  if (contract.compatibility_requirement?.join_allowed !== false) {
+    errors.push("FRAMEONE_GEOMETRY_JOIN_MUST_REMAIN_BLOCKED");
   }
   return errors;
 }
@@ -862,7 +906,10 @@ function buildSummary() {
     "Source Contract 목록이 등록 대상과 다릅니다.",
   );
   for (const contract of contracts) {
-    const errors = validateContractShape(contract);
+    const errors = [
+      ...validateContractShape(contract),
+      ...validateSpatialSourceMetadata(contract),
+    ];
     assert(errors.length === 0, `${contract.source_id} 계약 오류: ${errors.join(", ")}`);
   }
 
@@ -1077,6 +1124,12 @@ function writeOrVerifySummary(summary) {
 function argumentValue(flag) {
   const index = process.argv.indexOf(flag);
   return index >= 0 ? process.argv[index + 1] ?? null : null;
+}
+
+const metadataGateDocument = readJson(contractPath);
+for (const contract of metadataGateDocument.contracts ?? []) {
+  const errors = validateSpatialSourceMetadata(contract);
+  assert(errors.length === 0, `${contract.source_id} metadata gate 오류: ${errors.join(", ")}`);
 }
 
 const manifestArgument = argumentValue("--validate-manifest");

@@ -501,8 +501,10 @@
     {
       "source_id": "SRC-SEOUL-PEDESTRIAN-NETWORK",
       "institution": "서울특별시",
-      "dataset_name": "서울 보행자 네트워크 API (TbTraficWlkNet)",
-      "source_reference": "https://data.seoul.go.kr/",
+      "dataset_name": "서울시 자치구별 도보 네트워크 공간정보",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-21208/S/1/datasetView.do",
+      "source_system": "교통운영 및 정보서비스시스템",
+      "service_name": "TbTraficWlkNet",
       "source_version": null,
       "source_date": "2020 기준",
       "retrieved_at": null,
@@ -512,7 +514,7 @@
       "key_field": "node_id",
       "code_system": null,
       "spatial_unit": "pedestrian_network_node_link",
-      "coordinate_system": null,
+      "coordinate_system": "WGS84",
       "required_columns": [
         "node_id",
         "link_id",
@@ -580,26 +582,34 @@
       },
       "supported_versions": [],
       "compatibility_requirement": {
-        "gate_id": "SEOUL_SPATIAL_EVIDENCE_TO_FRAMEONE_GEOMETRY",
-        "status": "BLOCKED",
+        "gate_id": "SEOUL_SPATIAL_SOURCE_METADATA_FOR_INGESTION",
+        "status": "PASS",
         "join_allowed": false,
         "requirements": [
-          "WKT coordinate system의 공식 근거 확인",
-          "2020 기준 source와 현재 현장 상태 차이 검토",
+          "공식 데이터셋 URL, WGS84, 제공기관, 원천시스템 확인",
+          "공공누리 제1유형 이용조건 확인 및 향후 사용 시 출처표시",
+          "2020 기준은 수집 차단이 아닌 freshness caution으로 유지",
           "FRAMEONE Market/Submarket과의 관계를 candidate evidence로만 검토",
           "사람 검수 없이 geometry를 생성하거나 승격하지 않음"
         ],
         "step4a_evidence": "../SEOUL_SPATIAL_DATA_INGESTION_V1.md"
       },
-      "license_status": "NEEDS_REVIEW",
-      "usage_note": "2020 기준 공식 보행망 원문과 normalized WKT 문자열을 보존한다. 좌표계 확인과 사람 검수 전 geometry 생성 및 FRAMEONE 경계 승격에 사용하지 않는다.",
-      "status": "NEEDS_REVIEW"
+      "license_status": "CONFIRMED",
+      "license_name": "공공누리 제1유형",
+      "attribution_required": true,
+      "commercial_use_allowed": true,
+      "modification_allowed": true,
+      "third_party_copyright": "없음",
+      "usage_note": "2020 기준 공식 보행망 원문과 normalized WKT 문자열을 보존한다. 공공누리 제1유형에 따라 출처를 표시한다. 현재 현장상태 확인과 사람 검수 전 geometry 생성, Join 및 FRAMEONE 경계 승격에 사용하지 않는다.",
+      "status": "READY"
     },
     {
       "source_id": "SRC-SEOUL-CROSSWALK",
       "institution": "서울특별시",
-      "dataset_name": "서울 횡단보도 API (tbTraficCrsng)",
-      "source_reference": "https://data.seoul.go.kr/",
+      "dataset_name": "서울시 대로변 횡단보도 위치정보",
+      "source_reference": "https://data.seoul.go.kr/dataList/OA-21209/S/1/datasetView.do",
+      "source_system": "교통운영 및 정보서비스시스템",
+      "service_name": "tbTraficCrsng",
       "source_version": null,
       "source_date": "2020 기준",
       "retrieved_at": null,
@@ -609,7 +619,7 @@
       "key_field": "node_id",
       "code_system": null,
       "spatial_unit": "crosswalk_node_link",
-      "coordinate_system": null,
+      "coordinate_system": "WGS84",
       "required_columns": [
         "node_id",
         "link_id",
@@ -659,20 +669,26 @@
       },
       "supported_versions": [],
       "compatibility_requirement": {
-        "gate_id": "SEOUL_SPATIAL_EVIDENCE_TO_FRAMEONE_GEOMETRY",
-        "status": "BLOCKED",
+        "gate_id": "SEOUL_SPATIAL_SOURCE_METADATA_FOR_INGESTION",
+        "status": "PASS",
         "join_allowed": false,
         "requirements": [
-          "WKT coordinate system의 공식 근거 확인",
-          "2020 기준 source와 현재 현장 상태 차이 검토",
+          "공식 데이터셋 URL, WGS84, 제공기관, 원천시스템 확인",
+          "공공누리 제1유형 이용조건 확인 및 향후 사용 시 출처표시",
+          "2020 기준은 수집 차단이 아닌 freshness caution으로 유지",
           "횡단보도를 물리적 단절 검토 evidence로만 사용",
           "사람 검수 없이 geometry를 생성하거나 승격하지 않음"
         ],
         "step4a_evidence": "../SEOUL_SPATIAL_DATA_INGESTION_V1.md"
       },
-      "license_status": "NEEDS_REVIEW",
-      "usage_note": "2020 기준 공식 횡단보도 원문과 normalized WKT 문자열을 보존한다. WKT 누락 row도 유지하며 FRAMEONE geometry를 자동 생성하지 않는다.",
-      "status": "NEEDS_REVIEW"
+      "license_status": "CONFIRMED",
+      "license_name": "공공누리 제1유형",
+      "attribution_required": true,
+      "commercial_use_allowed": true,
+      "modification_allowed": true,
+      "third_party_copyright": "없음",
+      "usage_note": "2020 기준 공식 횡단보도 원문과 normalized WKT 문자열을 보존한다. 공공누리 제1유형에 따라 출처를 표시한다. WKT 누락 row도 유지하며 현재 현장상태 확인과 사람 검수 전 FRAMEONE geometry를 자동 생성하거나 Join하지 않는다.",
+      "status": "READY"
     }
   ]
 }

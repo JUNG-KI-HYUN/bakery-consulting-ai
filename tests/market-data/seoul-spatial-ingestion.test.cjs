@@ -6,6 +6,11 @@ const path = require("node:path");
 const { after, test } = require("node:test");
 const ts = require("typescript");
 
+const sourceContractsPath = path.join(
+  __dirname,
+  "../../data/seoul-market/v1.1-final/13_SOURCE_INGEST/source-contracts/SOURCE_CONTRACTS.json",
+);
+
 const originalLoader = require.extensions[".ts"];
 require.extensions[".ts"] = (module, filename) => {
   const output = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
@@ -89,6 +94,62 @@ const deterministicDependencies = (fetchRawPage, extra = {}) => ({
   random: () => 0,
   now: () => new Date("2026-09-10T00:00:00.000Z"),
   ...extra,
+});
+
+test("pedestrian/crosswalk 공식 source metadata gate를 통과하되 geometry Join은 차단한다", () => {
+  const contracts = JSON.parse(fs.readFileSync(sourceContractsPath, "utf8")).contracts;
+  const expectedBySourceId = {
+    "SRC-SEOUL-PEDESTRIAN-NETWORK": {
+      dataset_name: "서울시 자치구별 도보 네트워크 공간정보",
+      service_name: "TbTraficWlkNet",
+      source_reference: "https://data.seoul.go.kr/dataList/OA-21208/S/1/datasetView.do",
+    },
+    "SRC-SEOUL-CROSSWALK": {
+      dataset_name: "서울시 대로변 횡단보도 위치정보",
+      service_name: "tbTraficCrsng",
+      source_reference: "https://data.seoul.go.kr/dataList/OA-21209/S/1/datasetView.do",
+    },
+  };
+
+  for (const [sourceId, sourceSpecific] of Object.entries(expectedBySourceId)) {
+    const contract = contracts.find((candidate) => candidate.source_id === sourceId);
+    assert.ok(contract, `${sourceId} contract missing`);
+    assert.deepEqual(
+      {
+        dataset_name: contract.dataset_name,
+        service_name: contract.service_name,
+        source_reference: contract.source_reference,
+        institution: contract.institution,
+        source_system: contract.source_system,
+        source_date: contract.source_date,
+        coordinate_system: contract.coordinate_system,
+        license_status: contract.license_status,
+        license_name: contract.license_name,
+        attribution_required: contract.attribution_required,
+        commercial_use_allowed: contract.commercial_use_allowed,
+        modification_allowed: contract.modification_allowed,
+        third_party_copyright: contract.third_party_copyright,
+      },
+      {
+        ...sourceSpecific,
+        institution: "서울특별시",
+        source_system: "교통운영 및 정보서비스시스템",
+        source_date: "2020 기준",
+        coordinate_system: "WGS84",
+        license_status: "CONFIRMED",
+        license_name: "공공누리 제1유형",
+        attribution_required: true,
+        commercial_use_allowed: true,
+        modification_allowed: true,
+        third_party_copyright: "없음",
+      },
+    );
+    assert.equal(contract.status, "READY");
+    assert.equal(contract.compatibility_requirement.status, "PASS");
+    assert.equal(contract.compatibility_requirement.join_allowed, false);
+    assert.match(contract.usage_note, /2020 기준/);
+    assert.match(contract.usage_note, /사람 검수/);
+  }
 });
 
 test("Seoul Spatial ingestion 순수 helper", () => {

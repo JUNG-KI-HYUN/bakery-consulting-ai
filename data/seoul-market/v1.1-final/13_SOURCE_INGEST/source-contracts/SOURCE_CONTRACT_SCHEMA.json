@@ -48,6 +48,12 @@
       "type": "string",
       "format": "uri"
     },
+    "source_system": {
+      "type": ["string", "null"]
+    },
+    "service_name": {
+      "type": ["string", "null"]
+    },
     "source_version": {
       "type": ["string", "null"]
     },
@@ -154,6 +160,21 @@
     },
     "license_status": {
       "enum": ["CONFIRMED", "NEEDS_REVIEW", "UNKNOWN"]
+    },
+    "license_name": {
+      "type": ["string", "null"]
+    },
+    "attribution_required": {
+      "type": ["boolean", "null"]
+    },
+    "commercial_use_allowed": {
+      "type": ["boolean", "null"]
+    },
+    "modification_allowed": {
+      "type": ["boolean", "null"]
+    },
+    "third_party_copyright": {
+      "type": ["string", "null"]
     },
     "usage_note": {
       "type": "string",

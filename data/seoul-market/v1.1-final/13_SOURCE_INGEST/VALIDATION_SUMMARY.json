@@ -184,7 +184,7 @@
       "key_count": null,
       "coverage": null,
       "validation_status": "NOT_RUN",
-      "compatibility_status": "BLOCKED",
+      "compatibility_status": "PASS",
       "join_allowed": false
     },
     {
@@ -196,7 +196,7 @@
       "key_count": null,
       "coverage": null,
       "validation_status": "NOT_RUN",
-      "compatibility_status": "BLOCKED",
+      "compatibility_status": "PASS",
       "join_allowed": false
     }
   ],
