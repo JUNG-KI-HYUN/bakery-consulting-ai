@@ -74,17 +74,19 @@ export default function MarketAnalysisSummary({
   onEditConditions,
   viewMode = "customer",
   onViewModeChange = () => {},
+  contextStale = false,
 }: {
   context: MarketAnalysisContext | null;
   onEditConditions: () => void;
   viewMode?: MarketAnalysisViewMode;
   onViewModeChange?: (mode: MarketAnalysisViewMode) => void;
+  contextStale?: boolean;
 }) {
   const summary = buildMarketSummaryPresentation(context, viewMode);
   if (summary.status === "empty") return (
-    <section aria-label="후보점포 종합 진단" className="m-4 min-w-0 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
+    <section aria-label="선택지점 상세 진단" className="m-4 min-w-0 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-base font-bold text-slate-900">후보점포 종합 진단</h2>
+        <h2 className="text-base font-bold text-slate-900">선택지점 상세 진단</h2>
         <ViewModeToggle mode={viewMode} onChange={onViewModeChange} />
       </div>
       <p className="mt-2 text-sm leading-6 text-slate-600">{summary.message}</p>
@@ -96,12 +98,13 @@ export default function MarketAnalysisSummary({
       <header className="border-b border-blue-100 bg-blue-50 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
-            <h2 id="market-analysis-summary-title" className="text-xl font-bold tracking-tight text-slate-950">후보점포 종합 진단</h2>
-            <p className="mt-2 break-words text-base font-semibold text-slate-900">{summary.target.address}</p>
+            <h2 id="market-analysis-summary-title" className="text-xl font-bold tracking-tight text-slate-950">선택지점 상세 진단</h2>
+            <p className="mt-2 break-words text-base font-semibold text-slate-900">분석 기준 위치 · {summary.target.address}</p>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm leading-6 text-slate-600">
               <p className="min-w-0 break-words">FRAMEONE {summary.target.frameone}</p>
-              <p className="whitespace-nowrap">실행 반경 {summary.target.radius}</p>
-              <p className="whitespace-nowrap">{summary.target.source}</p>
+              <p className="min-w-0 break-words">선택 세부상권 {summary.target.submarket}</p>
+              <p className="whitespace-nowrap">지도 선택 · 반경 {summary.target.radius}</p>
+              <p className="whitespace-nowrap">서울시 통계 참고상권 {summary.statistics.market}</p>
             </div>
           </div>
           <div className="grid shrink-0 gap-2 sm:min-w-80">
@@ -110,12 +113,13 @@ export default function MarketAnalysisSummary({
           </div>
         </div>
         <p className="mt-3 text-xs leading-5 text-slate-600">현재 확보된 자료의 요약입니다. 점포 계약에 대한 최종 판단은 포함하지 않습니다.</p>
+        {contextStale ? <p role="status" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-900">현재 선택한 FRAMEONE 상권 Context가 실행 시점과 다릅니다. 아래 결과는 이전 Market/Submarket Context에서 실행된 위치 상세분석이며 재분석 전까지 새 Context의 결과로 사용하지 않습니다.</p> : null}
       </header>
 
       <div className="space-y-4 p-4 sm:p-5">
         <SummarySection title="분석 위치 요약">
-          <dl className="mt-3 grid min-w-0 gap-4 md:grid-cols-3">
-            {[["확인주소 / 위치", summary.target.address], ["실행 분석반경", summary.target.radius], ["FRAMEONE 주요상권", summary.target.frameone]].map(([label, value]) => (
+          <dl className="mt-3 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[["FRAMEONE 주요상권", summary.target.frameone], ["선택 세부상권", summary.target.submarket], ["분석 기준 위치", summary.target.address], ["분석 반경", summary.target.radius]].map(([label, value]) => (
               <div key={label} className="min-w-0"><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 break-words text-sm font-semibold text-slate-900">{value}</dd></div>
             ))}
           </dl>
@@ -140,8 +144,8 @@ export default function MarketAnalysisSummary({
           <p className="mt-1 text-xs leading-5 text-slate-500">실행 지점·{summary.target.radius} 반경 기준 · {summary.spatial.status}</p>
           {summary.spatial.ready ? (
             <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2">
-              <div className="min-w-0 rounded-lg bg-blue-50 p-4"><h4 className="text-sm font-bold text-slate-900">후보점포 포함 공식상권</h4><TextList items={summary.spatial.inside} empty="확인된 포함 공식상권 없음" /><p className="mt-2 text-xs leading-5 text-slate-600">분석지점이 실제 경계 안에 포함된 공식상권입니다.</p></div>
-              <div className="min-w-0 rounded-lg bg-slate-50 p-4"><h4 className="text-sm font-bold text-slate-900">분석반경 교차 공식상권</h4><TextList items={summary.spatial.overlaps} empty="확인된 반경 교차 공식상권 없음" /><p className="mt-2 text-xs leading-5 text-slate-600">후보점포는 상권 밖에 있지만, 분석반경과 위 공식상권이 겹칩니다.</p></div>
+              <div className="min-w-0 rounded-lg bg-blue-50 p-4"><h4 className="text-sm font-bold text-slate-900">분석지점 포함 공식상권</h4><TextList items={summary.spatial.inside} empty="분석지점이 직접 포함된 공식상권은 없습니다." /><p className="mt-2 text-xs leading-5 text-slate-600">분석지점이 실제 경계 안에 포함된 공식상권입니다.</p></div>
+              <div className="min-w-0 rounded-lg bg-slate-50 p-4"><h4 className="text-sm font-bold text-slate-900">분석반경 교차 공식상권</h4><TextList items={summary.spatial.overlaps} empty="확인된 반경 교차 공식상권 없음" /><p className="mt-2 text-xs leading-5 text-slate-600">분석지점은 상권 밖이지만, 분석반경과 위 공식상권이 겹칩니다.</p></div>
             </div>
           ) : <p className="mt-3 text-sm text-slate-600">{summary.spatial.status}</p>}
           {summary.spatial.unknown.length > 0 ? <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-sm font-semibold text-amber-900">공간관계를 확인할 수 없습니다.</p><TextList items={summary.spatial.unknown} empty="" /></div> : null}
@@ -157,7 +161,7 @@ export default function MarketAnalysisSummary({
           <p className="mt-1 text-sm text-slate-600">{summary.statistics.period}</p>
           <p role="status" className="mt-2 text-sm font-semibold text-slate-700">{summary.statistics.status}</p>
           {summary.statistics.warning ? <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">{summary.statistics.warning}</p> : null}
-          <p className="mt-3 text-xs leading-5 text-slate-600">서울시 공식상권 단위의 추정통계입니다. 후보점포 자체의 예상매출이나 {summary.target.radius} 분석반경 통계가 아닙니다.</p>
+          <p className="mt-3 text-xs leading-5 text-slate-600">서울시 공식상권 단위의 추정통계입니다. 분석지점 자체의 예상매출이나 {summary.target.radius} 분석반경 통계가 아닙니다.</p>
           {summary.statistics.metrics.length > 0 ? <dl className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {summary.statistics.metrics.map((metric) => <div key={metric.metric} className="min-w-0 rounded-lg bg-slate-50 p-3"><dt className="text-xs text-slate-600">{metric.label}</dt><dd className="mt-2 break-words text-lg font-bold tabular-nums text-slate-950">{metric.value}</dd></div>)}
           </dl> : null}
@@ -180,6 +184,7 @@ export default function MarketAnalysisSummary({
                   <dl className="mt-3 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                     <RawField label="Context schema" value={summary.staffDetails.schemaVersion} />
                     <RawField label="FRAMEONE Market ID" value={summary.staffDetails.target.frameoneMarketId} />
+                    <RawField label="FRAMEONE Submarket ID" value={summary.staffDetails.target.frameoneSubmarketId} />
                     <RawField label="실행 source" value={summary.staffDetails.target.source} />
                     <RawField label="실행 latitude" value={summary.staffDetails.target.latitude} />
                     <RawField label="실행 longitude" value={summary.staffDetails.target.longitude} />

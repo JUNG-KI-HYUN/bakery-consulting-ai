@@ -81,6 +81,8 @@ export type MarketAnalysisContext = DeepReadonly<{
   frameone: {
     selectedMarketId: string | null;
     selectedMarketName: string | null;
+    selectedSubmarketId: string | null;
+    selectedSubmarketName: string | null;
   };
   kakaoNearby: {
     status: MarketAnalysisRequestStatus;
@@ -111,6 +113,7 @@ export type MarketAnalysisContext = DeepReadonly<{
 export interface MarketAnalysisContextInput {
   executedAnalysis: ExecutedMarketAnalysis | null;
   selectedFrameoneMarket: { marketId: string; marketName: string } | null;
+  selectedFrameoneSubmarket?: { submarketId: string; submarketName: string } | null;
   kakaoNearby: KakaoNearbySearchState;
   officialMarkets: {
     status: MarketAnalysisRequestStatus;
@@ -178,6 +181,8 @@ export function buildMarketAnalysisContext(input: MarketAnalysisContextInput): M
     frameone: {
       selectedMarketId: input.selectedFrameoneMarket?.marketId ?? null,
       selectedMarketName: input.selectedFrameoneMarket?.marketName ?? null,
+      selectedSubmarketId: input.selectedFrameoneSubmarket?.submarketId ?? null,
+      selectedSubmarketName: input.selectedFrameoneSubmarket?.submarketName ?? null,
     },
     kakaoNearby: {
       status: execution ? input.kakaoNearby.status : "idle",

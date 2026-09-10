@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
 import MarketAnalysisSummary from "./MarketAnalysisSummary";
 import type { MarketAnalysisContext } from "@/lib/market-data/market-analysis-context";
@@ -14,6 +14,18 @@ export type MarketsWorkspaceTab =
   | "market-map"
   | "competition"
   | "public-data";
+
+export type MarketAnalysisMode = "market-area" | "point-detail";
+
+interface MarketAreaAnalysisSnapshot {
+  analysisType: "MARKET_AREA";
+  marketId: string;
+  marketName: string;
+  district: string;
+  submarketCount: number;
+  nodeCount: number;
+  geometryStatus: string;
+}
 
 const WORKSPACE_TABS: ReadonlyArray<{
   id: MarketsWorkspaceTab;
@@ -144,6 +156,16 @@ function requestStatusLabel(status: MarketAnalysisContext["kakaoNearby"]["status
   return "조회 전";
 }
 
+function sameAnalysisContext(
+  current: MarketAnalysisContext | null,
+  next: MarketAnalysisContext,
+) {
+  if (!current) return false;
+  // Context snapshots contain only serializable facts. Compare their values so a
+  // new object identity alone cannot feed child effects back into parent state.
+  return JSON.stringify(current) === JSON.stringify(next);
+}
+
 function CurrentAnalysisEvidence({ context }: { context: MarketAnalysisContext }) {
   const target = context.target;
   if (!target) return null;
@@ -163,15 +185,20 @@ function CurrentAnalysisEvidence({ context }: { context: MarketAnalysisContext }
     <section aria-label="현재 분석 근거" className="panel-card p-5 md:p-6">
       <div>
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">현재 상담 분석 근거</p>
-        <h3 className="mt-2 text-xl font-bold text-slate-950">{target.confirmedAddress ?? "지도 선택 위치"}</h3>
-        <p className="mt-1 text-sm text-slate-600">실행 반경 {target.executedRadiusMeters}m · {target.source === "address" ? "주소 분석" : "지도 분석"}</p>
+        <h3 className="mt-2 text-xl font-bold text-slate-950">분석 기준 위치 · {target.confirmedAddress ?? "지도에서 선택한 위치"}</h3>
+        <p className="mt-1 text-sm text-slate-600">지도 선택 · 반경 {target.executedRadiusMeters}m</p>
       </div>
 
-      <dl className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <dl className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-xl bg-slate-50 p-3">
           <dt className="text-xs font-semibold text-slate-500">현재 관련 공식상권</dt>
           <dd className="mt-1 text-sm font-bold text-slate-900">내부 {inside.length}개 · 반경 교차 {overlaps.length}개</dd>
           <dd className="mt-1 text-xs leading-5 text-slate-600">{[...inside, ...overlaps].map((market) => market.marketName).join(" · ") || "확인된 관계 없음"}</dd>
+        </div>
+        <div className="rounded-xl bg-slate-50 p-3">
+          <dt className="text-xs font-semibold text-slate-500">실행 FRAMEONE Context</dt>
+          <dd className="mt-1 text-sm font-bold text-slate-900">{context.frameone.selectedMarketName ?? "주요상권 미선택"}</dd>
+          <dd className="mt-1 text-xs text-slate-600">선택 세부상권 {context.frameone.selectedSubmarketName ?? "전체"}</dd>
         </div>
         <div className="rounded-xl bg-slate-50 p-3">
           <dt className="text-xs font-semibold text-slate-500">통계 기준 공식상권</dt>
@@ -203,6 +230,48 @@ function CurrentAnalysisEvidence({ context }: { context: MarketAnalysisContext }
   );
 }
 
+function MarketAreaAnalysisSummary({
+  snapshot,
+  onEditConditions,
+}: {
+  snapshot: MarketAreaAnalysisSnapshot | null;
+  onEditConditions: () => void;
+}) {
+  if (!snapshot) return (
+    <section aria-label="권역 진단" className="panel-card border-dashed p-5">
+      <h2 className="text-base font-bold text-slate-900">권역 진단</h2>
+      <p className="mt-2 text-sm leading-6 text-slate-600">먼저 분석 설정에서 FRAMEONE 주요상권을 선택하고 권역 분석을 실행해 주세요.</p>
+    </section>
+  );
+
+  return (
+    <section aria-label="FRAMEONE 권역 진단" className="panel-card overflow-hidden">
+      <header className="border-b border-blue-100 bg-blue-50 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">MARKET_AREA</p>
+            <h2 className="mt-2 text-xl font-bold text-slate-950">{snapshot.marketName} 권역 진단</h2>
+            <p className="mt-1 text-sm text-slate-600">FRAMEONE 주요상권 · {snapshot.marketName}</p>
+          </div>
+          <button type="button" onClick={onEditConditions} className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700">분석조건 변경</button>
+        </div>
+      </header>
+      <div className="p-5">
+        <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[["FRAMEONE 주요상권", snapshot.marketName], ["자치구", snapshot.district], ["포함 Submarket", `${snapshot.submarketCount}개`], ["포함 Node", `${snapshot.nodeCount}개`]].map(([label, value]) => (
+            <div key={label} className="rounded-xl bg-slate-50 p-3"><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 text-sm font-bold text-slate-900">{value}</dd></div>
+          ))}
+        </dl>
+        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="text-sm font-bold text-amber-900">상세 소비·생활인구 분석은 데이터 연결 후 제공</p>
+          <p className="mt-1 text-xs leading-5 text-amber-800">서울시 공식상권 통계, Kakao 검색결과 또는 겹치는 공간단위를 FRAMEONE 권역 전체 값으로 합산하지 않습니다.</p>
+        </div>
+        {snapshot.geometryStatus === "text_only" ? <p className="mt-3 text-xs text-slate-500">FRAMEONE 권역 geometry 미확인 · 지도 Polygon을 생성하거나 서울시 공식상권 경계로 대체하지 않습니다.</p> : null}
+      </div>
+    </section>
+  );
+}
+
 export default function MarketsExplorer({
   hierarchy,
 }: {
@@ -225,6 +294,14 @@ export default function MarketsExplorer({
   const [analysisContext, setAnalysisContext] = useState<MarketAnalysisContext | null>(null);
   const [analysisConditionsRequest, setAnalysisConditionsRequest] = useState(0);
   const [viewMode, setViewMode] = useState<MarketAnalysisViewMode>("customer");
+  const [analysisMode, setAnalysisMode] = useState<MarketAnalysisMode>("point-detail");
+  const [marketAreaAnalysis, setMarketAreaAnalysis] = useState<MarketAreaAnalysisSnapshot | null>(null);
+  const handleAnalysisContextChange = useCallback((nextContext: MarketAnalysisContext) => {
+    setAnalysisContext((current) => {
+      if (current?.target && !nextContext.target) return current;
+      return sameAnalysisContext(current, nextContext) ? current : nextContext;
+    });
+  }, []);
 
   const allMarkets = useMemo(
     () => hierarchy.districts.flatMap((district) => district.markets),
@@ -314,6 +391,31 @@ export default function MarketsExplorer({
     setSelectedSubmarketId(null);
   }
 
+  const marketSelector = (
+    <label className="block min-w-0 text-xs font-bold text-slate-700">
+      FRAMEONE 주요상권
+      <select
+        value={selectedMarketId}
+        onChange={(event) => {
+          const market = allMarkets.find((item) => item.marketId === event.target.value);
+          if (market) selectMarket(market);
+        }}
+        className="input mt-2 min-h-11 min-w-0"
+      >
+        {!selectedMarket ? <option value="">주요상권을 선택하세요</option> : null}
+        {hierarchy.districts.map((district) => (
+          <optgroup key={district.districtId} label={district.name}>
+            {district.markets.map((market) => <option key={market.marketId} value={market.marketId}>{market.name}</option>)}
+          </optgroup>
+        ))}
+      </select>
+    </label>
+  );
+  const pointContextStale = Boolean(analysisContext?.target && (
+    analysisContext.frameone.selectedMarketId !== (selectedMarket?.marketId ?? null) ||
+    analysisContext.frameone.selectedSubmarketId !== (selectedSubmarket?.submarketId ?? null)
+  ));
+
   return (
     <div className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1600px] -translate-x-1/2 overflow-x-clip">
       <nav
@@ -371,24 +473,83 @@ export default function MarketsExplorer({
               분석 설정
             </p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0B1220] md:text-3xl">
-              후보점포 분석 설정
+              분석 대상
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              주요상권과 후보점포 주소, 반경을 정한 뒤 분석을 실행하세요.
-              주소가 없으면 지도를 열어 분석할 위치를 직접 선택할 수 있습니다.
+              FRAMEONE 권역 전체를 확인할지, 한 지점의 300m·500m 주변을 상세분석할지 선택하세요.
             </p>
+            <div className="mt-5 inline-flex rounded-xl border border-slate-300 bg-slate-50 p-1" role="group" aria-label="분석 모드">
+              {([['market-area', '권역 분석'], ['point-detail', '위치 상세분석']] as const).map(([mode, label]) => (
+                <button key={mode} type="button" onClick={() => setAnalysisMode(mode)} aria-pressed={analysisMode === mode}
+                  className={`min-h-11 rounded-lg px-4 text-sm font-bold ${analysisMode === mode ? "bg-slate-900 text-white shadow-sm" : "text-slate-600"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <nav
+      <section aria-label="FRAMEONE 상권 Context" className="panel-card p-5 md:p-6">
+        <div className="max-w-xl">{marketSelector}</div>
+        {selectedMarket ? (
+          <>
+            <div className="mt-4">
+              <p className="text-xs font-bold text-slate-700">FRAMEONE 하위상권</p>
+              <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="FRAMEONE 하위상권 선택">
+                <button type="button" onClick={() => setSelectedSubmarketId(null)} aria-pressed={selectedSubmarketId === null}
+                  className={`min-h-11 rounded-full border px-4 text-xs font-bold ${selectedSubmarketId === null ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-700"}`}>전체</button>
+                {selectedMarket.submarkets.map((submarket) => (
+                  <button key={submarket.submarketId} type="button" onClick={() => setSelectedSubmarketId(submarket.submarketId)} aria-pressed={selectedSubmarketId === submarket.submarketId}
+                    className={`min-h-11 rounded-full border px-4 text-xs font-bold ${selectedSubmarketId === submarket.submarketId ? "border-blue-600 bg-blue-600 text-white" : "border-slate-300 bg-white text-slate-700"}`}>
+                    {submarket.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <article aria-label="선택 상권 기본 브리핑" className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">FRAMEONE 분석 분류</p>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">{selectedMarket.name}{selectedSubmarket ? ` > ${selectedSubmarket.name}` : ""} 기본 정보</h3>
+              <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+                {(selectedSubmarket ? [
+                  ["FRAMEONE 주요상권", selectedMarket.name], ["선택 하위상권", selectedSubmarket.name], ["세부 검토단위", `Node ${selectedSubmarket.nodes.length}개`],
+                ] : [
+                  ["자치구", selectedMarket.gu], ["하위상권", `${selectedMarket.submarkets.length}개`], ["세부 검토단위", `Node ${selectedMarket.submarkets.flatMap((submarket) => submarket.nodes).length}개`],
+                ]).map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-white p-3"><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 text-sm font-bold text-slate-900">{value}</dd></div>
+                ))}
+              </dl>
+              <p className="mt-4 text-xs leading-5 text-slate-600">
+                <span className="font-bold text-slate-800">실제 하위상권</span> · {selectedMarket.submarkets.map((submarket) => submarket.name).join(" · ") || "등록된 하위상권 없음"}
+              </p>
+              <div className="mt-4">
+                <p className="text-xs font-bold text-slate-700">현재 사용 가능한 분석</p>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
+                  <span className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-800">위치 상세분석</span>
+                  <span className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-800">Kakao 경쟁환경 · 위치 분석 후</span>
+                  <span className="rounded-full bg-blue-100 px-3 py-1.5 text-blue-800">서울 공식상권 통계·Trend · 참고상권 선택 후</span>
+                </div>
+                <p className="mt-3 text-xs font-bold text-slate-700">아직 연결되지 않은 데이터</p>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold">
+                  <span className="rounded-full bg-slate-200 px-3 py-1.5 text-slate-600">생활인구</span>
+                  <span className="rounded-full bg-slate-200 px-3 py-1.5 text-slate-600">상세 소비분석</span>
+                </div>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-slate-500">검증된 FRAMEONE geometry가 없어 지도 경계를 생성하지 않습니다. 아래 파란 경계는 FRAMEONE 하위상권이 아닌 서울시 공식통계 경계입니다.</p>
+              {pointContextStale ? <p role="status" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs font-semibold leading-5 text-amber-900">상권 Context가 변경되었습니다. 기존 위치 상세분석은 실행 당시 Context로 보존되며, 현재 선택을 반영하려면 같은 위치를 다시 분석해 주세요.</p> : null}
+            </article>
+          </>
+        ) : null}
+      </section>
+
+      {analysisMode === "point-detail" ? <nav
         aria-label="상권분석 사용 순서"
         className="panel-card px-4 py-3 md:px-5"
       >
         <ol className="grid gap-2 text-xs font-bold text-slate-700 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center">
           {[
-            ["1", "분석 대상 선택"],
-            ["2", "주소 또는 지도 위치 분석"],
+            ["1", "FRAMEONE 주요상권 선택"],
+            ["2", "지도 분석지점 선택"],
             ["3", "종합 진단 확인"],
           ].map(([step, label], index) => (
             <li key={step} className="contents">
@@ -409,7 +570,44 @@ export default function MarketsExplorer({
             </li>
           ))}
         </ol>
-      </nav>
+      </nav> : null}
+      {analysisMode === "market-area" ? (
+        <section aria-label="권역 분석 설정" className="panel-card p-5 md:p-6">
+          {marketAreaAnalysis ? (
+            <div aria-label="현재 권역 분석" className="mb-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-xs font-bold text-blue-700">현재 분석</p>
+              <p className="mt-1 text-base font-bold text-slate-950">{marketAreaAnalysis.marketName} 권역 분석</p>
+              <p className="mt-1 text-xs text-slate-600">FRAMEONE 주요상권 · {marketAreaAnalysis.marketName}</p>
+            </div>
+          ) : null}
+          <h3 className="text-base font-bold text-slate-950">FRAMEONE 권역 분석</h3>
+          <p className="mt-1 text-sm leading-6 text-slate-600">선택한 FRAMEONE 주요상권의 전체 특징을 확인합니다.</p>
+          {selectedMarket ? (
+            <>
+              <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+                {[["자치구", selectedMarket.gu], ["포함 Submarket", `${selectedMarket.submarkets.length}개`], ["포함 Node", `${selectedMarket.submarkets.flatMap((submarket) => submarket.nodes).length}개`]].map(([label, value]) => (
+                  <div key={label} className="rounded-lg bg-slate-50 p-3"><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 text-sm font-bold text-slate-900">{value}</dd></div>
+                ))}
+              </dl>
+              <p className="mt-3 text-xs leading-5 text-slate-500">FRAMEONE 권역 geometry가 확인되지 않아 지도 Polygon을 표시하지 않습니다.</p>
+              <button type="button" onClick={() => {
+                setMarketAreaAnalysis({
+                  analysisType: "MARKET_AREA",
+                  marketId: selectedMarket.marketId,
+                  marketName: selectedMarket.name,
+                  district: selectedMarket.gu,
+                  submarketCount: selectedMarket.submarkets.length,
+                  nodeCount: selectedMarket.submarkets.flatMap((submarket) => submarket.nodes).length,
+                  geometryStatus: selectedMarket.geometryStatus,
+                });
+                setActiveTab("market-map");
+              }} className="mt-4 min-h-11 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white">
+                종합진단 보기
+              </button>
+            </>
+          ) : null}
+        </section>
+      ) : null}
         </>
       ) : (
         <section className="panel-card px-5 py-4">
@@ -421,26 +619,30 @@ export default function MarketsExplorer({
       )}
 
       {activeTab === "market-map" ? (
-        <MarketAnalysisSummary
-          context={analysisContext}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          onEditConditions={() => {
-            setActiveTab("briefing");
-            setAnalysisConditionsRequest((request) => request + 1);
-          }}
-        />
+        analysisMode === "market-area" ? <MarketAreaAnalysisSummary snapshot={marketAreaAnalysis} onEditConditions={() => setActiveTab("briefing")} /> :
+          <MarketAnalysisSummary
+            context={analysisContext}
+            contextStale={pointContextStale}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            onEditConditions={() => {
+              setActiveTab("briefing");
+              setAnalysisConditionsRequest((request) => request + 1);
+            }}
+          />
       ) : null}
 
-      {activeTab === "public-data" && !analysisContext?.target ? (
+      {activeTab === "public-data" && (analysisMode === "market-area" || !analysisContext?.target) ? (
         <section className="panel-card border-dashed p-5 text-sm leading-6 text-slate-600">
-          분석 실행 후 데이터 근거를 확인할 수 있습니다. 먼저 분석 설정에서 후보점포 분석을 실행해 주세요.
+          {analysisMode === "market-area" ? "권역 단위 공식 소비·생활인구 데이터는 연결 전입니다. 현재 권역 분석은 FRAMEONE 계층 메타정보만 사용합니다." : "분석 실행 후 데이터 근거를 확인할 수 있습니다. 먼저 분석 설정에서 지도 분석지점을 선택하고 실행해 주세요."}
         </section>
       ) : null}
 
-      {activeTab === "public-data" && analysisContext?.target ? (
+      {activeTab === "public-data" && analysisMode === "point-detail" && analysisContext?.target ? (
         <CurrentAnalysisEvidence context={analysisContext} />
       ) : null}
+
+      {activeTab === "competition" && analysisMode === "market-area" ? <section className="panel-card border-dashed p-5 text-sm text-slate-600">Kakao 경쟁환경은 위치 상세분석의 실행 지점과 반경을 기준으로 제공합니다.</section> : null}
 
       <div className={activeTab === "market-map" || (activeTab === "public-data" && !analysisContext?.target) ? "hidden" : ""}>
       <MarketSpatialViewer
@@ -448,32 +650,12 @@ export default function MarketsExplorer({
         selectedSubmarket={selectedSubmarketSpatialSummary}
         activeTab={activeTab}
         onOpenMarketMap={() => setActiveTab("briefing")}
-        onAnalysisContextChange={setAnalysisContext}
+        onAnalysisContextChange={handleAnalysisContextChange}
         analysisConditionsRequest={analysisConditionsRequest}
         onOpenAnalysisSummary={() => setActiveTab("market-map")}
         analysisSummary={null}
-        marketSelector={
-          <label className="block min-w-0 text-xs font-bold text-slate-700">
-            FRAMEONE 주요상권
-            <select
-              value={selectedMarketId}
-              onChange={(event) => {
-                const market = allMarkets.find((item) => item.marketId === event.target.value);
-                if (market) selectMarket(market);
-              }}
-              className="input mt-2 min-h-11 min-w-0"
-            >
-              {!selectedMarket ? <option value="">주요상권을 선택하세요</option> : null}
-              {hierarchy.districts.map((district) => (
-                <optgroup key={district.districtId} label={district.name}>
-                  {district.markets.map((market) => (
-                    <option key={market.marketId} value={market.marketId}>{market.name}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </label>
-        }
+        pointSelectionEnabled={analysisMode === "point-detail"}
+        marketSelector={null}
       />
       </div>
 

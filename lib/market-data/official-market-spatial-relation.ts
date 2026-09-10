@@ -133,8 +133,8 @@ export const OFFICIAL_MARKET_RELATION_LABELS: Record<OfficialMarketRelation, str
 
 export function officialMarketRelationDescription(relation: OfficialMarketRelation, radius: number) {
   switch (relation) {
-    case "INSIDE": return "현재 분석지점(후보점포 또는 지도 선택 위치)이 이 공식상권 내부에 있습니다.";
-    case "RADIUS_OVERLAP": return `현재 분석지점은 공식상권 밖이지만 ${radius}m 분석반경과 이 공식상권이 겹칩니다. 주변 공식상권 참고자료입니다.`;
+    case "INSIDE": return "현재 분석지점이 이 공식상권 내부에 있습니다.";
+    case "RADIUS_OVERLAP": return `현재 분석지점은 공식상권 밖이지만 ${radius}m 분석반경과 이 공식상권이 겹칩니다. 주변 공식상권 참고자료이며 포함 상권을 뜻하지 않습니다.`;
     case "OUTSIDE": return `현재 분석지점 및 ${radius}m 반경과 직접 겹치지 않는 공식상권입니다. 별도 참고자료로만 확인하세요.`;
     case "UNKNOWN": return "공간관계 확인 필요: 공식상권 geometry 또는 계산 조건을 확인해 주세요.";
   }

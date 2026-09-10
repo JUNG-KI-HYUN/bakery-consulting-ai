@@ -226,7 +226,7 @@ test("CASE 11-15: 근거 화면 문구와 기존 화면 경계를 유지한다",
   assert.match(rendered, /예시 공식상권/);
   assert.match(rendered, /최근 기준 2026년 1분기/);
   assert.match(rendered, /서울시 공식상권 기준 추정통계입니다/);
-  assert.match(rendered, /후보점포의 예상매출을 의미하지 않습니다/);
+  assert.match(rendered, /분석지점의 예상매출을 의미하지 않습니다/);
   assert.match(rendered, /Kakao 반경검색 결과와 기준이 다릅니다/);
   assert.doesNotMatch(rendered, /경쟁점.*12|추천|계약 금지|성공 가능성|위험 판정/);
 

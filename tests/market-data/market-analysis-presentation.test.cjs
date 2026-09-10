@@ -40,6 +40,7 @@ function fixtureInput() {
   return {
     executedAnalysis: { source: "address", confirmedAddress: "예시 확인주소", analysisPoint: { longitude: 127, latitude: 37.5 }, analysisRadiusMeters: 500 },
     selectedFrameoneMarket: { marketId: "fixture-frameone", marketName: "예시 FRAMEONE 주요상권" },
+    selectedFrameoneSubmarket: { submarketId: "fixture-submarket", submarketName: "예시 FRAMEONE 하위상권" },
     kakaoNearby: { status: "success", error: null, response: { categories: ["bakery", "confectionery", "cafe"].map((id, index) => ({
       id, totalCount: [11, 11, 63][index], places: Array.from({ length: index === 2 ? 15 : 11 }, (_, i) => ({
         id: `fixture-place-${i}`, categoryId: id, categoryLabel: "예시 카테고리", name: `예시 장소 ${i}`,
@@ -73,18 +74,18 @@ test("presentation CASE A: pre-analysis renders only neutral instruction, no zer
   for (const value of [null, context((input) => { input.executedAnalysis = null; })]) {
     assert.equal(present(value).status, "empty");
     const rendered = html(value);
-    assert.ok(rendered.includes("먼저 분석 설정에서 후보점포 분석을 실행해 주세요."));
+    assert.ok(rendered.includes("먼저 분석 설정에서 지도 분석지점을 선택하고 분석을 실행해 주세요."));
     assert.doesNotMatch(rendered, /0곳|0원|데이터 없음|월 추정매출|주변 경쟁환경|500m/);
   }
 });
 test("presentation CASE B: address + FRAMEONE + executed 500m in summary header and location", () => {
   const rendered = html(context());
-  for (const expected of ["예시 확인주소", "예시 FRAMEONE 주요상권", "500m", "주소 분석", "분석조건 변경", "내부 업무분류"]) assert.ok(rendered.includes(expected));
+  for (const expected of ["예시 확인주소", "예시 FRAMEONE 주요상권", "예시 FRAMEONE 하위상권", "500m", "지도 선택 · 반경", "분석조건 변경", "내부 업무분류"]) assert.ok(rendered.includes(expected));
 });
 test("presentation CASE C: map with null address displays safe label without raw coordinates", () => {
   const value = context((input) => { input.executedAnalysis.source = "map"; input.executedAnalysis.confirmedAddress = null; });
   assert.equal(present(value).target.address, "지도 선택 위치");
-  const rendered = html(value); assert.ok(rendered.includes("지도 분석"));
+  const rendered = html(value); assert.ok(rendered.includes("지도 선택 · 반경"));
   assert.doesNotMatch(rendered, /37\.5|127|latitude|longitude/);
 });
 test("presentation CASE D: draft radius/address do not affect executed context", () => {
@@ -123,7 +124,7 @@ test("presentation CASE I: multiple INSIDE and OVERLAP results have no truncatio
 });
 test("presentation CASE J: manual INSIDE is separately named as statistical geography", () => {
   const result = present(context());
-  assert.equal(result.spatial.manual.relation, "후보점포 포함");
+  assert.equal(result.spatial.manual.relation, "분석지점 포함");
   assert.equal(result.statistics.market, "예시 inside 상권"); assert.equal(result.statistics.warning, null);
   assert.ok(html(context()).includes("통계 기준 공식상권"));
 });
@@ -173,7 +174,7 @@ test("presentation CASE R: sales retain estimated label and adjacent official ge
   const result = present(context()), rendered = html(context());
   assert.equal(result.statistics.metrics[0].label, "공식상권 전체 월 추정매출");
   assert.ok(rendered.includes("서울시 공식상권 단위의 추정통계입니다."));
-  assert.ok(rendered.includes("후보점포 자체의 예상매출이나 500m 분석반경 통계가 아닙니다."));
+  assert.ok(rendered.includes("분석지점 자체의 예상매출이나 500m 분석반경 통계가 아닙니다."));
   assert.ok(!result.statistics.metrics.some((item) => item.label.includes("예상매출")));
 });
 test("presentation CASE S: no overall competitor count; category overlap disclaimer visible", () => {
@@ -241,7 +242,8 @@ test("STEP 5 CASE J-N: staff mode adds raw Context facts without replacing custo
   assert.equal(staff.statistics.metrics[0].label, "월 추정매출");
   assert.equal(staff.staffDetails.target.frameoneMarketId, "fixture-frameone");
   assert.deepEqual(staff.staffDetails.target, {
-    frameoneMarketId: "fixture-frameone", source: "address", latitude: 37.5, longitude: 127, executedRadiusMeters: 500,
+    frameoneMarketId: "fixture-frameone", frameoneSubmarketId: "fixture-submarket",
+    source: "address", latitude: 37.5, longitude: 127, executedRadiusMeters: 500,
   });
   assert.deepEqual(staff.staffDetails.kakao.categories.map((item) => [item.id, item.status, item.totalCount, item.returnedCount]), [
     ["bakery", "success", 11, 11], ["confectionery", "success", 11, 11], ["cafe", "success", 63, 15],

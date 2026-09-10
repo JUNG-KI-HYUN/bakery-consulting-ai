@@ -88,7 +88,7 @@ export default function OfficialMarketTrend({
       )}
 
       <p className="mt-3 text-[10px] leading-5 text-slate-500">
-        서울시 공식상권 기준 추정통계입니다. 후보점포의 예상매출을 의미하지 않습니다.
+        서울시 공식상권 기준 추정통계입니다. 분석지점의 예상매출을 의미하지 않습니다.
         <br />
         공식상권 점포 통계이며 Kakao 반경검색 결과와 기준이 다릅니다.
       </p>

@@ -47,7 +47,7 @@ function publicFixture(dataStatus = "available") {
 }
 function input() {
   return {
-    executedAnalysis: null, selectedFrameoneMarket: null,
+    executedAnalysis: null, selectedFrameoneMarket: null, selectedFrameoneSubmarket: null,
     kakaoNearby: { status: "idle", response: null, error: null },
     officialMarkets: { status: "idle", error: null, results: null, manuallySelected: null },
     publicData: { requestStatus: "idle", requestedOfficialMarketCode: null, data: null, error: null },
@@ -80,7 +80,10 @@ test("Context CASE A: pre-analysis is null/idle without invented zero or UNKNOWN
   const result = build(input());
   assert.equal(result.schemaVersion, "market-analysis-context-v1");
   assert.equal(result.target, null);
-  assert.deepEqual(result.frameone, { selectedMarketId: null, selectedMarketName: null });
+  assert.deepEqual(result.frameone, {
+    selectedMarketId: null, selectedMarketName: null,
+    selectedSubmarketId: null, selectedSubmarketName: null,
+  });
   assert.deepEqual(result.kakaoNearby, { status: "idle", error: null, bakery: null, confectionery: null, cafe: null });
   assert.deepEqual(result.officialMarkets, { status: "idle", error: null, relatedMarkets: null, unknownMarkets: null, manuallySelected: null });
   assert.deepEqual(result.publicData, { requestStatus: "idle", status: null, selectedOfficialMarketData: null, error: null });
@@ -107,13 +110,17 @@ test("Context CASE D: draft edits cannot overwrite the executed radius/point/add
   assert.deepEqual(build(state), before);
   assert.equal(build(state).target.executedRadiusMeters, 500);
 });
-test("Context CASE E: current FRAMEONE ID/name remains a separate staff selection", () => {
+test("Context CASE E: current FRAMEONE Market/Submarket IDs and names remain a separate staff selection", () => {
   const state = analyzedInput(); loadPublic(state);
   state.selectedFrameoneMarket = { marketId: "fixture-frameone", marketName: "fixture FRAMEONE" };
+  state.selectedFrameoneSubmarket = { submarketId: "fixture-submarket", submarketName: "fixture FRAMEONE submarket" };
   const result = build(state);
-  assert.deepEqual(result.frameone, { selectedMarketId: "fixture-frameone", selectedMarketName: "fixture FRAMEONE" });
+  assert.deepEqual(result.frameone, {
+    selectedMarketId: "fixture-frameone", selectedMarketName: "fixture FRAMEONE",
+    selectedSubmarketId: "fixture-submarket", selectedSubmarketName: "fixture FRAMEONE submarket",
+  });
   assert.equal(result.publicData.selectedOfficialMarketData.officialMarketCode, "fixture-inside");
-  state.selectedFrameoneMarket = null;
+  state.selectedFrameoneMarket = null; state.selectedFrameoneSubmarket = null;
   assert.deepEqual(build(state).officialMarkets, result.officialMarkets);
 });
 test("Context CASE F: all INSIDE and RADIUS_OVERLAP results survive together", () => {

@@ -580,6 +580,7 @@ export default function MarketSpatialViewer({
   analysisSummary,
   analysisConditionsRequest,
   onOpenAnalysisSummary,
+  pointSelectionEnabled = true,
 }: {
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
@@ -590,6 +591,7 @@ export default function MarketSpatialViewer({
   analysisSummary?: React.ReactNode;
   analysisConditionsRequest?: number;
   onOpenAnalysisSummary?: () => void;
+  pointSelectionEnabled?: boolean;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -605,11 +607,19 @@ export default function MarketSpatialViewer({
   );
   const [loadedLayers, setLoadedLayers] = useState<LoadedLayerMap>({});
   const [executedSpatialAnalysis, setExecutedSpatialAnalysis] = useState<ExecutedMarketAnalysis | null>(null);
+  const [executedFrameoneContext, setExecutedFrameoneContext] = useState<{
+    market: { marketId: string; marketName: string } | null;
+    submarket: { submarketId: string; submarketName: string } | null;
+  } | null>(null);
   const [kakaoNearby, setKakaoNearby] = useState<KakaoNearbySearchState>({ status: "idle", response: null, error: null });
   const handleAnalysisExecuted = useCallback((analysis: ExecutedMarketAnalysis) => {
     setExecutedSpatialAnalysis(analysis);
+    setExecutedFrameoneContext({
+      market: selectedMarket ? { marketId: selectedMarket.marketId, marketName: selectedMarket.marketName } : null,
+      submarket: selectedSubmarket ? { submarketId: selectedSubmarket.submarketId, submarketName: selectedSubmarket.submarketName } : null,
+    });
     setKakaoNearby({ status: "loading", response: null, error: null });
-  }, []);
+  }, [selectedMarket, selectedSubmarket]);
   const [loadingLayerIds, setLoadingLayerIds] = useState<Set<SpatialLayerId>>(
     new Set(),
   );
@@ -1268,10 +1278,14 @@ export default function MarketSpatialViewer({
   const officialLayerError = layerErrors["seoul-official-markets"] ?? null;
   const officialLayerLoading = loadingLayerIds.has("seoul-official-markets");
   const selectedMarketName = selectedMarket?.marketName ?? null;
+  const selectedSubmarketId = selectedSubmarket?.submarketId ?? null;
+  const selectedSubmarketName = selectedSubmarket?.submarketName ?? null;
   const analysisContext = useMemo(() => buildMarketAnalysisContext({
     executedAnalysis: executedSpatialAnalysis,
-    selectedFrameoneMarket: selectedMarketId !== null && selectedMarketName !== null
+    selectedFrameoneMarket: executedSpatialAnalysis ? executedFrameoneContext?.market ?? null : selectedMarketId !== null && selectedMarketName !== null
       ? { marketId: selectedMarketId, marketName: selectedMarketName } : null,
+    selectedFrameoneSubmarket: executedSpatialAnalysis ? executedFrameoneContext?.submarket ?? null : selectedSubmarketId !== null && selectedSubmarketName !== null
+      ? { submarketId: selectedSubmarketId, submarketName: selectedSubmarketName } : null,
     kakaoNearby,
     officialMarkets: {
       status: officialMarketLayer ? "success" : officialLayerError ? "error" : officialLayerLoading ? "loading" : "idle",
@@ -1286,7 +1300,7 @@ export default function MarketSpatialViewer({
       data: bakeryData,
       error: bakeryDataError,
     },
-  }), [executedSpatialAnalysis, selectedMarketId, selectedMarketName, kakaoNearby,
+  }), [executedSpatialAnalysis, executedFrameoneContext, selectedMarketId, selectedMarketName, selectedSubmarketId, selectedSubmarketName, kakaoNearby,
     officialMarketLayer, officialLayerError, officialLayerLoading, spatialRelations,
     selectedOfficialMarketCode, selectedOfficialMarketName, bakeryDataStatus, bakeryDataMarketCode,
     bakeryData, bakeryDataError]);
@@ -1718,18 +1732,19 @@ export default function MarketSpatialViewer({
               marketSelector={marketSelector}
               analysisSummary={analysisSummary}
               analysisConditionsRequest={analysisConditionsRequest}
-              marketName={selectedMarket?.marketName ?? "주요상권 미선택"}
+              marketName={selectedMarket ? `${selectedMarket.marketName}${selectedSubmarket ? ` > ${selectedSubmarket.submarketName}` : " > 전체"}` : "주요상권 미선택"}
               officialMarketPolygons={kakaoOfficialMarketPolygons}
               selectedOfficialMarketCode={selectedOfficialMarketCode}
               onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
               onAnalysisExecuted={handleAnalysisExecuted}
               onNearbySearchChange={setKakaoNearby}
               onOpenAnalysisSummary={onOpenAnalysisSummary}
+              pointSelectionEnabled={pointSelectionEnabled}
               view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
             />
             {activeTab === "briefing" ? (
             <p className="border-t border-slate-200 px-4 py-2.5 text-[10px] leading-4 text-slate-500">
-              지도 경계는 FRAMEONE 연결 검토 후보만 표시합니다. 아래 공간관계는 전체 서울시 공식상권으로 계산하며, FRAMEONE 확정 연결을 뜻하지 않습니다.
+              파란 Polygon은 서울시 공식통계 경계이며 FRAMEONE Market/Submarket 경계가 아닙니다. 공간관계 계산과 FRAMEONE 연결 검토 상태는 서로 별개입니다.
             </p>
             ) : null}
           </section>
@@ -1820,10 +1835,10 @@ export default function MarketSpatialViewer({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                  {activeTab === "briefing" ? "서울시 공식상권" : "선택 상권 정보"}
+                  {activeTab === "briefing" ? "공식통계 데이터 근거" : "선택 상권 정보"}
                 </p>
                 <h3 className="mt-1 text-base font-bold text-slate-950">
-                  {activeTab === "briefing" ? "분석지점과 공식상권의 공간관계" : "지도에서 선택한 항목"}
+                  {activeTab === "briefing" ? "서울시 공식통계 연결" : "지도에서 선택한 항목"}
                 </h3>
               </div>
               {activeTab !== "briefing" ? (
@@ -1850,21 +1865,36 @@ export default function MarketSpatialViewer({
                 </p>
               ) : (
                 <>
-                  <p className="text-xs font-bold text-slate-700">실행 반경 {executedSpatialAnalysis.analysisRadiusMeters}m · 내부 {spatialRelations.insideMarkets.length}개 · 반경 교차 {spatialRelations.radiusOverlapMarkets.length}개</p>
-                  <ul className="mt-2 space-y-2">
-                    {[...spatialRelations.insideMarkets, ...spatialRelations.radiusOverlapMarkets].map((result) => (
-                      <li key={result.marketCode} className="rounded-lg border border-slate-200 p-3">
-                        <button type="button" className="text-left text-sm font-bold text-slate-900 underline underline-offset-4"
-                          onClick={() => handleKakaoOfficialMarketSelect(officialSpatialInputs.findIndex((item) => item.marketCode === result.marketCode))}>
-                          {result.marketName} 참고자료 선택
-                        </button>
-                        <SpatialRelationNotice result={result} />
-                      </li>
-                    ))}
-                  </ul>
-                  {spatialRelations.insideMarkets.length + spatialRelations.radiusOverlapMarkets.length === 0 ? (
-                    <p className="mt-2 text-xs text-slate-600">계산 가능한 공식상권 중 현재 분석지점 및 반경과 직접 겹치는 상권이 없습니다.</p>
-                  ) : null}
+                  <p className="text-xs font-bold text-slate-700">서울시 공식상권 연결</p>
+                  <dl className="mt-2 grid gap-2 text-xs sm:grid-cols-2">
+                    <div className="rounded-lg bg-blue-50 p-3">
+                      <dt className="font-semibold text-slate-600">분석지점 포함</dt>
+                      <dd className="mt-1 font-bold text-slate-900">{spatialRelations.insideMarkets.map((market) => market.marketName).join(" · ") || "직접 포함된 공식상권 없음"}</dd>
+                    </div>
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <dt className="font-semibold text-slate-600">{executedSpatialAnalysis.analysisRadiusMeters}m 반경 겹침</dt>
+                      <dd className="mt-1 font-bold text-slate-900">{spatialRelations.radiusOverlapMarkets.length}개 공식상권</dd>
+                    </div>
+                  </dl>
+                  {spatialRelations.insideMarkets.length === 0 ? <p className="mt-2 text-xs text-slate-600">분석지점이 직접 포함된 공식상권은 없습니다.</p> : null}
+                  {spatialRelations.insideMarkets.length + spatialRelations.radiusOverlapMarkets.length > 0 ? (
+                    <details className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
+                      <summary className="cursor-pointer text-xs font-bold text-slate-800">상세 근거 보기</summary>
+                      <label className="mt-3 block text-xs font-semibold text-slate-700">서울시 통계 참고상권
+                        <select className="input mt-2 min-h-11 min-w-0"
+                          value={[...spatialRelations.insideMarkets, ...spatialRelations.radiusOverlapMarkets].some((market) => market.marketCode === selectedOfficialMarketCode) ? selectedOfficialMarketCode ?? "" : ""}
+                          onChange={(event) => {
+                            const index = officialSpatialInputs.findIndex((item) => item.marketCode === event.target.value);
+                            if (index >= 0) handleKakaoOfficialMarketSelect(index);
+                          }}>
+                          <option value="">참고상권 선택</option>
+                          {spatialRelations.insideMarkets.map((market) => <option key={market.marketCode} value={market.marketCode}>{market.marketName} · 분석지점 포함</option>)}
+                          {spatialRelations.radiusOverlapMarkets.map((market) => <option key={market.marketCode} value={market.marketCode}>{market.marketName} · 반경 겹침</option>)}
+                        </select>
+                      </label>
+                      <p className="mt-2 text-[11px] leading-5 text-slate-500">반경 겹침 상권 선택은 분석지점이 해당 공식상권 안에 있다는 의미가 아닙니다.</p>
+                    </details>
+                  ) : <p className="mt-2 text-xs text-slate-600">계산 가능한 공식상권 중 현재 분석지점 및 반경과 직접 겹치는 상권이 없습니다.</p>}
                   {spatialRelations.unknownMarkets.length > 0 ? (
                     <p className="mt-2 text-xs text-amber-800">공간관계 확인 필요 {spatialRelations.unknownMarkets.length}개 · 계산 불가 항목은 직접 관계 없음으로 처리하지 않습니다.</p>
                   ) : null}
@@ -2194,7 +2224,7 @@ export default function MarketSpatialViewer({
                           <p className="mt-2 text-xs text-slate-600">{executedSpatialAnalysis ? "공간관계 확인 필요" : "분석지점을 먼저 선택해 주세요."}</p>
                         )}
                         <p className="mt-2 text-xs leading-5 text-slate-600">
-                          서울시 공식상권 단위의 추정매출·점포 통계입니다. 내부 또는 반경 교차 여부와 무관하게 후보점포 실제매출이나 분석반경 자체의 통계가 아닙니다.
+                          서울시 공식상권 단위의 추정매출·점포 통계입니다. 내부 또는 반경 교차 여부와 무관하게 분석지점 실제매출이나 분석반경 자체의 통계가 아닙니다.
                         </p>
 
                         {!selectedOfficialMarketCode ? (
@@ -2389,7 +2419,7 @@ export default function MarketSpatialViewer({
                             ) : null}
 
                             <p className="border-t border-emerald-100 pt-3 text-[10px] leading-5 text-slate-500">
-                              이 데이터는 해당 서울시 공식상권 전체의 제과점 통계이며 후보점포의 예상매출이 아닙니다.
+                              이 데이터는 해당 서울시 공식상권 전체의 제과점 통계이며 분석지점의 예상매출이 아닙니다.
                               <br />
                               데이터 기준분기를 확인하여 참고자료로 사용합니다.
                             </p>

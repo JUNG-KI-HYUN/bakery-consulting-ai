@@ -60,14 +60,14 @@ function sourceStatus(observations: readonly Observation[]): string {
 }
 
 const MANUAL_RELATION_LABELS: Record<OfficialMarketRelation, string> = {
-  INSIDE: "후보점포 포함",
+  INSIDE: "분석지점 포함",
   RADIUS_OVERLAP: "분석반경 교차",
   OUTSIDE: "직접 공간관계 없음",
   UNKNOWN: "공간관계 확인 불가",
 };
 const MANUAL_RELATION_DESCRIPTIONS: Record<OfficialMarketRelation, string> = {
-  INSIDE: "후보점포가 이 공식상권 내부에 있습니다.",
-  RADIUS_OVERLAP: "후보점포는 상권 밖에 있지만, 분석반경과 공식상권이 겹칩니다.",
+  INSIDE: "분석지점이 이 공식상권 내부에 있습니다.",
+  RADIUS_OVERLAP: "분석지점은 상권 밖에 있지만, 분석반경과 공식상권이 겹칩니다.",
   OUTSIDE: "분석지점과 직접적인 공간관계가 확인되지 않은 통계 참고 공식상권입니다.",
   UNKNOWN: "공간관계를 확인할 수 없습니다.",
 };
@@ -82,7 +82,7 @@ export function buildMarketSummaryPresentation(
   if (!context?.target) return {
     status: "empty" as const,
     viewMode,
-    message: "먼저 분석 설정에서 후보점포 분석을 실행해 주세요.",
+    message: "먼저 분석 설정에서 지도 분석지점을 선택하고 분석을 실행해 주세요.",
     staffDetails: null,
   };
 
@@ -131,12 +131,12 @@ export function buildMarketSummaryPresentation(
     }] : [];
   }) : [];
   const statisticsWarning = manual && manualRelation !== "INSIDE"
-    ? `현재 통계 기준은 직원이 참고 선택한 ‘${manual.marketName}’ 공식상권입니다. 후보점포가 직접 포함된 공식상권 통계와 다를 수 있습니다.` : null;
+    ? `현재 통계 기준은 직원이 참고 선택한 ‘${manual.marketName}’ 공식상권입니다. 분석지점이 직접 포함된 공식상권 통계와 다를 수 있습니다.` : null;
 
   const confirmed: string[] = [];
   const reference: string[] = [];
   const needsCheck: string[] = [];
-  for (const market of inside) confirmed.push(`후보점포는 ‘${market.marketName}’ 공식상권 내부에 있습니다.`);
+  for (const market of inside) confirmed.push(`분석지점은 ‘${market.marketName}’ 공식상권 내부에 있습니다.`);
   if (data && context.publicData.status !== "missing") {
     confirmed.push(`‘${statisticsMarket}’의 서울시 ${period} 공식통계가 ${context.publicData.status === "partial" ? "일부 " : ""}조회되었습니다.`);
   }
@@ -160,6 +160,7 @@ export function buildMarketSummaryPresentation(
     schemaVersion: context.schemaVersion,
     target: {
       frameoneMarketId: context.frameone.selectedMarketId,
+      frameoneSubmarketId: context.frameone.selectedSubmarketId,
       source: context.target.source,
       latitude: context.target.analysisPoint.latitude,
       longitude: context.target.analysisPoint.longitude,
@@ -227,6 +228,7 @@ export function buildMarketSummaryPresentation(
       address: context.target.confirmedAddress ?? (context.target.source === "map" ? "지도 선택 위치" : "확인주소 미제공"),
       radius, source: context.target.source === "address" ? "주소 분석" : "지도 분석",
       frameone: context.frameone.selectedMarketName ?? "주요상권 미선택",
+      submarket: context.frameone.selectedSubmarketName ?? "전체",
     },
     nearby: { status: kakaoStatus, categories },
     spatial: {
