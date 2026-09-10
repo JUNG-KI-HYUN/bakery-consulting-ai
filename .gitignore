@@ -25,6 +25,14 @@
 /data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/*
 !/data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/.gitkeep
 
+# generated Seoul spatial ingestion snapshots (keep schemas/contracts/scripts tracked)
+/data/seoul-market/v1.1-final/13_SOURCE_INGEST/normalized/*
+!/data/seoul-market/v1.1-final/13_SOURCE_INGEST/normalized/.gitkeep
+/data/seoul-market/v1.1-final/13_SOURCE_INGEST/quarantine/*
+!/data/seoul-market/v1.1-final/13_SOURCE_INGEST/quarantine/.gitkeep
+/data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-PEDESTRIAN-NETWORK/
+/data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-CROSSWALK/
+
 # misc
 .DS_Store
 *.pem

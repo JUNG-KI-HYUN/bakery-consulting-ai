@@ -4,8 +4,8 @@ import {
   type SeoulOpenDataRow,
 } from "./seoul-open-data";
 
-const SEOUL_PEDESTRIAN_NETWORK_SERVICE = "TbTraficWlkNet";
-const SEOUL_CROSSWALK_SERVICE = "tbTraficCrsng";
+export const SEOUL_PEDESTRIAN_NETWORK_SERVICE = "TbTraficWlkNet";
+export const SEOUL_CROSSWALK_SERVICE = "tbTraficCrsng";
 
 export const SEOUL_PEDESTRIAN_SPATIAL_SOURCE = {
   source: "Seoul Open Data Plaza",
@@ -16,6 +16,13 @@ export interface SeoulPedestrianSpatialRequest {
   startIndex: number;
   endIndex: number;
   signal?: AbortSignal;
+}
+
+export interface SeoulPedestrianSpatialRawPage extends SeoulOpenDataPage {
+  rawResponse: string;
+  source: typeof SEOUL_PEDESTRIAN_SPATIAL_SOURCE.source;
+  sourceBasis: typeof SEOUL_PEDESTRIAN_SPATIAL_SOURCE.sourceBasis;
+  fetchedAt: string;
 }
 
 interface SeoulPedestrianBaseRow {
@@ -142,14 +149,62 @@ export async function fetchSeoulPedestrianNetworkPage({
 }: SeoulPedestrianSpatialRequest): Promise<
   SeoulPedestrianSpatialPage<SeoulPedestrianNetworkRow>
 > {
-  const page = await requestSeoulOpenDataPage({
-    service: SEOUL_PEDESTRIAN_NETWORK_SERVICE,
-    start: startIndex,
-    end: endIndex,
+  const page = await fetchSeoulPedestrianNetworkRawPage({
+    startIndex,
+    endIndex,
     signal,
   });
 
   return toSpatialPage(page, page.rows.map(parseSeoulPedestrianNetworkRow));
+}
+
+async function fetchRawSpatialPage({
+  service,
+  startIndex,
+  endIndex,
+  signal,
+}: SeoulPedestrianSpatialRequest & {
+  service: string;
+}): Promise<SeoulPedestrianSpatialRawPage> {
+  let rawResponse: string | null = null;
+  const page = await requestSeoulOpenDataPage({
+    service,
+    start: startIndex,
+    end: endIndex,
+    signal,
+    captureRawResponse: (value) => {
+      rawResponse = value;
+    },
+  });
+
+  if (rawResponse === null) {
+    throw new Error("검증된 서울 열린데이터 API 원문 응답이 없습니다.");
+  }
+
+  return {
+    ...page,
+    rawResponse,
+    ...SEOUL_PEDESTRIAN_SPATIAL_SOURCE,
+    fetchedAt: new Date().toISOString(),
+  };
+}
+
+export function fetchSeoulPedestrianNetworkRawPage(
+  request: SeoulPedestrianSpatialRequest,
+): Promise<SeoulPedestrianSpatialRawPage> {
+  return fetchRawSpatialPage({
+    ...request,
+    service: SEOUL_PEDESTRIAN_NETWORK_SERVICE,
+  });
+}
+
+export function fetchSeoulCrosswalkRawPage(
+  request: SeoulPedestrianSpatialRequest,
+): Promise<SeoulPedestrianSpatialRawPage> {
+  return fetchRawSpatialPage({
+    ...request,
+    service: SEOUL_CROSSWALK_SERVICE,
+  });
 }
 
 export async function fetchSeoulCrosswalkPage({
@@ -159,12 +214,7 @@ export async function fetchSeoulCrosswalkPage({
 }: SeoulPedestrianSpatialRequest): Promise<
   SeoulPedestrianSpatialPage<SeoulCrosswalkRow>
 > {
-  const page = await requestSeoulOpenDataPage({
-    service: SEOUL_CROSSWALK_SERVICE,
-    start: startIndex,
-    end: endIndex,
-    signal,
-  });
+  const page = await fetchSeoulCrosswalkRawPage({ startIndex, endIndex, signal });
 
   return toSpatialPage(page, page.rows.map(parseSeoulCrosswalkRow));
 }

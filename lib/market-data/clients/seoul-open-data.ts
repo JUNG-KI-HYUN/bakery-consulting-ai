@@ -43,6 +43,7 @@ export interface SeoulOpenDataRequest {
   end: number;
   optionalParams?: ReadonlyArray<string | number>;
   signal?: AbortSignal;
+  captureRawResponse?: (rawResponse: string) => void | Promise<void>;
 }
 
 interface SeoulApiResult {
@@ -157,6 +158,7 @@ export async function requestSeoulOpenDataPage({
   end,
   optionalParams = [],
   signal,
+  captureRawResponse,
 }: SeoulOpenDataRequest): Promise<SeoulOpenDataPage> {
   validateRange(start, end);
   const normalizedService = validateService(service);
@@ -189,10 +191,21 @@ export async function requestSeoulOpenDataPage({
     );
   }
 
+  let rawResponse: string;
+
+  try {
+    rawResponse = await response.text();
+  } catch {
+    throw new SeoulOpenDataClientError(
+      "response",
+      "서울 열린데이터 API 응답을 읽을 수 없습니다.",
+    );
+  }
+
   let payload: unknown;
 
   try {
-    payload = await response.json();
+    payload = JSON.parse(rawResponse);
   } catch {
     throw new SeoulOpenDataClientError(
       "response",
@@ -249,6 +262,8 @@ export async function requestSeoulOpenDataPage({
   }
 
   const rows: SeoulOpenDataRow[] = Array.isArray(rawRows) ? rawRows : [];
+
+  await captureRawResponse?.(rawResponse);
 
   return {
     service: normalizedService,

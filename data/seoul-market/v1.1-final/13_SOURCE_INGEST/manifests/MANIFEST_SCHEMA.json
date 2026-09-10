@@ -1,36 +1,69 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "frameone://source-ingest/manifest.schema.json",
-  "title": "FRAMEONE Raw Source Manifest",
+  "title": "FRAMEONE Source Ingest Manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schema_version",
-    "source_id",
-    "original_filename",
-    "raw_path",
-    "extension",
-    "file_size",
-    "sha256",
-    "last_modified_at",
-    "retrieved_at",
-    "source_date",
-    "source_version",
-    "is_zip",
-    "inner_files",
-    "encoding",
-    "header",
-    "row_count",
-    "key_field",
-    "key_count",
-    "row_key_fields",
-    "null_key_count",
-    "duplicate_key_count",
-    "content_validation_status",
-    "validation_status",
-    "compatibility_status",
-    "normalized_output",
-    "notes"
+  "oneOf": [
+    {
+      "required": [
+        "schema_version",
+        "source_id",
+        "original_filename",
+        "raw_path",
+        "extension",
+        "file_size",
+        "sha256",
+        "last_modified_at",
+        "retrieved_at",
+        "source_date",
+        "source_version",
+        "is_zip",
+        "inner_files",
+        "encoding",
+        "header",
+        "row_count",
+        "key_field",
+        "key_count",
+        "row_key_fields",
+        "null_key_count",
+        "duplicate_key_count",
+        "content_validation_status",
+        "validation_status",
+        "compatibility_status",
+        "normalized_output",
+        "notes"
+      ]
+    },
+    {
+      "required": [
+        "manifest_kind",
+        "schema_version",
+        "snapshot_id",
+        "dataset",
+        "service_name",
+        "source_id",
+        "source",
+        "source_basis",
+        "fetched_at",
+        "page_size",
+        "total_count",
+        "expected_page_count",
+        "fetched_page_count",
+        "fetched_row_count",
+        "stored_count",
+        "quarantined_count",
+        "district_counts",
+        "validation",
+        "status",
+        "limited_run",
+        "publish_eligible",
+        "raw_path",
+        "normalized_path",
+        "checkpoint_path",
+        "failure"
+      ]
+    }
   ],
   "properties": {
     "schema_version": {
@@ -132,6 +165,148 @@
     },
     "notes": {
       "type": ["string", "null"]
+    },
+    "manifest_kind": {
+      "const": "API_SNAPSHOT"
+    },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "dataset": {
+      "enum": ["seoul_pedestrian_network", "seoul_crosswalk"]
+    },
+    "service_name": {
+      "enum": ["TbTraficWlkNet", "tbTraficCrsng"]
+    },
+    "source": {
+      "const": "Seoul Open Data Plaza"
+    },
+    "source_basis": {
+      "const": "2020 기준"
+    },
+    "fetched_at": {
+      "type": "string",
+      "minLength": 1
+    },
+    "page_size": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000
+    },
+    "total_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "expected_page_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fetched_page_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "fetched_row_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "stored_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "quarantined_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "district_counts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["district_code", "district_name", "row_count"],
+        "properties": {
+          "district_code": { "type": "string", "minLength": 1 },
+          "district_name": { "type": ["string", "null"] },
+          "row_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "result_code_status",
+        "total_count_consistent",
+        "collected_page_ranges_contiguous",
+        "expected_page_count_match",
+        "fetched_row_count_match",
+        "stored_count_match",
+        "district_counts_match",
+        "raw_checksum_match",
+        "normalized_checksum_match",
+        "parsing_failure_count",
+        "node_wkt_missing_count",
+        "link_wkt_missing_count",
+        "exact_duplicate_record_count",
+        "node_id_duplicate_count",
+        "link_id_duplicate_count",
+        "ready",
+        "errors"
+      ],
+      "properties": {
+        "result_code_status": { "enum": ["PASS", "FAIL"] },
+        "total_count_consistent": { "type": "boolean" },
+        "collected_page_ranges_contiguous": { "type": "boolean" },
+        "expected_page_count_match": { "type": "boolean" },
+        "fetched_row_count_match": { "type": "boolean" },
+        "stored_count_match": { "type": "boolean" },
+        "district_counts_match": { "type": "boolean" },
+        "raw_checksum_match": { "type": "boolean" },
+        "normalized_checksum_match": { "type": "boolean" },
+        "parsing_failure_count": { "type": "integer", "minimum": 0 },
+        "node_wkt_missing_count": { "type": "integer", "minimum": 0 },
+        "link_wkt_missing_count": { "type": "integer", "minimum": 0 },
+        "exact_duplicate_record_count": { "type": "integer", "minimum": 0 },
+        "node_id_duplicate_count": { "type": "integer", "minimum": 0 },
+        "link_id_duplicate_count": { "type": "integer", "minimum": 0 },
+        "ready": { "type": "boolean" },
+        "errors": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "status": {
+      "enum": ["COLLECTING", "VALIDATING", "READY", "FAILED"]
+    },
+    "limited_run": {
+      "type": "boolean"
+    },
+    "publish_eligible": {
+      "type": "boolean"
+    },
+    "normalized_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "checkpoint_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failure": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "message", "failed_at"],
+          "properties": {
+            "kind": { "type": "string", "minLength": 1 },
+            "message": { "type": "string", "minLength": 1 },
+            "failed_at": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
     }
   }
 }

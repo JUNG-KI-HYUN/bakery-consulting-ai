@@ -38,6 +38,15 @@ const reportPath = join(ingestDirectory, "RAW_INTAKE_REPORT.md");
 const summaryPath = join(ingestDirectory, "VALIDATION_SUMMARY.json");
 const manifestSchemaPath = join(manifestsDirectory, "MANIFEST_SCHEMA.json");
 const checkedAt = "2026-08-28";
+const spatialRuntimeSourceIds = new Set([
+  "SRC-SEOUL-PEDESTRIAN-NETWORK",
+  "SRC-SEOUL-CROSSWALK",
+]);
+const legacyRawIntakeSourceIds = new Set([
+  "SRC-SEOUL-LIVING",
+  "SRC-SEOUL-SALES",
+  "SRC-SEOUL-STORES",
+]);
 
 const protectedPaths = [
   join(repositoryRoot, "data", "consultations.json"),
@@ -141,6 +150,16 @@ function listFiles(directory, { includeGitkeep = false } = {}) {
     else if (includeGitkeep || entry.name !== ".gitkeep") files.push(path);
   }
   return files.sort(compareText);
+}
+
+function excludesSpatialRuntime(path, root) {
+  const sourceId = relative(root, path).split(/[\\/]/)[0];
+  return !spatialRuntimeSourceIds.has(sourceId);
+}
+
+function belongsToLegacyRawIntake(path) {
+  const sourceId = relative(rawDirectory, path).split(/[\\/]/)[0];
+  return legacyRawIntakeSourceIds.has(sourceId);
 }
 
 function flattenHierarchy(document) {
@@ -810,7 +829,7 @@ function buildArtifacts() {
   const contracts = readJson(contractPath).contracts;
   readJson(manifestSchemaPath);
   const contractsById = new Map(contracts.map((contract) => [contract.source_id, contract]));
-  const rawPaths = listFiles(rawDirectory);
+  const rawPaths = listFiles(rawDirectory).filter(belongsToLegacyRawIntake);
   assert(rawPaths.length === 5, `실제 Raw는 5개여야 합니다: ${rawPaths.length}`);
   const sourceCounts = new Map();
   const analyzedFiles = [];
@@ -1049,8 +1068,12 @@ function buildArtifacts() {
     sales_stores_comparison: salesStoresComparison,
     geometry_metric_comparison: geometryMetricComparison,
     manifest_count: analyzedFiles.length,
-    normalized_file_count: listFiles(normalizedDirectory).length,
-    quarantine_data_file_count: listFiles(quarantineDirectory).length,
+    normalized_file_count: listFiles(normalizedDirectory).filter((path) =>
+      excludesSpatialRuntime(path, normalizedDirectory),
+    ).length,
+    quarantine_data_file_count: listFiles(quarantineDirectory).filter((path) =>
+      excludesSpatialRuntime(path, quarantineDirectory),
+    ).length,
     raw_sha256_unchanged_during_validation: true,
     secret_match_count: secretMatchCount,
     prohibited_operations: {
@@ -1150,6 +1173,8 @@ function buildArtifacts() {
     missingSourceResult("SRC-SEOUL-FOOT"),
     missingSourceResult("SRC-SEOUL-WORK"),
     missingSourceResult("SRC-SGIS"),
+    missingSourceResult("SRC-SEOUL-PEDESTRIAN-NETWORK"),
+    missingSourceResult("SRC-SEOUL-CROSSWALK"),
   ];
   const summary = {
     schema_version: "1.1.0",
@@ -1238,7 +1263,8 @@ function writeOrVerify(expectedOutputs) {
     [...expectedOutputs.keys()].filter((path) => path.includes(`${manifestsDirectory}\\`) || path.includes(`${manifestsDirectory}/`)),
   );
   const actualManifestPaths = listFiles(manifestsDirectory).filter(
-    (path) => basename(path) !== "MANIFEST_SCHEMA.json",
+    (path) => basename(path) !== "MANIFEST_SCHEMA.json" &&
+      excludesSpatialRuntime(path, manifestsDirectory),
   );
   const unexpectedManifests = actualManifestPaths.filter(
     (path) => !expectedManifestPaths.has(path),

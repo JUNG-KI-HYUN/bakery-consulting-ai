@@ -44,6 +44,8 @@ const expectedSourceIds = [
   "SRC-SEOUL-FOOT",
   "SRC-SEOUL-WORK",
   "SRC-SGIS",
+  "SRC-SEOUL-PEDESTRIAN-NETWORK",
+  "SRC-SEOUL-CROSSWALK",
 ];
 
 const sourceIntegrityPaths = {
@@ -109,7 +111,7 @@ const contractRequiredFields = [
   "status",
 ];
 
-const manifestRequiredFields = [
+const rawFileManifestRequiredFields = [
   "source_id",
   "original_filename",
   "sha256",
@@ -122,6 +124,34 @@ const manifestRequiredFields = [
   "compatibility_status",
   "normalized_output",
   "notes",
+];
+
+const apiSnapshotManifestRequiredFields = [
+  "manifest_kind",
+  "schema_version",
+  "snapshot_id",
+  "dataset",
+  "service_name",
+  "source_id",
+  "source",
+  "source_basis",
+  "fetched_at",
+  "page_size",
+  "total_count",
+  "expected_page_count",
+  "fetched_page_count",
+  "fetched_row_count",
+  "stored_count",
+  "quarantined_count",
+  "district_counts",
+  "validation",
+  "status",
+  "limited_run",
+  "publish_eligible",
+  "raw_path",
+  "normalized_path",
+  "checkpoint_path",
+  "failure",
 ];
 
 function assert(condition, message) {
@@ -467,10 +497,43 @@ function validateCompatibility(contract, manifestCompatibilityStatus = null) {
 
 function validateManifestShape(manifest) {
   const errors = [];
-  for (const field of manifestRequiredFields) {
+  const isApiSnapshot = manifest.manifest_kind === "API_SNAPSHOT";
+  const requiredFields = isApiSnapshot
+    ? apiSnapshotManifestRequiredFields
+    : rawFileManifestRequiredFields;
+  for (const field of requiredFields) {
     if (!Object.hasOwn(manifest, field)) {
       errors.push(`MISSING_MANIFEST_FIELD:${field}`);
     }
+  }
+  if (isApiSnapshot) {
+    for (const field of [
+      "page_size",
+      "total_count",
+      "expected_page_count",
+      "fetched_page_count",
+      "fetched_row_count",
+      "stored_count",
+      "quarantined_count",
+    ]) {
+      const value = manifest[field];
+      if (!Number.isInteger(value) || value < 0) {
+        errors.push(`INVALID_MANIFEST_COUNT:${field}`);
+      }
+    }
+    if (!Array.isArray(manifest.district_counts)) {
+      errors.push("INVALID_DISTRICT_COUNTS");
+    }
+    if (!["COLLECTING", "VALIDATING", "READY", "FAILED"].includes(manifest.status)) {
+      errors.push("INVALID_API_SNAPSHOT_STATUS");
+    }
+    if (manifest.limited_run === true && manifest.status === "READY") {
+      errors.push("LIMITED_SNAPSHOT_READY");
+    }
+    if (manifest.publish_eligible === true && manifest.validation?.ready !== true) {
+      errors.push("PUBLISH_ELIGIBLE_WITHOUT_READY_VALIDATION");
+    }
+    return errors;
   }
   if (
     typeof manifest.original_filename === "string" &&
@@ -521,6 +584,26 @@ function validateManifest(manifestPath, contractsById) {
       rowCount: null,
       keyCount: null,
       errors,
+    };
+  }
+
+  if (manifest.manifest_kind === "API_SNAPSHOT") {
+    const validationStatus = manifest.status === "FAILED"
+      ? "FAIL"
+      : manifest.status === "READY"
+        ? "PASS"
+        : "NEEDS_REVIEW";
+    return {
+      manifest: relativeToIngest(manifestPath),
+      sourceId: contract.source_id,
+      rawPath: manifest.raw_path,
+      validationStatus,
+      compatibilityStatus: contract.compatibility_requirement.status,
+      joinAllowed: false,
+      rowCount: manifest.stored_count,
+      keyCount: null,
+      errors: manifest.validation?.errors ?? [],
+      needsReview: manifest.limited_run ? ["LIMITED_RUN_NOT_PUBLISHED"] : [],
     };
   }
 
@@ -776,7 +859,7 @@ function buildSummary() {
   assert(duplicateValues(sourceIds).length === 0, "Source Contract ID가 중복되었습니다.");
   assert(
     JSON.stringify([...sourceIds].sort()) === JSON.stringify([...expectedSourceIds].sort()),
-    "Source Contract 목록이 DATA_SOURCE_CATALOG 대상 7개와 다릅니다.",
+    "Source Contract 목록이 등록 대상과 다릅니다.",
   );
   for (const contract of contracts) {
     const errors = validateContractShape(contract);
