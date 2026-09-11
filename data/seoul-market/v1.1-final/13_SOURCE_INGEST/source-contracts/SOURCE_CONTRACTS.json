@@ -16,12 +16,14 @@
       "institution": "서울특별시",
       "dataset_name": "[내국인] 서울 생활인구(250m) OA-22784",
       "source_reference": "https://data.seoul.go.kr/dataList/OA-22784/S/1/datasetView.do",
+      "source_system": "빅데이터 서비스 플랫폼",
+      "service_name": "Se250MSpopLocalResd",
       "source_version": null,
       "source_date": null,
       "retrieved_at": null,
-      "file_format": "ZIP_CSV",
-      "allowed_extensions": [".zip"],
-      "encoding": "CP949",
+      "file_format": "OPEN_API_JSON_OR_ZIP_CSV",
+      "allowed_extensions": [".json", ".zip"],
+      "encoding": "UTF-8_JSON_OR_CP949_CSV",
       "key_field": "cell_id",
       "code_system": "NATIONAL_STANDARD_GRID_250M_CELL_ID",
       "spatial_unit": "250m_grid",
@@ -39,6 +41,7 @@
         "age_band_living_population"
       ],
       "nullable_columns": [
+        "total_living_population",
         "male_living_population",
         "female_living_population",
         "age_band_living_population"
@@ -65,7 +68,26 @@
         "female_living_population": null,
         "age_band_living_population": null
       },
-      "supported_versions": ["20260823_KO_HEADER"],
+      "source_column_maps_by_version": {
+        "20260823_KO_HEADER": {
+          "base_date": "일자",
+          "hour_code": "시간",
+          "administrative_dong_code": "행정동코드",
+          "cell_id": "250M격자",
+          "total_living_population": "생활인구합계"
+        },
+        "OPEN_API_Se250MSpopLocalResd": {
+          "base_date": "YMD",
+          "hour_code": "TT",
+          "administrative_dong_code": "H_DNG_CD",
+          "cell_id": "CELL_ID",
+          "total_living_population": "SPOP"
+        }
+      },
+      "supported_versions": [
+        "20260823_KO_HEADER",
+        "OPEN_API_Se250MSpopLocalResd"
+      ],
       "compatibility_requirement": {
         "gate_id": "LIVING_GRID_CELL_ID_COVERAGE",
         "status": "NEEDS_REVIEW",
@@ -78,8 +100,13 @@
         ],
         "step4a_evidence": "../../12_VALIDATION/LIVING_GRID_KEY_COVERAGE.json"
       },
-      "license_status": "NEEDS_REVIEW",
-      "usage_note": "실제 250M격자 coverage는 확인했지만 geometry 누락·추가 key 검토와 FRAMEONE Polygon 승인이 끝나기 전 Market 집계 및 자동 Join을 금지한다.",
+      "license_status": "CONFIRMED",
+      "license_name": "공공누리 제1유형: 출처표시",
+      "attribution_required": true,
+      "commercial_use_allowed": true,
+      "modification_allowed": true,
+      "third_party_copyright": "없음",
+      "usage_note": "Open API는 별도 날짜 검색조건 없이 조회 시점 기준 공식 안내상 4일 전 자료만 제공하며 매일 14시경 D-4 적재를 시작하므로 자동 수집은 15시 이후가 기준이다. YMD는 data reference date, 응답 수집시각은 fetched_at, 카탈로그 갱신일은 별도 metadata로 기록한다. TT는 00~23 시간대이며 CELL_ID가 250m 격자 식별자다. SPOP 및 성·연령 속성의 '*'는 3명 이하 비식별 억제값으로 null/suppressed 처리하고 0으로 바꾸지 않는다. Open API는 좌표나 geometry를 제공하지 않는다. 기존 LIVING_GRID_250M geometry와의 key coverage 검토 및 FRAMEONE Polygon 승인 전 Market 집계와 자동 Join을 금지한다.",
       "status": "NEEDS_REVIEW"
     },
     {

@@ -28,6 +28,12 @@ export function adaptSeoulLivingRecord(
     parseMetricValue(record.생활인구합계, ["*"]),
     contextIsValid,
   );
+  const validatedPopulation =
+    parsed.dataStatus === "available" &&
+    parsed.value !== null &&
+    parsed.value < 0
+      ? { value: null, dataStatus: "invalid" as const }
+      : parsed;
 
   return [
     {
@@ -36,9 +42,9 @@ export function adaptSeoulLivingRecord(
       geographyType: "living_grid",
       geographyId,
       metric: "living_population_total",
-      value: parsed.value,
+      value: validatedPopulation.value,
       unit: "people",
-      dataStatus: parsed.dataStatus,
+      dataStatus: validatedPopulation.dataStatus,
       metadata: {
         rawDate: optionalText(record.일자) ?? null,
         rawHour: optionalText(record.시간) ?? null,
