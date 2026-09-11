@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0.0",
+  "audit": "250M_OFFICIAL_GRID_SOURCE_VERIFICATION_V1",
+  "audited_at": "2026-09-11",
+  "result": "READY",
+  "scope": {
+    "geometry_modified": false,
+    "geometry_generated": false,
+    "aggregation_performed": false,
+    "current_pointer_updated": false,
+    "api_ingestion_performed": false
+  },
+  "official_source": {
+    "provider": "서울특별시",
+    "dataset": "[내국인] 서울 생활인구(250m) OA-22784",
+    "dataset_page": "https://data.seoul.go.kr/dataList/OA-22784/S/1/datasetView.do",
+    "living_population_page": "https://data.seoul.go.kr/dataVisual/seoul/seoulLivingPopulation.do",
+    "grid_viewer": "https://data.seoul.go.kr/opendata/seoulStay/grid_viewer.html",
+    "download_label": "서울 격자 파일(250m, 5179, SHP)",
+    "downloaded_filename": "서울생활인구_250m격자정보_EPSG5179.zip",
+    "download_method": {
+      "endpoint": "https://datafile.seoul.go.kr/bigfile/iot/inf/nio_download.do?&useCache=false",
+      "method": "POST",
+      "form": {
+        "infId": "DOWNLOAD",
+        "infSeq": "4",
+        "seqNo": "37",
+        "seq": "37"
+      }
+    },
+    "download_sha256": "5f7f95db30f1d4a433d9905b281c3fb95b59cd8200985512a897326208bf525e",
+    "crs": {
+      "official_label": "EPSG:5179",
+      "prj_name": "Korea_2000_Korea_Unified_Coordinate_System"
+    },
+    "archive": {
+      "directory": "match",
+      "files": [
+        "match.shp",
+        "match.shx",
+        "match.dbf",
+        "match.prj",
+        "match.cpg",
+        "match.qix",
+        "match.qmd"
+      ],
+      "encoding": "UTF-8",
+      "internal_file_timestamp": "2025-05-13",
+      "dbf_last_update": "2025-05-13",
+      "semantic_version": null,
+      "file_level_publication_date": null,
+      "file_level_metadata_status": "NEEDS_REVIEW"
+    },
+    "geometry": {
+      "shapefile_shape_type": "Polygon",
+      "feature_count": 10125,
+      "unique_cell_id_count": 10125,
+      "duplicate_cell_id_count": 0,
+      "missing_cell_id_count": 0,
+      "malformed_cell_id_count": 0,
+      "fields": [
+        "CELL_ID",
+        "CELL_X",
+        "CELL_Y",
+        "GID"
+      ]
+    },
+    "dataset_metadata": {
+      "public_date": "2025-11-17",
+      "data_updated_at": "2026-09-11",
+      "metadata_updated_at": "2026-07-30",
+      "source_system": "빅데이터 서비스 플랫폼",
+      "copyright_holder": "서울특별시",
+      "third_party_copyright": "없음",
+      "license": "공공누리 제1유형: 출처표시 (상업적 이용 및 변경 가능)",
+      "grid_artifact_license_scope": "공식 생활인구 페이지에서 제공되는 지원 파일이지만 SHP별 독립 license record는 노출되지 않아 NEEDS_REVIEW"
+    },
+    "documented_population_spatial_scope": "서울시 250m 격자 약 8,500여 개"
+  },
+  "local_geometry": {
+    "path": "data/seoul-market/v1.1-final/09_GEO/LIVING_GRID_250M.geojson",
+    "sha256": "b591c6e6379b7ba962d7d6ef5494ffd0dee519ddcae7ec69cbd8b7f86a07e8ad",
+    "source_id": "SRC-SEOUL-LIVING-GRID",
+    "geometry_version": "SEOUL_250M_GRID_SHP_2025-05-12",
+    "source_crs": "EPSG:5179",
+    "output_crs": "EPSG:4326",
+    "feature_count": 10125,
+    "unique_cell_id_count": 10125,
+    "official_shp_cell_id_set_equal": true,
+    "official_viewer_cell_id_set_equal": true,
+    "cell_x_cell_y_gid_mismatch_count": 0,
+    "provenance_classification": "A_CURRENT_OFFICIAL_GRID_SAME_SOURCE",
+    "provenance_basis": [
+      "현재 서울 생활인구 공식 페이지에서 직접 받은 EPSG:5179 SHP와 local GeoJSON의 CELL_ID 10,125개가 전부 동일하다.",
+      "공식 SHP DBF와 local GeoJSON의 CELL_X, CELL_Y, GID가 10,125건 모두 동일하다.",
+      "공식 grid viewer의 CELL_ID 10,125개도 공식 SHP 및 local GeoJSON과 전부 동일하다.",
+      "local GeoJSON은 source_crs EPSG:5179, output_crs EPSG:4326 및 공식 격자 source_id를 보존한다."
+    ],
+    "date_note": "local geometry_version의 2025-05-12와 현재 공식 ZIP 내부 시각/DBF 갱신일 2025-05-13은 하루 차이가 있지만 key와 세 속성은 전건 동일하다. 공식 파일에 별도 semantic version이 없어 날짜 명칭의 생성 규칙은 NEEDS_REVIEW다."
+  },
+  "metric_only_cell": {
+    "cell_id": "다사47256125",
+    "official_shp_present": false,
+    "official_grid_viewer_present": false,
+    "local_geometry_present": false,
+    "metric_history": [
+      {
+        "source_date": "2026-08-23",
+        "row_count": 24,
+        "hours": "00-23",
+        "administrative_dong_code": "11380690",
+        "spop_status": "suppressed"
+      },
+      {
+        "source_date": "2026-09-06",
+        "row_count": 24,
+        "hours": "00-23",
+        "administrative_dong_code": "11380690",
+        "spop_status": "suppressed"
+      }
+    ],
+    "finding": "공식 metric에는 두 확인일 모두 24시간 행이 존재하지만 SPOP 및 세부 값은 비식별 억제되어 있고, 현재 공식 geometry와 viewer에는 CELL_ID가 없다.",
+    "cause": null,
+    "cause_status": "NEEDS_REVIEW",
+    "decision": "REVIEW_REQUIRED_AND_EXCLUDE_FROM_SPATIAL_AGGREGATION_UNTIL_GEOMETRY_EXISTS"
+  },
+  "geometry_only_distribution": {
+    "count": 1567,
+    "coordinate_system": "EPSG:5179 cell centers",
+    "both_center_bounds": {
+      "minimum_x": 935125,
+      "maximum_x": 971875,
+      "minimum_y": 1936875,
+      "maximum_y": 1966875
+    },
+    "geometry_only_center_bounds": {
+      "minimum_x": 935125,
+      "maximum_x": 972125,
+      "minimum_y": 1936625,
+      "maximum_y": 1966875
+    },
+    "outside_both_center_bounding_box_count": 8,
+    "inside_both_center_bounding_box_count": 1559,
+    "adjacent_to_both_cell_8_neighbor_count": 1287,
+    "not_adjacent_to_both_cell_8_neighbor_count": 280,
+    "interpretation": [
+      "geometry-only는 공식 grid 전체 좌표 범위에 걸쳐 있으며 단순히 최외곽 1개 띠에만 모여 있지 않다.",
+      "1,567개 중 1,559개는 BOTH 중심점 bounding box 안에 있고, 1,287개는 적어도 하나의 BOTH 격자와 8방향으로 인접한다.",
+      "좌표 분포만으로 한강, 산지, 비주거지 또는 population 0을 판정하지 않았다."
+    ]
+  },
+  "compatibility": {
+    "status": "READY",
+    "metric_to_geometry": "READY_WITH_EXPLICIT_MISMATCH_POLICY",
+    "reason": "local geometry가 현재 공식 SHP 및 viewer와 key/attribute 수준에서 전건 동일하므로 Source와 CELL_ID 체계가 충분히 검증됐다. 유일한 metric-only는 공식 geometry에도 없으므로 예외로 보존하고 공간집계에서 제외하는 명시적 정책이 필요하다.",
+    "policies": {
+      "both": "공식 geometry가 존재하므로 source date와 metric 상태를 보존하는 조건으로 공간집계 입력 사용 가능",
+      "metric_only": "공간집계 제외, REVIEW_REQUIRED 유지, metric 원문과 suppressed 상태 보존, geometry 임의 생성 금지",
+      "geometry_only": "NO_OBSERVATION 또는 MISSING_METRIC 상태로 보존, population 0 자동입력 금지, 공간집계 분모·coverage에서 별도 표시"
+    }
+  }
+}
