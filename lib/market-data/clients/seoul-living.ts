@@ -62,6 +62,11 @@ export type SeoulLivingPage = Omit<SeoulOpenDataPage, "rows"> & {
   rows: SeoulLivingApiRecord[];
 };
 
+export type SeoulLivingRawPage = SeoulOpenDataPage & {
+  fetchedAt: string;
+  rawResponse: string;
+};
+
 function validateApiRecord(
   row: SeoulOpenDataRow,
   rowIndex: number,
@@ -117,17 +122,38 @@ export async function fetchSeoulLivingPage({
   end,
   signal,
 }: SeoulLivingRequest): Promise<SeoulLivingPage> {
+  const page = await fetchSeoulLivingRawPage({ start, end, signal });
+
+  return {
+    service: page.service,
+    start: page.start,
+    end: page.end,
+    totalCount: page.totalCount,
+    fetchedAt: page.fetchedAt,
+    rows: validateSeoulLivingApiRows(page.rows),
+  };
+}
+
+export async function fetchSeoulLivingRawPage({
+  start,
+  end,
+  signal,
+}: SeoulLivingRequest): Promise<SeoulLivingRawPage> {
+  let rawResponse = "";
   const page = await requestSeoulOpenDataPage({
     service: SEOUL_LIVING_SERVICE,
     start,
     end,
     signal,
+    captureRawResponse: (response) => {
+      rawResponse = response;
+    },
   });
 
   return {
     ...page,
     fetchedAt: new Date().toISOString(),
-    rows: validateSeoulLivingApiRows(page.rows),
+    rawResponse,
   };
 }
 

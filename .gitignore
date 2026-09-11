@@ -32,6 +32,7 @@
 !/data/seoul-market/v1.1-final/13_SOURCE_INGEST/quarantine/.gitkeep
 /data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-PEDESTRIAN-NETWORK/
 /data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-CROSSWALK/
+/data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-LIVING/snapshots/
 
 # misc
 .DS_Store

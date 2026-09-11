@@ -153,13 +153,22 @@ function listFiles(directory, { includeGitkeep = false } = {}) {
 }
 
 function excludesSpatialRuntime(path, root) {
-  const sourceId = relative(root, path).split(/[\\/]/)[0];
-  return !spatialRuntimeSourceIds.has(sourceId);
+  const relativeParts = relative(root, path).split(/[\\/]/);
+  const sourceId = relativeParts[0];
+  if (spatialRuntimeSourceIds.has(sourceId)) return false;
+  if (sourceId !== "SRC-SEOUL-LIVING") return true;
+  if (root === manifestsDirectory) return relativeParts[1] !== "snapshots";
+  return false;
 }
 
 function belongsToLegacyRawIntake(path) {
-  const sourceId = relative(rawDirectory, path).split(/[\\/]/)[0];
-  return legacyRawIntakeSourceIds.has(sourceId);
+  const relativeParts = relative(rawDirectory, path).split(/[\\/]/);
+  const sourceId = relativeParts[0];
+  return (
+    legacyRawIntakeSourceIds.has(sourceId) &&
+    relativeParts.length === 2 &&
+    extname(path).toLowerCase() === ".zip"
+  );
 }
 
 function flattenHierarchy(document) {
@@ -1263,7 +1272,10 @@ function writeOrVerify(expectedOutputs) {
     [...expectedOutputs.keys()].filter((path) => path.includes(`${manifestsDirectory}\\`) || path.includes(`${manifestsDirectory}/`)),
   );
   const actualManifestPaths = listFiles(manifestsDirectory).filter(
-    (path) => basename(path) !== "MANIFEST_SCHEMA.json" &&
+    (path) => ![
+      "MANIFEST_SCHEMA.json",
+      "LIVING_API_SNAPSHOT_MANIFEST_SCHEMA.json",
+    ].includes(basename(path)) &&
       excludesSpatialRuntime(path, manifestsDirectory),
   );
   const unexpectedManifests = actualManifestPaths.filter(
