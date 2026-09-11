@@ -53,3 +53,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Seoul living population publication runtime artifacts
+data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-LIVING/current.json
+data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-LIVING/publication-decisions/
