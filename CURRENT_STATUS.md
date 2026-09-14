@@ -1,6 +1,6 @@
 # CURRENT STATUS
 
-Last updated: 2026-09-11
+Last updated: 2026-09-14
 
 ## 1. Current Branch
 
@@ -12,10 +12,17 @@ Last updated: 2026-09-11
 
 Current HEAD:
 
-`d595b51 feat: ingest seoul 250m living population snapshot`
+`f4db8f3 docs: define boundary review artifact template`
 
 Recent commits:
 
+- `f4db8f3 docs: define boundary review artifact template`
+- `b730808 docs: define frameone boundary evidence approval`
+- `d861c6b docs: define living population aggregation readiness`
+- `bc96b63 feat: publish validated living population current snapshot`
+- `033b94c chore: verify official living population grid source`
+- `e2f6fbe feat: reconcile living population grid ids`
+- `9cde476 docs: update current development status`
 - `d595b51 feat: ingest seoul 250m living population snapshot`
 - `c66da78 feat: prepare seoul 250m living population source`
 - `a6753fc feat: add frameone data source registry v1`
@@ -72,6 +79,28 @@ Completed as of 2026-09-11:
 - FRAMEONE Data Source Registry V1 completed
 - Seoul 250m Living Population official API connection completed
 - Seoul 250m Living Population full source ingestion completed
+- 250m Living Population CELL_ID Geometry Reconciliation V1 completed
+  - `BOTH`: 8,558
+  - `METRIC_ONLY`: 1
+  - `GEOMETRY_ONLY`: 1,567
+- Official Living Population Grid Source Verification V1 saved as `READY`
+  - Local geometry CELL_ID and official SHP/viewer CELL_ID sets are equal.
+  - File-level publication/version metadata and the one-day date-label difference remain `NEEDS_REVIEW`.
+- Living Population Source Current publication completed
+  - PC2 current pointer exists.
+  - Publication scope: `SOURCE_CURRENT_ONLY`
+  - Publication eligibility re-evaluation: `ELIGIBLE`, failed gates 0
+  - The re-evaluation did not republish or change the current pointer.
+- Market/Submarket Living Population Aggregation Readiness V1 reviewed as `BLOCKED`
+- FRAMEONE Boundary Evidence Approval V1 criteria document completed
+- E3/E4 Boundary Review Artifact Template V1 design document completed
+- E3/E4 Boundary Review Artifact Non-Spatial Dry-run completed
+  - Purpose: staff training and procedure consistency review without spatial data
+  - Procedure review result: partially passed
+  - Actual Market/Submarket/Node geometry remains absent.
+  - No formal E3/E4 artifact or approval was created.
+  - Geometry-dependent aggregation remains `BLOCKED`.
+  - No code, schema, UI, or API was changed for the dry-run.
 
 Latest living-population snapshot:
 
@@ -85,8 +114,10 @@ Latest living-population snapshot:
 - Unique metric CELL_ID: `8,559`
 - Existing geometry CELL_ID: `10,125`
 - Snapshot status: `READY`
-- Geometry Join: `NOT_PERFORMED`
-- Production current pointer: `NOT_PUBLISHED`
+- CELL_ID reconciliation: `COMPLETED`
+- Source current pointer: `PUBLISHED`
+- Publication scope: `SOURCE_CURRENT_ONLY`
+- Spatial aggregation ready: `false`
 
 Latest full-ingestion quality result:
 
@@ -110,9 +141,29 @@ Population handling rules:
 Important living-population rule:
 
 - Do not auto-fill geometry-only CELL_ID with population 0.
-- Do not join living-population metrics to Market/Submarket until CELL_ID geometry compatibility is verified.
-- Do not publish the production current pointer until geometry compatibility is reviewed.
+- `METRIC_ONLY` remains `REVIEW_REQUIRED` and excluded from spatial aggregation until geometry exists.
+- Source current publication does not authorize Market/Submarket aggregation.
 - Metric and geometry datasets must remain independently traceable.
+
+### 3.2 Current Spatial Aggregation Blockers
+
+The source/grid foundation and FRAMEONE target-boundary foundation are separate readiness gates.
+
+- FRAMEONE Market geometry: `0 / 156`
+- FRAMEONE Submarket geometry: `0 / 382`
+- FRAMEONE Node geometry: `0 / 763`
+- Market living-grid crosswalk data rows: `0`
+- Market/Submarket living-population aggregation: `BLOCKED`
+
+The boundary evidence approval criteria and review artifact template are completed design/review documents only.
+
+They do not mean:
+
+- any actual Market/Submarket boundary has been approved
+- a boundary schema has been implemented
+- a boundary review UI has been implemented
+- an active boundary pointer has been implemented
+- a living-population aggregation has been performed
 
 ---
 
@@ -631,18 +682,28 @@ Government-support APIs and eligibility logic are planned for a later phase and 
 
 The current priority is to finish the Seoul-wide market-data foundation before expanding decision logic.
 
-Current sequence:
+Completed foundation sequence:
 
 1. `250m CELL_ID Geometry Reconciliation V1`
-2. Validate metric CELL_ID ↔ 250m geometry compatibility
-3. Decide safe living-population current snapshot publication
-4. Validate Market/Submarket aggregation readiness
-5. LOCALDATA bakery permit integration
-6. Public commercial-store source integration
-7. Data Source automatic update / change-watch foundation
-8. Seoul-wide Spatial Evidence E2 framework
-9. Submarket QA / readiness
-10. Candidate-store decision integration
+2. Official metric CELL_ID ↔ 250m geometry compatibility verification
+3. Living Population Source Current publication decision and source-only publication
+4. Market/Submarket living-population aggregation readiness review
+5. Boundary Evidence Approval V1 criteria document
+6. E3/E4 Boundary Review Artifact Template V1 design document
+7. E3/E4 Boundary Review Artifact Non-Spatial Dry-run
+
+Current actionable sequence without FRAMEONE geometry:
+
+1. `Boundary Review Policy Clarification V1`
+2. Decide whether to enter `Pilot Boundary Evidence Package V1` only after the policy clarification is completed.
+3. Continue independent source-foundation work only as a separately scoped task, such as LOCALDATA bakery permit integration.
+
+Blocked until verified FRAMEONE geometry or equivalent approved crosswalk evidence exists:
+
+1. Market/Submarket living-population aggregation
+2. Grid-to-Market/Submarket crosswalk publication
+3. Submarket spatial QA/readiness
+4. Candidate-store decision integration that depends on FRAMEONE spatial aggregation
 
 Important:
 
@@ -674,30 +735,29 @@ Do not begin these major modules until the current market-data foundation reache
 
 Next Codex task:
 
-`250m CELL_ID Geometry Reconciliation V1`
+`Boundary Review Policy Clarification V1`
 
 Primary objective:
 
-Safely compare:
+Clarify only the policy questions found during the completed non-spatial dry-run:
 
-- current living-population metric CELL_ID: `8,559`
-- existing 250m geometry CELL_ID: `10,125`
-
-Required classification:
-
-- `BOTH`
-- `METRIC_ONLY`
-- `GEOMETRY_ONLY`
+- separate status scopes that currently use `READY`
+- distinguish `NEEDS_REVIEW` from `REVIEW_REQUIRED`
+- define an E3 preflight state for requests without geometry
+- define Gate `NOT_EVALUATED` and stop-reason handling
+- define a Gate-to-decision matrix
+- distinguish E4 review evidence from E4 approved evidence
+- define required, conditional, and optional Evidence cardinality
+- define the common meaning of Confidence `A/B/C/D/E`
 
 Important rules:
 
-- Do not automatically interpret `GEOMETRY_ONLY` as population 0.
-- Do not modify the existing geometry.
-- Do not publish the living-population current pointer yet.
-- Do not aggregate to Market/Submarket yet.
-- First verify geometry source/version and CELL_ID compatibility.
-- Preserve evidence for all mismatch categories.
-- Do not assume the existing geometry and current living-population API are from the exact same source/version without proof.
+- Do not create actual Market/Submarket boundaries or Node coordinates.
+- Do not convert `manual_review` or `candidate` relationships to confirmed relationships.
+- Do not create a formal E3 Candidate or actual E4 approval.
+- Do not implement schema, UI, API, active pointer, Grid Crosswalk, or aggregation.
+- Preserve unresolved metadata and boundary-specific policy questions as `NEEDS_REVIEW` or `BLOCKED`.
+- Review entry into `Pilot Boundary Evidence Package V1` only after this policy clarification is complete.
 
 This task should remain narrow.
 
@@ -868,11 +928,20 @@ Existing geometry:
 - `LIVING_GRID_250M.geojson`
 - geometry count: `10,125`
 
-Known compatibility issue:
+Completed reconciliation:
 
-- metric CELL_ID count and geometry CELL_ID count do not match
-- existing historical key coverage also showed geometry-only and metric-only cases
-- this mismatch must be reconciled before spatial aggregation
+- `BOTH`: `8,558`
+- `METRIC_ONLY`: `1`
+- `GEOMETRY_ONLY`: `1,567`
+- Metric equation and geometry equation: valid
+- Official grid verification result: `READY`
+
+Remaining limits:
+
+- `METRIC_ONLY` cause remains `NEEDS_REVIEW`; its source rows and suppressed values remain preserved.
+- Official grid file-level publication/version metadata remains `NEEDS_REVIEW`.
+- Grid compatibility does not provide FRAMEONE Market/Submarket/Node geometry.
+- Market/Submarket spatial aggregation remains `BLOCKED`.
 
 Do not:
 
@@ -1058,7 +1127,7 @@ Branch:
 
 Current HEAD:
 
-`d595b51 feat: ingest seoul 250m living population snapshot`
+`f4db8f3 docs: define boundary review artifact template`
 
 Protected local files expected to remain modified:
 
@@ -1083,47 +1152,71 @@ Latest committed development chain:
 `d595b51`
 → Seoul 250m Living Population full source ingestion
 
-Next work must continue from this checkpoint.
+`e2f6fbe`
+→ Living Population Grid ID reconciliation
+
+`033b94c`
+→ Official Living Population Grid source verification
+
+`bc96b63`
+→ Validated Living Population Source Current publication
+
+`d861c6b`
+→ Market/Submarket aggregation readiness decision (`BLOCKED`)
+
+`b730808`
+→ FRAMEONE Boundary Evidence Approval V1 criteria
+
+`f4db8f3`
+→ E3/E4 Boundary Review Artifact Template V1 design
+
+Next work must continue from `f4db8f3` while preserving the existing protected local changes.
 
 ---
 
 ## 24. Next Safe Development Sequence
 
-Immediate:
+Completed and removed from the next-task queue:
 
-`250m CELL_ID Geometry Reconciliation V1`
+- `250m CELL_ID Geometry Reconciliation V1`
+- Official Living Population Grid source verification
+- Living Population Source Current publication decision and source-only publication
+- Market/Submarket Living Population Aggregation Readiness review
+- Boundary Evidence Approval V1 criteria document
+- E3/E4 Boundary Review Artifact Template V1 design document
+- E3/E4 Boundary Review Artifact Non-Spatial Dry-run
 
-Then, only if compatibility is sufficiently verified:
+Can proceed without FRAMEONE geometry, one narrowly scoped task at a time:
 
-`Living Population Current Snapshot Publication Decision`
+1. `Boundary Review Policy Clarification V1`
+   - status scope separation
+   - `NEEDS_REVIEW` vs `REVIEW_REQUIRED`
+   - E3 preflight state
+   - Gate `NOT_EVALUATED` and stop reason
+   - Gate-to-decision matrix
+   - E4 review evidence vs E4 approved evidence
+   - Evidence cardinality
+   - Confidence `A/B/C/D/E` definition
+2. Review entry into `Pilot Boundary Evidence Package V1` only after the policy clarification is complete.
+3. `LOCALDATA Bakery Permit Integration`
+4. `Public Commercial Store Source Integration`
+5. `Automatic Source Update / Change Watch`
+6. `Seoul-wide Spatial Evidence E2 Framework`
 
-Then:
+Blocked until verified FRAMEONE geometry or equivalent approved crosswalk evidence is available:
 
-`Market/Submarket Living Population Aggregation Readiness`
+1. Create actual Market/Submarket Polygon geometry
+2. Register an actual E3 Candidate
+3. Issue an actual E4 approval
+4. Promote geometry to `validated` or `verified_geometry`
+5. Create or change an active boundary pointer
+6. Copy an official commercial-district or administrative-dong Polygon as a FRAMEONE boundary
+7. Publish Grid-to-Market/Submarket relationships
+8. Aggregate living population to Market/Submarket
+9. Complete Submarket spatial QA/readiness
+10. Integrate FRAMEONE spatial aggregation into candidate-store decisions
 
-After living-population foundation:
-
-`LOCALDATA Bakery Permit Integration`
-
-Then:
-
-`Public Commercial Store Source Integration`
-
-Then:
-
-`Automatic Source Update / Change Watch`
-
-Then:
-
-`Seoul-wide Spatial Evidence E2 Framework`
-
-Then:
-
-`Submarket QA / Readiness`
-
-Then:
-
-`Candidate-store Decision Integration`
+Geometry-dependent work must remain `BLOCKED`; the completed approval criteria and review template do not satisfy the geometry gate.
 
 Do not skip compatibility gates merely to move faster.
 
