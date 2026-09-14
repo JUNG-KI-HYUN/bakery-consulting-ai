@@ -16,6 +16,7 @@ export const BASIC_LOCATION_ANALYSIS_UNIT_TYPES = [
   "FRAMEONE_MARKET",
   "FRAMEONE_SUBMARKET",
   "FRAMEONE_NODE",
+  "OFFICIAL_COMMERCIAL_AREA",
   "RADIUS_300M",
   "RADIUS_500M",
 ] as const;
@@ -93,7 +94,12 @@ export interface BasicLocationAnalysisUnit {
 export interface BasicLocationSource {
   sourceId: string | null;
   sourceName: string;
-  sourceType: "FRAMEONE_CANONICAL" | "EXTERNAL_PLATFORM" | "ANALYSIS_INPUT";
+  sourceType:
+    | "PUBLIC_DATA_OFFICIAL"
+    | "EXTERNAL_PLATFORM"
+    | "FRAMEONE_CANONICAL"
+    | "ANALYSIS_INPUT"
+    | "SYSTEM_CALCULATION";
 }
 
 export interface BasicLocationSourceReference {
@@ -160,6 +166,13 @@ export type BlockedResultInput = Omit<
   "valueType" | "confidenceReasons"
 > & {
   limitations: readonly [BasicLocationLimitation, ...BasicLocationLimitation[]];
+};
+
+export type UnavailableResultInput = Omit<
+  ResultBaseInput,
+  "valueType" | "confidenceReasons"
+> & {
+  missingReason: Exclude<BasicLocationMissingReason, "BLOCKED_BY_GEOMETRY">;
 };
 
 export class BasicLocationResultValidationError extends Error {
@@ -250,5 +263,20 @@ export function createGeometryBlockedResult(input: BlockedResultInput): BasicLoc
     confidence: "UNKNOWN",
     confidenceReasons: [],
     missingReason: "BLOCKED_BY_GEOMETRY",
+  }));
+}
+
+export function createUnavailableResult(input: UnavailableResultInput): BasicLocationResult {
+  validateBase(input);
+
+  return freezeResult(structuredClone({
+    ...input,
+    contractVersion: "FRAMEONE_BASIC_LOCATION_RESULT_V1",
+    resultId: resultIdFor(input),
+    value: null,
+    valueType: "UNKNOWN",
+    status: "NOT_AVAILABLE",
+    confidence: "UNKNOWN",
+    confidenceReasons: [],
   }));
 }
