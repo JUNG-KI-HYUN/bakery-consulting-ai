@@ -29,10 +29,12 @@ Review Artifact는 상태를 섞지 않고 다음을 따로 기록한다.
 |---|---|---|---|
 | Geometry | `geometryStatus=draft` | 변경하지 않음 | `validated` |
 | 공간 검증 | `verificationStatus=candidate` | 변경하지 않음 | `verified_geometry` |
-| Evidence level | Candidate 근거 `E3` | 완료된 Human Review evidence `E4` | 승인 artifact를 provenance로 연결 |
+| Evidence level | Candidate 근거 `E3` | 완료된 Human Review evidence `E4` | `E4 + reviewStatus=APPROVED`인 artifact를 provenance로 연결 |
 | Review decision | 검토 전 없음 | `APPROVED`, `REVIEW_REQUIRED`, `REJECTED` | `APPROVED`만 승격 후보 |
 
 `APPROVED` Review Artifact가 geometry를 직접 수정하지 않는다. 별도 승격/게시 단계가 승인된 정확한 `boundaryVersion`과 checksum을 확인한 뒤 상태를 변경해야 한다.
+
+`E4`는 사람이 review를 수행하고 판단 근거를 남겼다는 Evidence level이다. 승인 여부는 `reviewStatus`로 별도 표현하며, `E4`만으로 `APPROVED` 또는 geometry 승격을 뜻하지 않는다.
 
 ## 3. Review Artifact 최소 필드
 
@@ -55,7 +57,7 @@ Review Artifact는 상태를 섞지 않고 다음을 따로 기록한다.
 | `candidateState.verificationStatus` | 항상 | E3 입력은 `candidate` |
 | `candidateState.evidenceLevel` | 항상 | E3 입력은 `E3` |
 | `evidenceRefs` | 항상 | source/evidence를 복사하지 않고 참조 |
-| `gateResults` | 항상 | 각 Hard Gate의 판정과 근거 |
+| `gateResults` | 항상 | 각 Hard Gate의 `PASS`, `FAIL`, `NOT_EVALUATED` 판정과 근거; 미평가 시 stopReason과 선행 중단 Gate ID 또는 원인 포함 |
 | `conflicts` | 항상 | 없으면 빈 배열; 충돌 유형·상태·처리근거 |
 | `limitations` | 항상 | freshness, coverage, 미확인과 사용 제한 |
 | `review.reviewStatus` | 검토 완료 시 | 사람의 최종 결정 |
@@ -77,21 +79,22 @@ Review Artifact는 상태를 섞지 않고 다음을 따로 기록한다.
 
 ## 4. reviewStatus
 
-Boundary review 전용 구현 convention은 아직 없으므로 직전 Approval V1에서 제안한 최소 세 상태를 사용한다. Geometry status, 일반 Evidence `VerificationStatus`, Source/runtime health와 혼용하지 않는다.
+Boundary Review Policy Clarification V1에서 확정한 formal review의 세 상태를 사용한다. Geometry status, 일반 Evidence `VerificationStatus`, Source/runtime health와 혼용하지 않는다.
 
 ### `APPROVED`
 
-- 모든 필수 Hard Gate가 `PASS`다.
+- 9개 Hard Gate가 모두 `PASS`다.
 - 승인 차단 conflict가 없다.
 - 사람이 정확한 boundaryVersion/checksum을 명시적으로 승인했다.
-- E4 evidence가 완성됐다.
+- `evidenceLevel=E4`이고 `reviewStatus=APPROVED`다.
 - 별도 승격 단계에서만 `validated + verified_geometry`로 전환할 수 있다.
 
 ### `REVIEW_REQUIRED`
 
-- Candidate를 즉시 폐기할 정도는 아니지만 추가 evidence, 수정, 최신 Source 또는 현장 확인이 필요하다.
+- Preflight를 통과한 formal Candidate에 보완 가능한 문제가 있어 추가 evidence, 수정, 최신 Source 또는 현장 확인이 필요하다.
 - geometry는 `draft`, 검증 표현은 `candidate`로 유지한다.
 - 미해결 항목과 다음 확인사항을 `gateResults`, `conflicts`, `reviewNote`에 남긴다.
+- Candidate가 없거나 Preflight를 통과하지 못한 요청에는 사용하지 않는다.
 
 ### `REJECTED`
 
@@ -101,7 +104,14 @@ Boundary review 전용 구현 convention은 아직 없으므로 직전 Approval 
 
 ## 5. Hard Gate Checklist
 
-Gate 판정은 문서상 `PASS | FAIL | REVIEW_REQUIRED | NOT_APPLICABLE`을 사용한다. `NOT_APPLICABLE`에는 이유가 필요하며, 필수 Gate를 편의상 생략하는 값으로 사용하지 않는다.
+Gate 판정은 문서상 `PASS | FAIL | NOT_EVALUATED`만 사용한다.
+
+- `PASS`: Gate를 실제로 평가했고 승인 조건을 충족했다.
+- `FAIL`: Gate를 실제로 평가했고 승인 조건을 충족하지 못했다. 실패 원인이 보완 가능하면 formal `reviewStatus=REVIEW_REQUIRED`, 해당 Candidate version을 사용할 수 없으면 `reviewStatus=REJECTED`로 판단한다.
+- `NOT_EVALUATED`: 선행 Hard Gate 실패 또는 평가 입력 부재 때문에 Gate를 평가하지 못했다. `FAIL` 또는 `PASS`로 간주하지 않는다.
+- `NOT_EVALUATED`에는 `stopReason`과 선행 중단 Gate ID 또는 원인을 기록한다.
+- 9개 Hard Gate는 approval 시 모두 필수다. 평가하지 못한 Gate를 생략하거나 통과한 것으로 처리하지 않는다.
+- Gate 결과에는 `REVIEW_REQUIRED`를 사용하지 않는다. `REVIEW_REQUIRED`는 formal Candidate의 `reviewStatus`에만 사용한다.
 
 | Gate ID | GIS/Data 확인 | 직원이 확인할 실무 질문 | 승인 조건 |
 |---|---|---|---|
@@ -145,17 +155,18 @@ Soft Evidence의 양이나 긍정 점수는 `GEOMETRY_VALIDITY`, `IDENTITY_HIERA
 
 ## 7. Confidence 규칙
 
-Repository의 `DATA_SCHEMA.md`에는 `confidence = A/B/C/D/E` convention이 있다. 따라서 `HIGH/MEDIUM/LOW`를 새로 만들지 않는다.
+Repository의 `DATA_SCHEMA.md`에는 `confidence = A/B/C/D/E` convention이 있고, Boundary Review Policy Clarification V1은 Boundary review에서 사용할 공통 의미를 정의한다. 따라서 `HIGH/MEDIUM/LOW`를 새로 만들지 않는다.
 
 - 값은 `A | B | C | D | E | null`만 사용한다.
-- 기존 문서에 각 등급의 Boundary-specific 의미가 정의돼 있지 않으므로 이 템플릿에서 임의 의미나 자동 산식을 만들지 않는다.
+- 각 등급의 공통 의미는 Boundary Review Policy Clarification V1을 따르며 이 템플릿에서 별도 의미나 자동 산식을 만들지 않는다.
 - 검토 전 또는 근거 부족 시 `null`을 허용하며 임의로 D/E를 넣지 않는다.
 - 검토 완료 시 사람은 기존 convention에 따라 confidence를 기록한다.
 - confidence는 reviewStatus와 독립이다.
 - 어떤 confidence도 자동 승인이나 Hard Gate 우회를 허용하지 않는다.
+- confidence가 `A`여도 Hard Gate가 `FAIL` 또는 `NOT_EVALUATED`이면 `APPROVED`가 될 수 없다.
 - `APPROVED`라도 limitation과 재검토 필요시점은 별도로 보존한다.
 
-Boundary-specific A/B/C/D/E 의미가 필요하면 별도 policy 결정을 먼저 해야 한다.
+Confidence는 Policy Clarification V1의 공통 의미를 사용하되 각 판단의 근거와 limitation을 reviewNote에 남긴다.
 
 ## 8. Version 관리
 
@@ -234,11 +245,12 @@ Approval 조건:
 
 ## 11. Approval 규칙
 
-다음 식을 모두 만족해야 E4 승인으로 처리한다.
+다음 식을 모두 만족해야 E4 review 결과를 승인으로 처리한다.
 
 ```text
-모든 필수 Hard Gate = PASS
+9개 Hard Gate 전부 = PASS
 AND 승인 차단 conflict = 0
+AND evidenceLevel = E4
 AND human reviewStatus = APPROVED
 AND reviewer/reviewedAt/reviewNote 존재
 AND 검토한 boundaryVersion/checksum 일치
@@ -246,6 +258,8 @@ AND 검토한 boundaryVersion/checksum 일치
 
 추가 규칙:
 
+- Gate가 하나라도 `FAIL` 또는 `NOT_EVALUATED`이면 `APPROVED`는 불가능하다.
+- `E4`는 Human Review가 수행된 Evidence level이며 그 자체가 승인을 뜻하지 않는다.
 - Soft Evidence와 confidence는 Hard Gate 실패를 상쇄하지 않는다.
 - AI/System은 `HUMAN_APPROVAL`을 PASS로 만들거나 `APPROVED`를 부여할 수 없다.
 - `REVIEW_REQUIRED`는 실패를 숨기는 임시 승인 상태가 아니다.
