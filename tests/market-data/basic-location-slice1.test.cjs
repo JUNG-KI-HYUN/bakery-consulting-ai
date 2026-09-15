@@ -24,6 +24,9 @@ const {
   createAnalysisRunId,
   createAnalysisRunSnapshot,
 } = require("../../lib/market-data/basic-location/run.ts");
+const {
+  applyBasicLocationDisplayPolicy,
+} = require("../../lib/market-data/basic-location/display-policy.ts");
 
 // Synthetic fixtures only. No customer data, real location, geometry or claimed statistics.
 const UUID_A = "11111111-1111-4111-8111-111111111111";
@@ -170,4 +173,79 @@ test("Slice 1 guards invalid coordinates, radius and hierarchy mismatches", () =
   const input = canonicalInput();
   input.submarket.parentMarketId = "FIXTURE-OTHER-MARKET";
   assert.throws(() => adaptFrameoneCanonicalResults(input), /Submarket canonical hierarchy/);
+});
+
+test("Slice 4A.1: confirmed analysis address keeps its building-verification limitation", () => {
+  const run = createAnalysisRunSnapshot({
+    target: {
+      source: "address",
+      confirmedAddress: "Sample address",
+      latitude: 37.5,
+      longitude: 127,
+      radiusMeters: 300,
+    },
+    frameone: { marketId: "FIXTURE-MARKET", marketName: "Fixture Market" },
+  }, { randomUUID: () => UUID_A, now: () => FIXED_DATE });
+  const result = adaptAnalysisTargetResults(run).find(
+    (item) => item.metricKey === "analysis.target.confirmed_address",
+  );
+
+  assert.equal(result.customerDisplayPolicy, "CUSTOMER_WITH_NOTE");
+  assert.ok(result.limitations.some(
+    (item) => item.code === "ANALYSIS_ADDRESS_NOT_BUILDING_VERIFICATION",
+  ));
+  assert.equal(result.value, "Sample address");
+  assert.equal(result.primarySource.sourceType, "ANALYSIS_INPUT");
+  assert.equal(result.status, "AVAILABLE");
+  assert.equal(result.confidence, "HIGH");
+  assert.doesNotThrow(() => applyBasicLocationDisplayPolicy([result], "CUSTOMER"));
+});
+
+test("Slice 4A.1: FRAMEONE Node metadata retains its non-spatial limitation", () => {
+  const run = createAnalysisRunSnapshot({
+    target: {
+      source: "map",
+      confirmedAddress: null,
+      latitude: 37.5,
+      longitude: 127,
+      radiusMeters: 500,
+    },
+    frameone: {
+      districtId: "FIXTURE-DISTRICT",
+      districtName: "Fixture District",
+      marketId: "FIXTURE-MARKET",
+      marketName: "Fixture Market",
+      submarketId: "FIXTURE-SUBMARKET",
+      submarketName: "Fixture Submarket",
+      nodeId: "FIXTURE-NODE",
+      nodeName: "Fixture Node",
+    },
+  }, { randomUUID: () => UUID_B, now: () => FIXED_DATE });
+  const input = canonicalInput(run);
+  input.node = {
+    nodeId: "FIXTURE-NODE",
+    parentSubmarketId: "FIXTURE-SUBMARKET",
+    type: "MICRO_AREA",
+    name: "Fixture Node",
+    address: "Sample Node address",
+  };
+  const nodeResults = adaptFrameoneCanonicalResults(input).filter(
+    (item) => item.analysisUnit.type === "FRAMEONE_NODE",
+  );
+  const customerWithNote = nodeResults.filter(
+    (item) => item.customerDisplayPolicy === "CUSTOMER_WITH_NOTE",
+  );
+
+  assert.deepEqual(
+    customerWithNote.map((item) => item.metricKey),
+    ["frameone.node.type", "frameone.node.address"],
+  );
+  assert.ok(customerWithNote.every((item) => item.limitations.length >= 1));
+  assert.ok(customerWithNote.every((item) => item.limitations.some(
+    (limitation) => limitation.code === "FRAMEONE_NODE_LOCATION_UNVERIFIED",
+  )));
+  assert.ok(customerWithNote.every((item) => item.primarySource.sourceType === "FRAMEONE_CANONICAL"));
+  assert.ok(customerWithNote.every((item) => item.status === "AVAILABLE" && item.confidence === "HIGH"));
+  assert.ok(!nodeResults.some((item) => /latitude|longitude|geometry/.test(item.metricKey)));
+  assert.doesNotThrow(() => applyBasicLocationDisplayPolicy(nodeResults, "CUSTOMER"));
 });

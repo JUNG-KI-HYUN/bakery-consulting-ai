@@ -265,7 +265,7 @@ test("Slice 4A: CUSTOMER_WITH_NOTE without limitations is rejected for CUSTOMER"
   );
 });
 
-test("Slice 4A: existing target address Result exposes the known missing-limitation conflict", () => {
+test("Slice 4A.1: existing target address Result satisfies the customer note contract", () => {
   const snapshot = createAnalysisRunSnapshot({
     target: { source: "address", confirmedAddress: "Sample address", latitude: 37.5, longitude: 127, radiusMeters: 300 },
     frameone: { marketId: "SAMPLE-MARKET", marketName: "Sample Market" },
@@ -275,6 +275,8 @@ test("Slice 4A: existing target address Result exposes the known missing-limitat
   });
   const address = adaptAnalysisTargetResults(snapshot).find((item) => item.metricKey === "analysis.target.confirmed_address");
   assert.equal(address.customerDisplayPolicy, "CUSTOMER_WITH_NOTE");
-  assert.deepEqual(address.limitations, []);
-  assert.throws(() => applyBasicLocationDisplayPolicy([address], "CUSTOMER"), /고객용 limitation/);
+  assert.ok(address.limitations.some(
+    (item) => item.code === "ANALYSIS_ADDRESS_NOT_BUILDING_VERIFICATION",
+  ));
+  assert.doesNotThrow(() => applyBasicLocationDisplayPolicy([address], "CUSTOMER"));
 });

@@ -5,6 +5,7 @@ import {
   type BasicLocationAnalysisLayer,
   type BasicLocationAnalysisUnit,
   type BasicLocationCustomerDisplayPolicy,
+  type BasicLocationLimitation,
   type BasicLocationResult,
   type BasicLocationResultValue,
 } from "./results";
@@ -61,6 +62,18 @@ const FRAMEONE_SOURCE = {
   sourceType: "FRAMEONE_CANONICAL",
 } as const;
 
+const TARGET_ADDRESS_LIMITATION = {
+  code: "ANALYSIS_ADDRESS_NOT_BUILDING_VERIFICATION",
+  message: "분석 실행 시 확인한 주소이며 후보건물의 동일성, 실제 점포 위치 또는 출입구를 검증한 결과가 아닙니다.",
+  severity: "CAUTION",
+} as const satisfies BasicLocationLimitation;
+
+const FRAMEONE_NODE_LOCATION_LIMITATION = {
+  code: "FRAMEONE_NODE_LOCATION_UNVERIFIED",
+  message: "FRAMEONE Node는 내부 canonical 탐색 분류이며 현재 검증된 좌표나 geometry가 없어 실제 지점, 도보동선 또는 공간범위를 뜻하지 않습니다.",
+  severity: "CAUTION",
+} as const satisfies BasicLocationLimitation;
+
 function requireNonEmpty(value: string, path: string) {
   if (value.trim().length === 0) throw new Error(`${path}가 비어 있습니다.`);
 }
@@ -78,6 +91,7 @@ function availableResult(input: {
   locator: string;
   sourceVersion?: string | null;
   referenceDate?: string | null;
+  limitations?: readonly BasicLocationLimitation[];
   methodologyNote?: string | null;
 }) {
   return createAvailableResult({
@@ -106,7 +120,7 @@ function availableResult(input: {
       code: "EXECUTED_SNAPSHOT",
       message: "분석 실행 시점의 입력 또는 canonical 값을 그대로 보존했습니다.",
     }],
-    limitations: [],
+    limitations: [...(input.limitations ?? [])],
     fieldCheckRequired: false,
     fieldCheckKeys: [],
     customerDisplayPolicy: input.customerDisplayPolicy,
@@ -143,6 +157,7 @@ export function adaptAnalysisTargetResults(snapshot: AnalysisRunSnapshot): Basic
       metricLabel: "확인된 분석 주소",
       value: snapshot.target.confirmedAddress,
       customerDisplayPolicy: "CUSTOMER_WITH_NOTE",
+      limitations: [TARGET_ADDRESS_LIMITATION],
       methodologyNote: "주소는 분석 위치 식별 보조정보이며 실제 점포 출입구와 다를 수 있습니다.",
     }));
   }
@@ -156,6 +171,7 @@ function canonicalResult(
   metricLabel: string,
   value: Exclude<BasicLocationResultValue, null>,
   customerDisplayPolicy: BasicLocationCustomerDisplayPolicy,
+  limitations: readonly BasicLocationLimitation[] = [],
 ) {
   return availableResult({
     snapshot: input.snapshot,
@@ -169,6 +185,7 @@ function canonicalResult(
     locator: "data/seoul-market/v1.1-final/MARKET_HIERARCHY.json",
     sourceVersion: input.hierarchyVersion,
     referenceDate: input.hierarchyCheckedAt,
+    limitations,
     methodologyNote: "FRAMEONE 내부 canonical 분류이며 서울시 공식상권 분류가 아닙니다.",
   });
 }
@@ -255,11 +272,27 @@ export function adaptFrameoneCanonicalResults(input: FrameoneCanonicalAdapterInp
     results.push(
       canonicalResult(input, nodeUnit, "frameone.node.id", "FRAMEONE Node ID", node.nodeId, "INTERNAL_ONLY"),
       canonicalResult(input, nodeUnit, "frameone.node.name", "FRAMEONE Node", node.name, "CUSTOMER_READY"),
-      canonicalResult(input, nodeUnit, "frameone.node.type", "FRAMEONE Node 유형", node.type, "CUSTOMER_WITH_NOTE"),
+      canonicalResult(
+        input,
+        nodeUnit,
+        "frameone.node.type",
+        "FRAMEONE Node 유형",
+        node.type,
+        "CUSTOMER_WITH_NOTE",
+        [FRAMEONE_NODE_LOCATION_LIMITATION],
+      ),
       canonicalResult(input, nodeUnit, "frameone.node.parent_submarket_id", "상위 FRAMEONE Submarket ID", node.parentSubmarketId, "INTERNAL_ONLY"),
     );
     if (node.address) {
-      results.push(canonicalResult(input, nodeUnit, "frameone.node.address", "FRAMEONE Node 주소", node.address, "CUSTOMER_WITH_NOTE"));
+      results.push(canonicalResult(
+        input,
+        nodeUnit,
+        "frameone.node.address",
+        "FRAMEONE Node 주소",
+        node.address,
+        "CUSTOMER_WITH_NOTE",
+        [FRAMEONE_NODE_LOCATION_LIMITATION],
+      ));
     }
   }
 
