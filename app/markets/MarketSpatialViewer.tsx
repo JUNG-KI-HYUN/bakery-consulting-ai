@@ -583,6 +583,7 @@ export default function MarketSpatialViewer({
   onOpenMarketMap,
   marketSelector,
   onAnalysisContextChange,
+  onKakaoNearbySourceChange,
   analysisSummary,
   analysisConditionsRequest,
   onOpenAnalysisSummary,
@@ -594,6 +595,7 @@ export default function MarketSpatialViewer({
   onOpenMarketMap: () => void;
   marketSelector: React.ReactNode;
   onAnalysisContextChange?: (context: MarketAnalysisContext) => void;
+  onKakaoNearbySourceChange?: (state: KakaoNearbySearchState) => void;
   analysisSummary?: React.ReactNode;
   analysisConditionsRequest?: number;
   onOpenAnalysisSummary?: () => void;
@@ -1408,6 +1410,10 @@ export default function MarketSpatialViewer({
   useEffect(() => {
     onAnalysisContextChange?.(analysisContext);
   }, [analysisContext, onAnalysisContextChange]);
+
+  useEffect(() => {
+    onKakaoNearbySourceChange?.(kakaoNearby);
+  }, [kakaoNearby, onKakaoNearbySourceChange]);
 
   const kakaoOfficialMarketPolygons = useMemo(() => {
     if (!officialMarketLayer || !crosswalk) {

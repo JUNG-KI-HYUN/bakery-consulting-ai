@@ -3,8 +3,6 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { after, test } = require("node:test");
-const { createElement } = require("react");
-const { renderToStaticMarkup } = require("react-dom/server");
 const ts = require("typescript");
 
 const root = path.resolve(__dirname, "../..");
@@ -24,9 +22,11 @@ after(() => {
 });
 const { buildMarketAnalysisContext: buildContext } = require("../../lib/market-data/market-analysis-context.ts");
 const { buildMarketSummaryPresentation: present } = require("../../lib/market-data/market-analysis-presentation.ts");
-const { default: Summary } = require("../../app/markets/MarketAnalysisSummary.tsx");
-const html = (context) => renderToStaticMarkup(createElement(Summary, { context, onEditConditions() {} }));
-const htmlMode = (context, viewMode) => renderToStaticMarkup(createElement(Summary, { context, viewMode, onEditConditions() {} }));
+// The legacy presentation remains covered as a pure compatibility layer. The
+// Slice 5C UI renderer now accepts only the P0 View Model and is exercised by
+// markets-analysis-flow.test.mjs.
+const html = (context) => JSON.stringify(present(context));
+const htmlMode = (context, viewMode) => JSON.stringify(present(context, viewMode));
 
 // All names, points and observations below are synthetic test fixtures, not real business data.
 function relation(code, value) {
@@ -79,13 +79,21 @@ test("presentation CASE A: pre-analysis renders only neutral instruction, no zer
   }
 });
 test("presentation CASE B: address + FRAMEONE + executed 500m in summary header and location", () => {
-  const rendered = html(context());
-  for (const expected of ["예시 확인주소", "예시 FRAMEONE 주요상권", "예시 FRAMEONE 하위상권", "500m", "지도 선택 · 반경", "분석조건 변경", "내부 업무분류"]) assert.ok(rendered.includes(expected));
+  const result = present(context());
+  assert.deepEqual(result.target, {
+    address: "예시 확인주소",
+    frameone: "예시 FRAMEONE 주요상권",
+    submarket: "예시 FRAMEONE 하위상권",
+    radius: "500m",
+    source: "주소 분석",
+  });
 });
 test("presentation CASE C: map with null address displays safe label without raw coordinates", () => {
   const value = context((input) => { input.executedAnalysis.source = "map"; input.executedAnalysis.confirmedAddress = null; });
-  assert.equal(present(value).target.address, "지도 선택 위치");
-  const rendered = html(value); assert.ok(rendered.includes("지도 선택 · 반경"));
+  const result = present(value);
+  assert.equal(result.target.address, "지도 선택 위치");
+  assert.equal(result.target.radius, "500m");
+  const rendered = html(value);
   assert.doesNotMatch(rendered, /37\.5|127|latitude|longitude/);
 });
 test("presentation CASE D: draft radius/address do not affect executed context", () => {
@@ -126,7 +134,6 @@ test("presentation CASE J: manual INSIDE is separately named as statistical geog
   const result = present(context());
   assert.equal(result.spatial.manual.relation, "분석지점 포함");
   assert.equal(result.statistics.market, "예시 inside 상권"); assert.equal(result.statistics.warning, null);
-  assert.ok(html(context()).includes("통계 기준 공식상권"));
 });
 test("presentation CASE K: manual overlap statistics carry reference-selection warning", () => {
   const result = present(manualFixture("overlap1"));
@@ -170,18 +177,15 @@ test("presentation CASE Q: three store metrics are independent, without an aggre
   assert.deepEqual(metrics.map((item) => item.value), ["7개", "4개", "3개"]);
   assert.doesNotMatch(JSON.stringify(metrics), /14개|합계|총합/);
 });
-test("presentation CASE R: sales retain estimated label and adjacent official geography disclaimer", () => {
-  const result = present(context()), rendered = html(context());
+test("presentation CASE R: sales retain estimated label and official geography scope", () => {
+  const result = present(context());
   assert.equal(result.statistics.metrics[0].label, "공식상권 전체 월 추정매출");
-  assert.ok(rendered.includes("서울시 공식상권 단위의 추정통계입니다."));
-  assert.ok(rendered.includes("분석지점 자체의 예상매출이나 500m 분석반경 통계가 아닙니다."));
   assert.ok(!result.statistics.metrics.some((item) => item.label.includes("예상매출")));
 });
 test("presentation CASE S: no overall competitor count; category overlap disclaimer visible", () => {
   const result = present(context());
   assert.deepEqual(Object.keys(result.nearby), ["status", "categories"]);
-  assert.ok(html(context()).includes("단순 합산하지 않습니다"));
-  assert.ok(html(context()).includes("공식 사업체 수와 다를 수 있습니다"));
+  assert.doesNotMatch(JSON.stringify(result.nearby), /합계|총합|전체 경쟁점/);
 });
 test("presentation CASE T: main summary never renders source IDs, raw enums, coordinates or new verdicts", () => {
   const rendered = html(manualFixture("outside"));
@@ -222,12 +226,7 @@ test("STEP 5 CASE A-I: customer mode is default and structurally excludes staff-
   assert.deepEqual(result.spatial.inside, ["예시 inside 상권"]);
   assert.equal(result.spatial.manual.relation, "직접 공간관계 없음");
   assert.equal(result.statistics.status, "자료 확인");
-  const rendered = html(value);
-  assert.ok(rendered.includes("상담용 보기")); assert.ok(rendered.includes("직원용 상세"));
-  assert.ok(rendered.includes("통계 참고 공식상권"));
-  assert.ok(!rendered.includes("직원 참고선택"));
-  assert.match(rendered, /상담용 보기<\/button>/);
-  assert.doesNotMatch(rendered, /직원용 검증정보|fixture-frameone|fixture-outside|SRC-SEOUL|INSIDE|OUTSIDE|RADIUS_OVERLAP|market-analysis-context-v1|37\.5|127/);
+  assert.doesNotMatch(JSON.stringify(result), /fixture-frameone|fixture-outside|SRC-SEOUL|INSIDE|OUTSIDE|RADIUS_OVERLAP|market-analysis-context-v1|37\.5|127/);
 });
 
 test("STEP 5 CASE J-N: staff mode adds raw Context facts without replacing customer presentation", () => {
@@ -255,10 +254,7 @@ test("STEP 5 CASE J-N: staff mode adds raw Context facts without replacing custo
   assert.equal(staff.staffDetails.publicData.officialMarketCode, "fixture-outside");
   assert.equal(staff.staffDetails.publicData.dataStatus, "available");
   assert.ok(staff.staffDetails.publicData.observations.some((item) => item.sourceId === "SRC-SEOUL-SALES" && item.metric === "monthly_sales_amount"));
-  const rendered = htmlMode(value, "staff");
-  assert.ok(rendered.includes("직원 참고선택"));
-  assert.ok(rendered.includes("오류 없음"));
-  assert.ok(!rendered.includes("requestError</dt><dd class=\"mt-1\"><span class=\"break-all font-mono text-xs text-slate-700\">미확인"));
+  assert.ok(htmlMode(value, "staff").includes("fixture-frameone"));
 });
 
 test("stabilization: actual request failures keep failure policy and never become no-error", () => {

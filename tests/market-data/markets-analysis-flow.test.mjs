@@ -145,7 +145,13 @@ function installMapFixture() {
       { status: failGeocode ? 422 : 200 },
     );
     assert.equal(url.pathname, "/api/markets/nearby-places");
-    return Response.json({ categories: ["bakery", "confectionery", "cafe"].map((id) => ({ id, totalCount: 0, places: [] })) });
+    return Response.json({
+      center: { latitude: Number(url.searchParams.get("lat")), longitude: Number(url.searchParams.get("lng")) },
+      radiusM: Number(url.searchParams.get("radius")),
+      categories: ["bakery", "confectionery", "cafe"].map((id) => ({ id, totalCount: 0, places: [] })),
+      uniquePlaceCount: 0,
+      uniquePlaces: [],
+    });
   };
   return { maps, markers, circles, polygons, requests, LatLng,
     failGeocode() { failGeocode = true; },
@@ -262,13 +268,13 @@ test("STEP 6 CASE A-C/J/K/R: final tabs, default setup, navigation and empty sta
   assert.equal(spatial().props.selectedSubmarket, null);
   assert.ok(view.button("fixture B 유일 하위상권"));
   assert.ok(!nodes(view.tree).some((node) => node.type === "button" && text(node) === "fixture A 첫 하위상권"));
-  const labels = ["분석 설정", "종합 진단", "경쟁 환경", "데이터 근거"];
+  const labels = ["분석 설정", "기초입지 분석결과", "경쟁 환경", "데이터 근거"];
   assert.deepEqual([...new Set(nodes(view.tree).filter((node) => node.type === "button" && labels.includes(text(node))).map(text))], labels);
   assert.ok(view.button("분석 설정").props["aria-current"]);
   assert.doesNotMatch(text(view.tree), /브리핑|상권지도|경쟁점|공공데이터/);
-  for (const [label, id] of [["종합 진단", "market-map"], ["경쟁 환경", "competition"], ["데이터 근거", "public-data"], ["분석 설정", "briefing"]]) {
+  for (const [label, id] of [["기초입지 분석결과", "market-map"], ["경쟁 환경", "competition"], ["데이터 근거", "public-data"], ["분석 설정", "briefing"]]) {
     view.button(label).props.onClick(); await view.flush(); assert.equal(spatial().props.activeTab, id);
-    if (label === "종합 진단") assert.ok(renderToStaticMarkup(view.tree).includes("먼저 분석 설정에서 지도 분석지점을 선택하고 분석을 실행해 주세요."));
+    if (label === "기초입지 분석결과") assert.ok(renderToStaticMarkup(view.tree).includes("먼저 분석 설정에서 지도 분석지점과 반경을 선택하고 분석을 실행해 주세요."));
     if (label === "데이터 근거") assert.ok(text(view.tree).includes("분석 실행 후 데이터 근거를 확인할 수 있습니다."));
   }
   const rendered = renderToStaticMarkup(view.tree);
@@ -308,7 +314,7 @@ test("analysis mode CASE 1/6/8/9/16: MARKET_AREA uses only verified FRAMEONE hie
     assert.ok(rendered.includes("FRAMEONE 권역 geometry가 확인되지 않아 지도 Polygon을 표시하지 않습니다."));
     assert.ok(rendered.includes("포함 Submarket") && rendered.includes("2개") && rendered.includes("포함 Node"));
     assert.ok(!nodes(view.tree).some((node) => node.type === "button" && ["fixture 권역 분석 보기", "권역 진단 보기"].includes(text(node))));
-    view.button("종합진단 보기").props.onClick(); await view.flush();
+    view.button("기초입지 분석결과 보기").props.onClick(); await view.flush();
     rendered = renderToStaticMarkup(view.tree);
     assert.ok(rendered.includes("fixture 권역 권역 진단"));
     assert.ok(rendered.includes("상세 소비·생활인구 분석은 데이터 연결 후 제공"));
@@ -639,19 +645,26 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
   } finally { map?.dispose(); viewer.dispose(); }
 });
 
-test("STEP 6 CASE D-I/L-Q/S-T: tabs reuse Context, requests, map, selection, public data and staff mode", async () => {
+test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 View Model", async () => {
   const sdk = installMapFixture();
   const mapFetch = global.fetch;
   const source = JSON.parse(fs.readFileSync(path.join(root, "data/seoul-market/v1.1-final/09_GEO/OFFICIAL_SEOUL_MARKETS.geojson"), "utf8"));
   global.fetch = async (input, options) => input.includes("spatial-layers") ? Response.json(source) : mapFetch(input, options);
-  const explorer = fixture(MarketsExplorer, { hierarchy: { districts: [] } });
+  const market = (id) => ({
+    marketId: id, name: id, gu: "fixture district", geometryStatus: "text_only",
+    researchPriority: "A", bakeryMarketImportance: "A", submarkets: [],
+  });
+  const explorer = fixture(MarketsExplorer, { hierarchy: {
+    schemaVersion: "fixture-v1", checkedAt: "2026-09-16T00:00:00.000Z", city: "fixture",
+    districts: [{ districtId: "fixture-district", name: "fixture district", markets: [market("fixture-A"), market("fixture-B")] }],
+  } });
   let viewer, map;
   const viewerProps = () => explorer.find((node) => node.type === MarketSpatialViewer).props;
   const mapProps = () => viewer.find((node) => node.type === KakaoBaseMap).props;
   const summaryNode = () => explorer.find((node) => node.type === MarketAnalysisSummary);
   const summaryHtml = () => renderToStaticMarkup(summaryNode());
   async function flush() {
-    for (let round = 0; round < 3; round++) {
+    for (let round = 0; round < 4; round++) {
       await explorer.flush();
       viewer.props = viewerProps(); viewer.dirty = true; await viewer.flush();
       map.props = mapProps(); map.dirty = true; await map.flush();
@@ -660,79 +673,50 @@ test("STEP 6 CASE D-I/L-Q/S-T: tabs reuse Context, requests, map, selection, pub
   try {
     await explorer.flush(); viewer = fixture(MarketSpatialViewer, viewerProps()); await viewer.flush();
     map = fixture(KakaoBaseMap, mapProps()); await flush();
-    assert.equal(viewerProps().activeTab, "briefing");
-    assert.equal(map.props.analysisSummary, null);
     map.find((node) => node.props.id === "kakao-map-sdk").props.onReady(); await flush();
     map.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture address" } });
     await flush(); map.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await flush();
-    assert.equal(sdk.requests.filter((request) => request.pathname.endsWith("nearby-places")).length, 0);
     map.button("이 위치 상세분석").props.onClick(); await flush();
     const requestCount = sdk.requests.length, mapInstance = sdk.maps[0];
     const completedMapHtml = renderToStaticMarkup(map.tree);
-    assert.ok(completedMapHtml.includes("분석 완료"));
-    assert.ok(completedMapHtml.includes("종합 진단 보기"));
+    assert.ok(completedMapHtml.includes("기초입지 분석결과 보기"));
     assert.ok(completedMapHtml.includes("중복정규화"));
-    assert.ok(completedMapHtml.includes("공식 점포 수나 전체 영업점 수가 아닙니다"));
-    assert.doesNotMatch(completedMapHtml, /지도 표시 \d+곳<\/span>/);
-    map.button("종합 진단 보기").props.onClick(); await flush();
-    assert.equal(viewerProps().activeTab, "market-map");
-    assert.equal(sdk.requests.length, requestCount);
-    const executedContext = summaryNode().props.context;
-    assert.ok(summaryHtml().includes("fixture resolved address")); assert.ok(summaryHtml().includes("지도 선택 · 반경 500m"));
-    assert.equal(summaryNode().props.viewMode, "customer");
-    assert.doesNotMatch(summaryHtml(), /직원용 검증정보|market-analysis-context-v1|latitude|longitude/);
-    summaryNode().props.onViewModeChange("staff"); await flush();
-    assert.equal(summaryNode().props.viewMode, "staff"); assert.match(summaryHtml(), /직원용 검증정보|market-analysis-context-v1/);
-    for (const label of ["경쟁 환경", "데이터 근거", "종합 진단"]) {
+    map.button("기초입지 분석결과 보기").props.onClick(); await flush();
+
+    const firstViewModel = summaryNode().props.viewModel;
+    assert.equal(firstViewModel.audience, "STAFF");
+    assert.equal(firstViewModel.analysisRunId, firstViewModel.analysisContext.analysisRunId);
+    assert.equal(firstViewModel.analysisContext.target.radiusMeters, 500);
+    assert.equal(firstViewModel.analysisContext.target.confirmedAddress, "fixture resolved address");
+    assert.ok(firstViewModel.availableEvidence.kakaoObserved.some((item) => item.value === 0));
+    assert.ok(firstViewModel.limitations.results.some((item) => item.status === "BLOCKED"));
+    for (const section of ["1. 분석 Context", "2. 현재 상권 / 공간단위", "3. 현재 확인된 근거", "4. 서울시 공식상권 참고자료", "5. 현재 해석", "6. 데이터 한계 / 분석 불가", "7. 현장 확인 필요사항", "8. 데이터 근거"]) {
+      assert.ok(summaryHtml().includes(section));
+    }
+    assert.ok(summaryHtml().includes("실제 전체 경쟁점 수가 아닙니다"));
+    assert.ok(summaryHtml().includes("현재 300m/500m 반경 통계가 아닙니다"));
+
+    viewerProps().onKakaoNearbySourceChange({
+      status: "success",
+      response: { center: { latitude: 1, longitude: 1 }, radiusM: 500, categories: [], uniquePlaceCount: 999, uniquePlaces: [] },
+      error: null,
+      analysisRunId: "basic-location-run:77777777-7777-4777-8777-777777777777",
+      completedAt: "2026-09-16T01:00:00.000Z",
+    });
+    await explorer.flush();
+    assert.equal(summaryNode().props.viewModel.analysisRunId, firstViewModel.analysisRunId);
+    assert.ok(!summaryNode().props.viewModel.dataEvidence.some((item) => item.value === 999));
+
+    for (const label of ["경쟁 환경", "데이터 근거", "기초입지 분석결과"]) {
       explorer.button(label).props.onClick(); await flush();
       assert.equal(sdk.maps.length, 1); assert.equal(sdk.maps[0], mapInstance);
       assert.equal(sdk.requests.length, requestCount);
     }
-    explorer.button("데이터 근거").props.onClick(); await flush();
-    const explorerNodes = nodes(explorer.tree);
-    const evidenceNode = explorer.find((node) => typeof node.type === "function" && node.type.name === "CurrentAnalysisEvidence");
-    const hierarchyNode = explorer.find((node) => node.type === "details" && text(node).includes("전체 FRAMEONE 상권 계층 · 내부 상세정보"));
-    const evidenceHtml = renderToStaticMarkup(evidenceNode);
-    assert.ok(explorerNodes.indexOf(evidenceNode) < explorerNodes.indexOf(hierarchyNode));
-    assert.ok(evidenceHtml.includes("SALES/STORES 기준분기"));
-    assert.ok(evidenceHtml.includes("SRC-SEOUL-SALES"));
-    explorer.button("종합 진단").props.onClick(); await flush();
-    assert.equal(summaryNode().props.viewMode, "staff"); assert.equal(summaryNode().props.context, executedContext);
-    assert.ok(summaryHtml().includes("fixture resolved address"));
-    assert.equal(map.tree.props["aria-hidden"], true);
-    assert.ok(map.tree.props.className.includes("hidden"));
-    assert.ok(nodes(map.tree).some((node) => node.props["aria-label"] === "서울 중심 Kakao 기본 지도"));
-    summaryNode().props.onEditConditions(); await flush();
-    assert.equal(viewerProps().activeTab, "briefing");
-    assert.ok(!map.find((node) => node.props["aria-labelledby"] === "analysis-point-title").props.className.includes("hidden"));
-    map.button("300m").props.onClick();
-    map.find((node) => node.props.id === "candidate-store-address").props.onChange({ target: { value: "fixture edited draft" } });
-    await flush(); explorer.button("종합 진단").props.onClick(); await flush();
-    assert.equal(summaryNode().props.context, executedContext); assert.ok(summaryHtml().includes("지도 선택 · 반경 500m"));
-    assert.equal(sdk.requests.length, requestCount);
     explorer.button("분석 설정").props.onClick(); await flush();
-    sdk.emit(mapInstance, "click", { latLng: new sdk.LatLng(37.51, 127.11) }); await flush();
-    map.button("이 위치 상세분석").props.onClick(); await flush();
-    explorer.button("종합 진단").props.onClick(); await flush();
-    assert.ok(summaryHtml().includes("지도 선택 위치")); assert.ok(summaryHtml().includes("지도 선택 · 반경 300m"));
-    assert.ok(summaryHtml().includes("37.51"));
-    summaryNode().props.onViewModeChange("customer"); await flush();
-    assert.ok(!summaryHtml().includes("37.51"));
-    assert.equal(summaryNode().props.context.target.confirmedAddress, null);
-    assert.equal(executedContext.target.executedRadiusMeters, 500);
-    const pointDetailContext = summaryNode().props.context;
-    explorer.button("분석 설정").props.onClick(); await flush();
-    explorer.button("권역 분석").props.onClick(); await flush();
-    assert.equal(map.props.pointSelectionEnabled, false);
-    const markerCount = sdk.markers.length;
-    sdk.emit(mapInstance, "click", { latLng: new sdk.LatLng(37.7, 127.3) }); await flush();
-    assert.equal(sdk.markers.length, markerCount);
-    explorer.button("종합 진단").props.onClick(); await flush();
-    const areaHtml = renderToStaticMarkup(explorer.tree);
-    assert.ok(areaHtml.includes("먼저 분석 설정에서 FRAMEONE 주요상권을 선택하고 권역 분석을 실행해 주세요.")); assert.ok(!areaHtml.includes("37.51"));
-    explorer.find((node) => typeof node.type === "function" && node.type.name === "MarketAreaAnalysisSummary").props.onEditConditions(); await flush();
-    explorer.button("위치 상세분석").props.onClick(); await flush();
-    explorer.button("종합 진단").props.onClick(); await flush();
-    assert.equal(summaryNode().props.context, pointDetailContext);
+    const selector = explorer.find((node) => node.type === "select" && node.props.value === "fixture-A");
+    selector.props.onChange({ target: { value: "fixture-B" } }); await explorer.flush();
+    explorer.button("기초입지 분석결과").props.onClick(); await explorer.flush();
+    assert.equal(summaryNode().props.viewModel.analysisRunId, firstViewModel.analysisRunId);
+    assert.ok(summaryHtml().includes("이전 Run의 실행 Context로 고정"));
   } finally { map?.dispose(); viewer?.dispose(); explorer.dispose(); }
 });

@@ -3,11 +3,24 @@
 import { useCallback, useMemo, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
 import MarketAnalysisSummary from "./MarketAnalysisSummary";
-import type { MarketAnalysisContext } from "@/lib/market-data/market-analysis-context";
+import type {
+  KakaoNearbySearchState,
+  MarketAnalysisContext,
+} from "@/lib/market-data/market-analysis-context";
+import { buildMarketSummaryPresentation } from "@/lib/market-data/market-analysis-presentation";
 import {
-  buildMarketSummaryPresentation,
-  type MarketAnalysisViewMode,
-} from "@/lib/market-data/market-analysis-presentation";
+  adaptAnalysisTargetResults,
+  adaptFrameoneCanonicalResults,
+  buildGeometryDependentBlockedResults,
+} from "@/lib/market-data/basic-location/adapters";
+import { adaptKakaoNearbyResults } from "@/lib/market-data/basic-location/kakao-nearby-adapter";
+import { adaptOfficialCommercialAreaRelationResults } from "@/lib/market-data/basic-location/official-commercial-area-adapter";
+import { adaptOfficialMarketStatisticsResults } from "@/lib/market-data/basic-location/official-market-stats-adapter";
+import { collectBasicLocationResults } from "@/lib/market-data/basic-location/result-collection";
+import { applyBasicLocationDisplayPolicy } from "@/lib/market-data/basic-location/display-policy";
+import { buildBasicLocationInterpretation } from "@/lib/market-data/basic-location/interpretation";
+import { buildP0BasicLocationViewModel } from "@/lib/market-data/basic-location/view-model";
+import { getSpatialLayerDefinition } from "./spatial-layer-registry";
 
 export type MarketsWorkspaceTab =
   | "briefing"
@@ -32,7 +45,7 @@ const WORKSPACE_TABS: ReadonlyArray<{
   label: string;
 }> = [
   { id: "briefing", label: "분석 설정" },
-  { id: "market-map", label: "종합 진단" },
+  { id: "market-map", label: "기초입지 분석결과" },
   { id: "competition", label: "경쟁 환경" },
   { id: "public-data", label: "데이터 근거" },
 ];
@@ -292,8 +305,14 @@ export default function MarketsExplorer({
   const [activeTab, setActiveTab] =
     useState<MarketsWorkspaceTab>("briefing");
   const [analysisContext, setAnalysisContext] = useState<MarketAnalysisContext | null>(null);
+  const [kakaoNearbySource, setKakaoNearbySource] = useState<KakaoNearbySearchState>({
+    status: "idle",
+    response: null,
+    error: null,
+    analysisRunId: null,
+    completedAt: null,
+  });
   const [analysisConditionsRequest, setAnalysisConditionsRequest] = useState(0);
-  const [viewMode, setViewMode] = useState<MarketAnalysisViewMode>("customer");
   const [analysisMode, setAnalysisMode] = useState<MarketAnalysisMode>("point-detail");
   const [marketAreaAnalysis, setMarketAreaAnalysis] = useState<MarketAreaAnalysisSnapshot | null>(null);
   const handleAnalysisContextChange = useCallback((nextContext: MarketAnalysisContext) => {
@@ -301,6 +320,11 @@ export default function MarketsExplorer({
       if (current?.target && !nextContext.target) return current;
       return sameAnalysisContext(current, nextContext) ? current : nextContext;
     });
+  }, []);
+  const handleKakaoNearbySourceChange = useCallback((nextState: KakaoNearbySearchState) => {
+    setKakaoNearbySource((current) =>
+      JSON.stringify(current) === JSON.stringify(nextState) ? current : nextState,
+    );
   }, []);
 
   const allMarkets = useMemo(
@@ -419,6 +443,150 @@ export default function MarketsExplorer({
     analysisContext.frameone.selectedMarketId !== (selectedMarket?.marketId ?? null) ||
     analysisContext.frameone.selectedSubmarketId !== (selectedSubmarket?.submarketId ?? null)
   ));
+  const basicLocationViewModel = useMemo(() => {
+    const snapshot = analysisContext?.runSnapshot ?? null;
+    if (
+      snapshot === null ||
+      analysisContext?.analysisRunId !== snapshot.analysisRunId
+    ) {
+      return null;
+    }
+
+    const runDistrict = hierarchy.districts.find((district) =>
+      district.districtId === snapshot.frameone.districtId,
+    );
+    const runMarket = runDistrict?.markets.find((market) =>
+      market.marketId === snapshot.frameone.marketId,
+    );
+    const runSubmarket = snapshot.frameone.submarketId
+      ? runMarket?.submarkets.find((submarket) =>
+          submarket.submarketId === snapshot.frameone.submarketId,
+        )
+      : null;
+    const runNode = snapshot.frameone.nodeId
+      ? runSubmarket?.nodes.find((node) => node.nodeId === snapshot.frameone.nodeId)
+      : null;
+    const officialLayer = getSpatialLayerDefinition("seoul-official-markets");
+    if (
+      !runDistrict ||
+      !runMarket ||
+      (snapshot.frameone.submarketId && !runSubmarket) ||
+      (snapshot.frameone.nodeId && !runNode) ||
+      !officialLayer?.geometryVersion
+    ) {
+      return null;
+    }
+
+    const targetResults = adaptAnalysisTargetResults(snapshot);
+    const frameoneResults = adaptFrameoneCanonicalResults({
+      snapshot,
+      district: runDistrict,
+      market: runMarket,
+      submarket: runSubmarket,
+      node: runNode,
+      hierarchyVersion: hierarchy.schemaVersion,
+      hierarchyCheckedAt: hierarchy.checkedAt,
+    });
+    const blockedResults = buildGeometryDependentBlockedResults(snapshot);
+    const currentKakaoSource = kakaoNearbySource.analysisRunId === snapshot.analysisRunId
+      ? kakaoNearbySource
+      : {
+          status: "idle" as const,
+          response: null,
+          error: null,
+          analysisRunId: snapshot.analysisRunId,
+          completedAt: null,
+        };
+    const kakaoResults = adaptKakaoNearbyResults({
+      snapshot,
+      searchState: currentKakaoSource,
+      fetchedAt: currentKakaoSource.completedAt ?? snapshot.createdAt,
+    }).results;
+    const relationResults = adaptOfficialCommercialAreaRelationResults({
+      snapshot,
+      status: analysisContext.officialMarkets.status,
+      results: analysisContext.officialMarkets.relatedMarkets === null
+        ? null
+        : [
+            ...analysisContext.officialMarkets.relatedMarkets,
+            ...(analysisContext.officialMarkets.unknownMarkets ?? []),
+          ],
+      error: analysisContext.officialMarkets.error,
+      geometryVersion: officialLayer.geometryVersion,
+      sourceDate: null,
+      evaluatedAt:
+        analysisContext.sourceCompletion.officialRelationCompletedAt ??
+        snapshot.createdAt,
+      relationMethodologyVersion: "official-market-spatial-relation-v1",
+    });
+
+    const officialData = analysisContext.publicData.selectedOfficialMarketData;
+    const officialMarketName = officialData?.officialMarketName ??
+      analysisContext.officialMarkets.manuallySelected?.marketName ?? null;
+    const officialStatsResults = officialData && officialMarketName
+      ? adaptOfficialMarketStatisticsResults({
+          snapshot,
+          officialMarketCode: officialData.officialMarketCode,
+          officialMarketName,
+          sales: {
+            status: analysisContext.publicData.requestStatus,
+            referencePeriod: officialData.referencePeriod,
+            observations: officialData.sales,
+            error: analysisContext.publicData.error,
+            fetchedAt:
+              analysisContext.sourceCompletion.officialStatsCompletedAt ??
+              snapshot.createdAt,
+          },
+          stores: {
+            status: analysisContext.publicData.requestStatus,
+            referencePeriod: officialData.referencePeriod,
+            observations: officialData.stores,
+            error: analysisContext.publicData.error,
+            fetchedAt:
+              analysisContext.sourceCompletion.officialStatsCompletedAt ??
+              snapshot.createdAt,
+          },
+          trend: {
+            status: analysisContext.publicData.requestStatus,
+            trend: officialData.officialTrend
+              ? {
+                  ...officialData.officialTrend,
+                  periods: officialData.officialTrend.periods.map((period) => ({
+                    ...period,
+                  })),
+                }
+              : null,
+            error: analysisContext.publicData.error,
+            fetchedAt:
+              analysisContext.sourceCompletion.officialStatsCompletedAt ??
+              snapshot.createdAt,
+          },
+        })
+      : [];
+
+    const results = collectBasicLocationResults({
+      analysisRunId: snapshot.analysisRunId,
+      resultGroups: {
+        target: targetResults,
+        frameone: frameoneResults,
+        blocked: blockedResults,
+        kakao: kakaoResults,
+        officialRelation: relationResults,
+        officialStats: officialStatsResults,
+      },
+    });
+    const displayableResults = applyBasicLocationDisplayPolicy(results, "STAFF");
+    const interpretation = buildBasicLocationInterpretation({
+      analysisRunId: snapshot.analysisRunId,
+      results: displayableResults.map(({ result }) => result),
+    });
+    return buildP0BasicLocationViewModel({
+      analysisRunId: snapshot.analysisRunId,
+      audience: "STAFF",
+      displayableResults,
+      interpretation,
+    });
+  }, [analysisContext, hierarchy, kakaoNearbySource]);
 
   return (
     <div className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1600px] -translate-x-1/2 overflow-x-clip">
@@ -554,7 +722,7 @@ export default function MarketsExplorer({
           {[
             ["1", "FRAMEONE 주요상권 선택"],
             ["2", "지도 분석지점 선택"],
-            ["3", "종합 진단 확인"],
+            ["3", "기초입지 분석결과 확인"],
           ].map(([step, label], index) => (
             <li key={step} className="contents">
               <span className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2">
@@ -606,7 +774,7 @@ export default function MarketsExplorer({
                 });
                 setActiveTab("market-map");
               }} className="mt-4 min-h-11 rounded-lg bg-slate-900 px-4 text-sm font-bold text-white">
-                종합진단 보기
+                기초입지 분석결과 보기
               </button>
             </>
           ) : null}
@@ -625,10 +793,8 @@ export default function MarketsExplorer({
       {activeTab === "market-map" ? (
         analysisMode === "market-area" ? <MarketAreaAnalysisSummary snapshot={marketAreaAnalysis} onEditConditions={() => setActiveTab("briefing")} /> :
           <MarketAnalysisSummary
-            context={analysisContext}
+            viewModel={basicLocationViewModel}
             contextStale={pointContextStale}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
             onEditConditions={() => {
               setActiveTab("briefing");
               setAnalysisConditionsRequest((request) => request + 1);
@@ -655,6 +821,7 @@ export default function MarketsExplorer({
         activeTab={activeTab}
         onOpenMarketMap={() => setActiveTab("briefing")}
         onAnalysisContextChange={handleAnalysisContextChange}
+        onKakaoNearbySourceChange={handleKakaoNearbySourceChange}
         analysisConditionsRequest={analysisConditionsRequest}
         onOpenAnalysisSummary={() => setActiveTab("market-map")}
         analysisSummary={null}

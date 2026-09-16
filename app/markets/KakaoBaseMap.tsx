@@ -754,7 +754,7 @@ export default function KakaoBaseMap({
                 <>
                   <span role="status" className="rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-bold text-emerald-800">분석 완료</span>
                   {onOpenAnalysisSummary ? (
-                    <button type="button" onClick={onOpenAnalysisSummary} className="min-h-11 rounded-lg bg-slate-900 px-4 text-xs font-bold text-white">종합 진단 보기</button>
+                    <button type="button" onClick={onOpenAnalysisSummary} className="min-h-11 rounded-lg bg-slate-900 px-4 text-xs font-bold text-white">기초입지 분석결과 보기</button>
                   ) : null}
                 </>
               ) : null}
