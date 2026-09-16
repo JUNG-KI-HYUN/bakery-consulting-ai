@@ -6,6 +6,7 @@ import type {
   BakeryOfficialMarketData,
   BakeryOfficialMarketDataStatus,
 } from "./services/bakery-official-market";
+import type { AnalysisRunSnapshot } from "./basic-location/run";
 
 export type MarketAnalysisRequestStatus = "idle" | "loading" | "success" | "error";
 
@@ -48,6 +49,21 @@ export interface KakaoNearbySearchState {
   status: MarketAnalysisRequestStatus;
   response: NearbyPlacesResponse | null;
   error: string | null;
+  analysisRunId: string | null;
+  completedAt: string | null;
+}
+
+export interface RunBoundSourceUpdate {
+  analysisRunId: string | null;
+}
+
+/** Reject a late Source update without mutating either the active or incoming state. */
+export function acceptRunBoundSourceUpdate<T extends RunBoundSourceUpdate>(
+  activeRunId: string | null,
+  current: T,
+  incoming: T,
+): T {
+  return incoming.analysisRunId === activeRunId ? incoming : current;
 }
 
 type DeepReadonly<T> = T extends object
@@ -72,6 +88,14 @@ type ManualOfficialMarket = Pick<OfficialMarketSpatialResult, "marketCode" | "ma
  */
 export type MarketAnalysisContext = DeepReadonly<{
   schemaVersion: "market-analysis-context-v1";
+  analysisRunId: string | null;
+  analysisStartedAt: string | null;
+  runSnapshot: AnalysisRunSnapshot | null;
+  sourceCompletion: {
+    kakaoCompletedAt: string | null;
+    officialRelationCompletedAt: string | null;
+    officialStatsCompletedAt: string | null;
+  };
   target: {
     source: ExecutedMarketAnalysis["source"];
     confirmedAddress: string | null;
@@ -112,12 +136,15 @@ export type MarketAnalysisContext = DeepReadonly<{
 
 export interface MarketAnalysisContextInput {
   executedAnalysis: ExecutedMarketAnalysis | null;
+  runSnapshot?: AnalysisRunSnapshot | null;
   selectedFrameoneMarket: { marketId: string; marketName: string } | null;
   selectedFrameoneSubmarket?: { submarketId: string; submarketName: string } | null;
   kakaoNearby: KakaoNearbySearchState;
   officialMarkets: {
     status: MarketAnalysisRequestStatus;
     error: string | null;
+    analysisRunId: string | null;
+    completedAt: string | null;
     // Already computed by STEP 2; the builder never reads geometry.
     results: readonly OfficialMarketSpatialResult[] | null;
     manuallySelected: ManualOfficialMarket | null;
@@ -127,6 +154,8 @@ export interface MarketAnalysisContextInput {
     requestedOfficialMarketCode: string | null;
     data: BakeryOfficialMarketData | null;
     error: string | null;
+    analysisRunId: string | null;
+    completedAt: string | null;
   };
 }
 
@@ -158,20 +187,61 @@ function freezeSnapshot<T>(value: T): DeepReadonly<T> {
  * Clone before freezing so later state updates cannot rewrite earlier snapshots.
  */
 export function buildMarketAnalysisContext(input: MarketAnalysisContextInput): MarketAnalysisContext {
-  const execution = input.executedAnalysis;
+  const runSnapshot = input.runSnapshot ?? null;
+  const activeRunId = runSnapshot?.analysisRunId ?? null;
+  const sourceBelongsToRun = (sourceRunId: string | null | undefined) =>
+    runSnapshot === null ? sourceRunId == null : sourceRunId === activeRunId;
+  const execution = runSnapshot ? {
+    source: runSnapshot.target.source,
+    confirmedAddress: runSnapshot.target.confirmedAddress,
+    analysisPoint: {
+      latitude: runSnapshot.target.latitude,
+      longitude: runSnapshot.target.longitude,
+    },
+    analysisRadiusMeters: runSnapshot.target.radiusMeters,
+  } satisfies ExecutedMarketAnalysis : input.executedAnalysis;
+  const kakaoNearby = sourceBelongsToRun(input.kakaoNearby.analysisRunId)
+    ? input.kakaoNearby
+    : {
+        status: "idle" as const,
+        response: null,
+        error: null,
+        analysisRunId: activeRunId,
+        completedAt: null,
+      };
+  const officialMarkets = sourceBelongsToRun(input.officialMarkets.analysisRunId)
+    ? input.officialMarkets
+    : { status: "idle" as const, error: null, results: null, manuallySelected: input.officialMarkets.manuallySelected };
+  const publicDataInput = sourceBelongsToRun(input.publicData.analysisRunId)
+    ? input.publicData
+    : { requestStatus: "idle" as const, requestedOfficialMarketCode: null, data: null, error: null };
   const manual = input.officialMarkets.manuallySelected;
-  const spatialResults = execution && input.officialMarkets.status === "success"
-    ? input.officialMarkets.results
+  const spatialResults = execution && officialMarkets.status === "success"
+    ? officialMarkets.results
     : null;
   const requestMatchesSelection = manual !== null &&
-    input.publicData.requestedOfficialMarketCode === manual.marketCode;
-  const publicData = requestMatchesSelection && input.publicData.requestStatus === "success" &&
-    input.publicData.data?.officialMarketCode === manual.marketCode
-    ? input.publicData.data
+    publicDataInput.requestedOfficialMarketCode === manual.marketCode;
+  const publicData = requestMatchesSelection && publicDataInput.requestStatus === "success" &&
+    publicDataInput.data?.officialMarketCode === manual.marketCode
+    ? publicDataInput.data
     : null;
 
   return freezeSnapshot(structuredClone({
     schemaVersion: "market-analysis-context-v1" as const,
+    analysisRunId: activeRunId,
+    analysisStartedAt: runSnapshot?.createdAt ?? null,
+    runSnapshot,
+    sourceCompletion: {
+      kakaoCompletedAt: sourceBelongsToRun(input.kakaoNearby.analysisRunId)
+        ? input.kakaoNearby.completedAt ?? null
+        : null,
+      officialRelationCompletedAt: sourceBelongsToRun(input.officialMarkets.analysisRunId)
+        ? input.officialMarkets.completedAt ?? null
+        : null,
+      officialStatsCompletedAt: sourceBelongsToRun(input.publicData.analysisRunId)
+        ? input.publicData.completedAt ?? null
+        : null,
+    },
     target: execution ? {
       source: execution.source,
       confirmedAddress: execution.confirmedAddress,
@@ -179,21 +249,21 @@ export function buildMarketAnalysisContext(input: MarketAnalysisContextInput): M
       executedRadiusMeters: execution.analysisRadiusMeters,
     } : null,
     frameone: {
-      selectedMarketId: input.selectedFrameoneMarket?.marketId ?? null,
-      selectedMarketName: input.selectedFrameoneMarket?.marketName ?? null,
-      selectedSubmarketId: input.selectedFrameoneSubmarket?.submarketId ?? null,
-      selectedSubmarketName: input.selectedFrameoneSubmarket?.submarketName ?? null,
+      selectedMarketId: runSnapshot?.frameone.marketId ?? input.selectedFrameoneMarket?.marketId ?? null,
+      selectedMarketName: runSnapshot?.frameone.marketName ?? input.selectedFrameoneMarket?.marketName ?? null,
+      selectedSubmarketId: runSnapshot?.frameone.submarketId ?? input.selectedFrameoneSubmarket?.submarketId ?? null,
+      selectedSubmarketName: runSnapshot?.frameone.submarketName ?? input.selectedFrameoneSubmarket?.submarketName ?? null,
     },
     kakaoNearby: {
-      status: execution ? input.kakaoNearby.status : "idle",
-      error: execution ? input.kakaoNearby.error : null,
-      bakery: execution ? nearbyCategory(input.kakaoNearby, "bakery") : null,
-      confectionery: execution ? nearbyCategory(input.kakaoNearby, "confectionery") : null,
-      cafe: execution ? nearbyCategory(input.kakaoNearby, "cafe") : null,
+      status: execution ? kakaoNearby.status : "idle",
+      error: execution ? kakaoNearby.error : null,
+      bakery: execution ? nearbyCategory(kakaoNearby, "bakery") : null,
+      confectionery: execution ? nearbyCategory(kakaoNearby, "confectionery") : null,
+      cafe: execution ? nearbyCategory(kakaoNearby, "cafe") : null,
     },
     officialMarkets: {
-      status: execution ? input.officialMarkets.status : "idle",
-      error: execution ? input.officialMarkets.error : null,
+      status: execution ? officialMarkets.status : "idle",
+      error: execution ? officialMarkets.error : null,
       relatedMarkets: spatialResults?.filter((result) =>
         result.relation === "INSIDE" || result.relation === "RADIUS_OVERLAP") ?? null,
       unknownMarkets: spatialResults?.filter((result) => result.relation === "UNKNOWN") ?? null,
@@ -203,10 +273,10 @@ export function buildMarketAnalysisContext(input: MarketAnalysisContextInput): M
       } : null,
     },
     publicData: {
-      requestStatus: requestMatchesSelection ? input.publicData.requestStatus : "idle",
+      requestStatus: requestMatchesSelection ? publicDataInput.requestStatus : "idle",
       status: publicData?.dataStatus ?? null,
       selectedOfficialMarketData: publicData,
-      error: requestMatchesSelection ? input.publicData.error : null,
+      error: requestMatchesSelection ? publicDataInput.error : null,
     },
   } satisfies MarketAnalysisContext));
 }

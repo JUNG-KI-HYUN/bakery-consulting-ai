@@ -250,7 +250,7 @@ export default function KakaoBaseMap({
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
   onSelectOfficialMarket: (featureIndex: number) => void;
-  onAnalysisExecuted?: (analysis: ExecutedMarketAnalysis) => void;
+  onAnalysisExecuted?: (analysis: ExecutedMarketAnalysis) => string | null;
   onNearbySearchChange?: (state: KakaoNearbySearchState) => void;
   view?: KakaoBaseMapView;
   marketSelector?: ReactNode;
@@ -267,6 +267,7 @@ export default function KakaoBaseMap({
   const circleRef = useRef<KakaoCircleInstance | null>(null);
   const infoWindowRef = useRef<KakaoInfoWindowInstance | null>(null);
   const nearbySearchControllerRef = useRef<AbortController | null>(null);
+  const activeAnalysisRunIdRef = useRef<string | null>(null);
   const ignoreNextMapClickRef = useRef(false);
   const mapKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY?.trim() ?? "";
   const [status, setStatus] = useState<KakaoMapStatus>(
@@ -282,6 +283,7 @@ export default function KakaoBaseMap({
   const [analysisPoint, setAnalysisPoint] = useState<MapPoint | null>(null);
   const [analysisRadiusM, setAnalysisRadiusM] =
     useState<RadiusM>(DEFAULT_RADIUS_M);
+  const [analysisRunId, setAnalysisRunId] = useState<string | null>(null);
   const [nearbyPlaces, setNearbyPlaces] =
     useState<NearbyPlacesByCategory>(emptyNearbyPlaces);
   const [uniqueNearbyPlaces, setUniqueNearbyPlaces] = useState<NearbyPlace[]>([]);
@@ -494,12 +496,19 @@ export default function KakaoBaseMap({
       return;
     }
 
+    const requestRunId = analysisRunId;
     nearbySearchControllerRef.current?.abort();
     const controller = new AbortController();
     nearbySearchControllerRef.current = controller;
     setNearbySearchStatus("loading");
     setNearbySearchError("");
-    onNearbySearchChange?.({ status: "loading", response: null, error: null });
+    onNearbySearchChange?.({
+      status: "loading",
+      response: null,
+      error: null,
+      analysisRunId: requestRunId,
+      completedAt: null,
+    });
     setNearbyPlaces(emptyNearbyPlaces());
     setUniqueNearbyPlaces([]);
     setSelectedNearbyPlace(null);
@@ -521,7 +530,10 @@ export default function KakaoBaseMap({
         return payload;
       })
       .then((payload) => {
-        if (controller.signal.aborted) {
+        if (
+          controller.signal.aborted ||
+          activeAnalysisRunIdRef.current !== requestRunId
+        ) {
           return;
         }
 
@@ -547,6 +559,8 @@ export default function KakaoBaseMap({
           status: errors.length > 0 ? "error" : "success",
           response: payload,
           error: errors.length > 0 ? errors.join(" ") : null,
+          analysisRunId: requestRunId,
+          completedAt: new Date().toISOString(),
         });
         if (errors.length > 0) {
           setNearbySearchStatus("error");
@@ -558,7 +572,10 @@ export default function KakaoBaseMap({
         }
       })
       .catch((error: unknown) => {
-        if (controller.signal.aborted) {
+        if (
+          controller.signal.aborted ||
+          activeAnalysisRunIdRef.current !== requestRunId
+        ) {
           return;
         }
         setNearbySearchStatus("error");
@@ -566,6 +583,8 @@ export default function KakaoBaseMap({
           status: "error",
           response: null,
           error: error instanceof Error ? error.message : "주변 장소를 불러오지 못했습니다.",
+          analysisRunId: requestRunId,
+          completedAt: new Date().toISOString(),
         });
         setNearbySearchError(
           `${error instanceof Error ? error.message : "주변 장소를 불러오지 못했습니다."} 지도 이동·확대/축소는 계속 사용할 수 있습니다.`,
@@ -578,7 +597,7 @@ export default function KakaoBaseMap({
         nearbySearchControllerRef.current = null;
       }
     };
-  }, [analysisPoint, analysisRadiusM, status, onNearbySearchChange]);
+  }, [analysisPoint, analysisRadiusM, analysisRunId, status, onNearbySearchChange]);
 
   useEffect(() => {
     const kakaoMaps = (window as KakaoWindow).kakao?.maps;
@@ -641,10 +660,18 @@ export default function KakaoBaseMap({
       return;
     }
 
+    const execution: ExecutedMarketAnalysis = {
+      source: selectedPointAddress ? "address" : "map",
+      confirmedAddress: selectedPointAddress,
+      analysisPoint: { ...selectedPoint },
+      analysisRadiusMeters: radiusM,
+    };
+    const nextAnalysisRunId = onAnalysisExecuted?.(execution) ?? null;
+    activeAnalysisRunIdRef.current = nextAnalysisRunId;
+    setAnalysisRunId(nextAnalysisRunId);
     setAnalysisPoint({ ...selectedPoint });
     setNearbySearchStatus("loading");
     setAnalysisRadiusM(radiusM);
-    onAnalysisExecuted?.({ source: "map", confirmedAddress: null, analysisPoint: { ...selectedPoint }, analysisRadiusMeters: radiusM });
     setAnalysisTarget({ label: selectedPointAddress ? `선택 지점 주변 주소 · ${selectedPointAddress} 상세분석` : "지도에서 선택한 위치 상세분석", marketName });
     setConditionsOpen(false);
     setMapVisible(true);

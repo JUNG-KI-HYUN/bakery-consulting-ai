@@ -342,6 +342,9 @@ export default function MarketsExplorer({
   const selectedMarket = allMarkets.find(
     (market) => market.marketId === selectedMarketId,
   );
+  const selectedDistrict = hierarchy.districts.find((district) =>
+    district.markets.some((market) => market.marketId === selectedMarketId),
+  );
   const selectedSubmarket = selectedMarket?.submarkets.find(
     (submarket) => submarket.submarketId === selectedSubmarketId,
   );
@@ -352,6 +355,7 @@ export default function MarketsExplorer({
     : [];
   const selectedMarketSpatialSummary = selectedMarket
     ? {
+        districtId: selectedDistrict?.districtId ?? "",
         marketId: selectedMarket.marketId,
         marketName: selectedMarket.name,
         district: selectedMarket.gu,

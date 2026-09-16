@@ -521,7 +521,8 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
     await flush(); map.find((node) => node.type === "form").props.onSubmit({ preventDefault() {} }); await flush();
     assert.equal(context().target, null);
     map.button("이 위치 상세분석").props.onClick(); await flush();
-    assert.deepEqual(context().target, { source: "map", confirmedAddress: null, analysisPoint: { longitude: 127.1, latitude: 37.5 }, executedRadiusMeters: 500 });
+    assert.deepEqual(context().target, { source: "address", confirmedAddress: "fixture resolved address", analysisPoint: { longitude: 127.1, latitude: 37.5 }, executedRadiusMeters: 500 });
+    assert.match(context().analysisRunId, /^basic-location-run:/);
     assert.equal(context().kakaoNearby.status, "loading"); assert.equal(context().kakaoNearby.bakery, null);
     resolveNearby(nearbyRequests.at(-1), { categories: ["bakery", "confectionery", "cafe"].map((id) => ({ id, totalCount: 0, places: [] })) });
     await flush(); assert.equal(context().kakaoNearby.status, "success"); assert.equal(context().kakaoNearby.bakery.totalCount, 0);
@@ -545,17 +546,24 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
     map.button("이 위치 상세분석").props.onClick(); await flush();
     assert.equal(context().target.source, "map"); assert.equal(context().target.confirmedAddress, null);
     assert.equal(context().target.executedRadiusMeters, 300);
+    const staleRunId = context().analysisRunId;
     assert.equal(context().kakaoNearby.bakery, null); // previous successful response cleared atomically
     const staleNearby = nearbyRequests.at(-1);
     // Invoke a replacement execution directly while the previous fixture promise is pending.
     map.button("500m").props.onClick(); await flush(); map.button("이 위치 상세분석").props.onClick(); await flush();
+    const replacementRunId = context().analysisRunId;
+    assert.notEqual(replacementRunId, staleRunId);
     assert.equal(staleNearby.signal.aborted, true);
     resolveNearby(staleNearby, { categories: [{ id: "bakery", totalCount: 999, places: [] }] }); await flush();
+    assert.equal(context().analysisRunId, replacementRunId);
+    assert.equal(context().sourceCompletion.kakaoCompletedAt, null);
     assert.equal(context().kakaoNearby.status, "loading"); assert.equal(context().kakaoNearby.bakery, null);
     resolveNearby(nearbyRequests.at(-1), { categories: [
       { id: "bakery", totalCount: 0, places: [], error: "fixture category failure" },
       { id: "confectionery", totalCount: 11, places: [] }, { id: "cafe", totalCount: 63, places: [] },
     ] }); await flush();
+    assert.notEqual(context().sourceCompletion.kakaoCompletedAt, null);
+    assert.notEqual(context().sourceCompletion.officialRelationCompletedAt, null);
     assert.equal(context().kakaoNearby.status, "error"); assert.equal(context().kakaoNearby.bakery.totalCount, null);
     assert.equal(context().kakaoNearby.confectionery.totalCount, 11); assert.equal(context().kakaoNearby.cafe.totalCount, 63);
     assert.equal(context().target.executedRadiusMeters, 500);
@@ -584,6 +592,7 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
       const request = publicRequests.at(-1), payload = publicPayload(request, dataStatus);
       request.resolve(Response.json(payload)); await flush();
       assert.equal(context().publicData.status, dataStatus);
+      assert.notEqual(context().sourceCompletion.officialStatsCompletedAt, null);
       assert.deepEqual(context().publicData.selectedOfficialMarketData, payload);
       assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "OUTSIDE");
       if (dataStatus === "available") {
@@ -614,11 +623,19 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
     assert.equal(context().officialMarkets.manuallySelected.marketCode, "3120231");
     assert.deepEqual(context().officialMarkets.relatedMarkets, related);
 
+    loadButton().props.onClick(); await flush();
+    const staleRunPublic = publicRequests.at(-1);
+    const previousRunId = context().analysisRunId;
     map.button("이 위치 상세분석").props.onClick(); await flush();
+    assert.notEqual(context().analysisRunId, previousRunId);
+    assert.equal(staleRunPublic.signal.aborted, true);
+    staleRunPublic.resolve(Response.json(publicPayload(staleRunPublic, "available"))); await flush();
+    assert.equal(context().publicData.requestStatus, "idle");
+    assert.equal(context().sourceCompletion.officialStatsCompletedAt, null);
     resolveNearby(nearbyRequests.at(-1), { message: "fixture nearby transport failure" }, 502); await flush();
     assert.equal(context().kakaoNearby.status, "error"); assert.equal(context().kakaoNearby.cafe, null);
     assert.equal(context().kakaoNearby.error, "fixture nearby transport failure");
-    assert.deepEqual(addressContext.target, { source: "map", confirmedAddress: null, analysisPoint: { longitude: 127.1, latitude: 37.5 }, executedRadiusMeters: 500 });
+    assert.deepEqual(addressContext.target, { source: "address", confirmedAddress: "fixture resolved address", analysisPoint: { longitude: 127.1, latitude: 37.5 }, executedRadiusMeters: 500 });
   } finally { map?.dispose(); viewer.dispose(); }
 });
 
@@ -661,7 +678,7 @@ test("STEP 6 CASE D-I/L-Q/S-T: tabs reuse Context, requests, map, selection, pub
     assert.equal(viewerProps().activeTab, "market-map");
     assert.equal(sdk.requests.length, requestCount);
     const executedContext = summaryNode().props.context;
-    assert.ok(summaryHtml().includes("지도 선택 위치")); assert.ok(summaryHtml().includes("지도 선택 · 반경 500m"));
+    assert.ok(summaryHtml().includes("fixture resolved address")); assert.ok(summaryHtml().includes("지도 선택 · 반경 500m"));
     assert.equal(summaryNode().props.viewMode, "customer");
     assert.doesNotMatch(summaryHtml(), /직원용 검증정보|market-analysis-context-v1|latitude|longitude/);
     summaryNode().props.onViewModeChange("staff"); await flush();
@@ -681,7 +698,7 @@ test("STEP 6 CASE D-I/L-Q/S-T: tabs reuse Context, requests, map, selection, pub
     assert.ok(evidenceHtml.includes("SRC-SEOUL-SALES"));
     explorer.button("종합 진단").props.onClick(); await flush();
     assert.equal(summaryNode().props.viewMode, "staff"); assert.equal(summaryNode().props.context, executedContext);
-    assert.ok(summaryHtml().includes("지도 선택 위치"));
+    assert.ok(summaryHtml().includes("fixture resolved address"));
     assert.equal(map.tree.props["aria-hidden"], true);
     assert.ok(map.tree.props.className.includes("hidden"));
     assert.ok(nodes(map.tree).some((node) => node.props["aria-label"] === "서울 중심 Kakao 기본 지도"));

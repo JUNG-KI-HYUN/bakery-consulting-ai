@@ -11,12 +11,17 @@ import {
 import type { BakeryOfficialMarketData } from "@/lib/market-data/services/bakery-official-market";
 import OfficialMarketTrend from "./OfficialMarketTrend";
 import {
+  acceptRunBoundSourceUpdate,
   buildMarketAnalysisContext,
   type ExecutedMarketAnalysis,
   type KakaoNearbySearchState,
   type MarketAnalysisContext,
   type MarketAnalysisRequestStatus as BakeryDataRequestStatus,
 } from "@/lib/market-data/market-analysis-context";
+import {
+  createAnalysisRunSnapshot,
+  type AnalysisRunSnapshot,
+} from "@/lib/market-data/basic-location/run";
 import {
   findRelatedOfficialMarkets,
   OFFICIAL_MARKET_RELATION_LABELS,
@@ -204,6 +209,7 @@ const BAKERY_OPEN_CLOSE_ROWS: readonly BakeryOpenCloseDefinition[] = [
 ];
 
 export interface SelectedMarketSpatialSummary {
+  districtId: string;
   marketId: string;
   marketName: string;
   district: string;
@@ -607,19 +613,18 @@ export default function MarketSpatialViewer({
   );
   const [loadedLayers, setLoadedLayers] = useState<LoadedLayerMap>({});
   const [executedSpatialAnalysis, setExecutedSpatialAnalysis] = useState<ExecutedMarketAnalysis | null>(null);
-  const [executedFrameoneContext, setExecutedFrameoneContext] = useState<{
-    market: { marketId: string; marketName: string } | null;
-    submarket: { submarketId: string; submarketName: string } | null;
-  } | null>(null);
-  const [kakaoNearby, setKakaoNearby] = useState<KakaoNearbySearchState>({ status: "idle", response: null, error: null });
-  const handleAnalysisExecuted = useCallback((analysis: ExecutedMarketAnalysis) => {
-    setExecutedSpatialAnalysis(analysis);
-    setExecutedFrameoneContext({
-      market: selectedMarket ? { marketId: selectedMarket.marketId, marketName: selectedMarket.marketName } : null,
-      submarket: selectedSubmarket ? { submarketId: selectedSubmarket.submarketId, submarketName: selectedSubmarket.submarketName } : null,
-    });
-    setKakaoNearby({ status: "loading", response: null, error: null });
-  }, [selectedMarket, selectedSubmarket]);
+  const [runSnapshot, setRunSnapshot] = useState<AnalysisRunSnapshot | null>(null);
+  const [kakaoNearby, setKakaoNearby] = useState<KakaoNearbySearchState>({
+    status: "idle",
+    response: null,
+    error: null,
+    analysisRunId: null,
+    completedAt: null,
+  });
+  const [officialRelationCompletion, setOfficialRelationCompletion] = useState<{
+    analysisRunId: string | null;
+    completedAt: string | null;
+  }>({ analysisRunId: null, completedAt: null });
   const [loadingLayerIds, setLoadingLayerIds] = useState<Set<SpatialLayerId>>(
     new Set(),
   );
@@ -645,6 +650,8 @@ export default function MarketSpatialViewer({
     useState<BakeryOfficialMarketData | null>(null);
   const [bakeryDataError, setBakeryDataError] = useState<string | null>(null);
   const [bakeryDataMarketCode, setBakeryDataMarketCode] = useState<string | null>(null);
+  const [bakeryDataRunId, setBakeryDataRunId] = useState<string | null>(null);
+  const [bakeryDataCompletedAt, setBakeryDataCompletedAt] = useState<string | null>(null);
   const requestedLayerIdsRef = useRef(new Set<SpatialLayerId>());
   const crosswalkCacheRef = useRef(
     new Map<string, MarketCrosswalkResponse>(),
@@ -655,9 +662,76 @@ export default function MarketSpatialViewer({
   const panOffsetRef = useRef(panOffset);
   const canvasSizeRef = useRef(canvasSize);
   const bakeryDataControllerRef = useRef<AbortController | null>(null);
+  const activeRunIdRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectionCanvasRef = useRef<HTMLCanvasElement>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleKakaoNearbyChange = useCallback((incoming: KakaoNearbySearchState) => {
+    setKakaoNearby((current) =>
+      acceptRunBoundSourceUpdate(activeRunIdRef.current, current, incoming),
+    );
+  }, []);
+
+  const handleAnalysisExecuted = useCallback((analysis: ExecutedMarketAnalysis) => {
+    setExecutedSpatialAnalysis(analysis);
+
+    if (!selectedMarket) {
+      activeRunIdRef.current = null;
+      setRunSnapshot(null);
+      setKakaoNearby({
+        status: "loading",
+        response: null,
+        error: null,
+        analysisRunId: null,
+        completedAt: null,
+      });
+      return null;
+    }
+
+    const nextRun = createAnalysisRunSnapshot({
+      target: {
+        source: analysis.source,
+        confirmedAddress: analysis.confirmedAddress,
+        latitude: analysis.analysisPoint.latitude,
+        longitude: analysis.analysisPoint.longitude,
+        radiusMeters: analysis.analysisRadiusMeters,
+      },
+      frameone: {
+        districtId: selectedMarket.districtId,
+        districtName: selectedMarket.district,
+        marketId: selectedMarket.marketId,
+        marketName: selectedMarket.marketName,
+        submarketId: selectedSubmarket?.submarketId ?? null,
+        submarketName: selectedSubmarket?.submarketName ?? null,
+        nodeId: null,
+        nodeName: null,
+      },
+    });
+
+    activeRunIdRef.current = nextRun.analysisRunId;
+    setRunSnapshot(nextRun);
+    setKakaoNearby({
+      status: "loading",
+      response: null,
+      error: null,
+      analysisRunId: nextRun.analysisRunId,
+      completedAt: null,
+    });
+    setOfficialRelationCompletion({
+      analysisRunId: nextRun.analysisRunId,
+      completedAt: null,
+    });
+    bakeryDataControllerRef.current?.abort();
+    bakeryDataControllerRef.current = null;
+    setBakeryDataStatus("idle");
+    setBakeryData(null);
+    setBakeryDataError(null);
+    setBakeryDataMarketCode(null);
+    setBakeryDataRunId(nextRun.analysisRunId);
+    setBakeryDataCompletedAt(null);
+    return nextRun.analysisRunId;
+  }, [selectedMarket, selectedSubmarket]);
 
   const selectedReference =
     selectedReferences[selectedReferenceIndex] ?? null;
@@ -1271,25 +1345,47 @@ export default function MarketSpatialViewer({
     () => officialMarketLayer ? findRelatedOfficialMarkets(executedSpatialAnalysis, officialSpatialInputs) : null,
     [executedSpatialAnalysis, officialSpatialInputs, officialMarketLayer],
   );
+  const officialLayerError = layerErrors["seoul-official-markets"] ?? null;
+  const officialLayerLoading = loadingLayerIds.has("seoul-official-markets");
+  useEffect(() => {
+    const analysisRunId = runSnapshot?.analysisRunId ?? null;
+    if (analysisRunId === null) {
+      setOfficialRelationCompletion({ analysisRunId: null, completedAt: null });
+      return;
+    }
+    if (!spatialRelations && !officialLayerError) return;
+
+    setOfficialRelationCompletion((current) => {
+      if (activeRunIdRef.current !== analysisRunId) return current;
+      if (current.analysisRunId === analysisRunId && current.completedAt !== null) {
+        return current;
+      }
+      return {
+        analysisRunId,
+        completedAt: new Date().toISOString(),
+      };
+    });
+  }, [officialLayerError, runSnapshot?.analysisRunId, spatialRelations]);
   const selectedSpatialRelation = spatialRelations?.results.find((result) => result.marketCode === selectedOfficialMarketCode);
   const selectedOfficialMarketName = selectedOfficialMarketCode && selectedReference
     ? referenceNameForFeature("seoul-official-markets", selectedReference.feature)
     : null;
-  const officialLayerError = layerErrors["seoul-official-markets"] ?? null;
-  const officialLayerLoading = loadingLayerIds.has("seoul-official-markets");
   const selectedMarketName = selectedMarket?.marketName ?? null;
   const selectedSubmarketId = selectedSubmarket?.submarketId ?? null;
   const selectedSubmarketName = selectedSubmarket?.submarketName ?? null;
   const analysisContext = useMemo(() => buildMarketAnalysisContext({
     executedAnalysis: executedSpatialAnalysis,
-    selectedFrameoneMarket: executedSpatialAnalysis ? executedFrameoneContext?.market ?? null : selectedMarketId !== null && selectedMarketName !== null
+    runSnapshot,
+    selectedFrameoneMarket: selectedMarketId !== null && selectedMarketName !== null
       ? { marketId: selectedMarketId, marketName: selectedMarketName } : null,
-    selectedFrameoneSubmarket: executedSpatialAnalysis ? executedFrameoneContext?.submarket ?? null : selectedSubmarketId !== null && selectedSubmarketName !== null
+    selectedFrameoneSubmarket: selectedSubmarketId !== null && selectedSubmarketName !== null
       ? { submarketId: selectedSubmarketId, submarketName: selectedSubmarketName } : null,
     kakaoNearby,
     officialMarkets: {
       status: officialMarketLayer ? "success" : officialLayerError ? "error" : officialLayerLoading ? "loading" : "idle",
       error: officialLayerError,
+      analysisRunId: officialRelationCompletion.analysisRunId,
+      completedAt: officialRelationCompletion.completedAt,
       results: spatialRelations?.results ?? null,
       manuallySelected: selectedOfficialMarketCode !== null && selectedOfficialMarketName !== null
         ? { marketCode: selectedOfficialMarketCode, marketName: selectedOfficialMarketName } : null,
@@ -1299,11 +1395,14 @@ export default function MarketSpatialViewer({
       requestedOfficialMarketCode: bakeryDataMarketCode,
       data: bakeryData,
       error: bakeryDataError,
+      analysisRunId: bakeryDataRunId,
+      completedAt: bakeryDataCompletedAt,
     },
-  }), [executedSpatialAnalysis, executedFrameoneContext, selectedMarketId, selectedMarketName, selectedSubmarketId, selectedSubmarketName, kakaoNearby,
+  }), [executedSpatialAnalysis, runSnapshot, selectedMarketId, selectedMarketName, selectedSubmarketId, selectedSubmarketName, kakaoNearby,
     officialMarketLayer, officialLayerError, officialLayerLoading, spatialRelations,
-    selectedOfficialMarketCode, selectedOfficialMarketName, bakeryDataStatus, bakeryDataMarketCode,
-    bakeryData, bakeryDataError]);
+    officialRelationCompletion, selectedOfficialMarketCode, selectedOfficialMarketName,
+    bakeryDataStatus, bakeryDataMarketCode, bakeryData, bakeryDataError,
+    bakeryDataRunId, bakeryDataCompletedAt]);
 
   // Single read-only output for future consumers; no new UI or persistence.
   useEffect(() => {
@@ -1370,6 +1469,8 @@ export default function MarketSpatialViewer({
     setBakeryData(null);
     setBakeryDataError(null);
     setBakeryDataMarketCode(null);
+    setBakeryDataRunId(activeRunIdRef.current);
+    setBakeryDataCompletedAt(null);
   }, [selectedOfficialMarketCode]);
 
   useEffect(
@@ -1386,8 +1487,11 @@ export default function MarketSpatialViewer({
 
     bakeryDataControllerRef.current?.abort();
     const controller = new AbortController();
+    const requestRunId = activeRunIdRef.current;
     bakeryDataControllerRef.current = controller;
     setBakeryDataMarketCode(selectedOfficialMarketCode);
+    setBakeryDataRunId(requestRunId);
+    setBakeryDataCompletedAt(null);
     setBakeryDataStatus("loading");
     setBakeryData(null);
     setBakeryDataError(null);
@@ -1423,22 +1527,30 @@ export default function MarketSpatialViewer({
         payload,
         selectedOfficialMarketCode,
       );
-      if (!controller.signal.aborted) {
+      if (
+        !controller.signal.aborted &&
+        activeRunIdRef.current === requestRunId
+      ) {
         setBakeryData(result);
         setBakeryDataStatus("success");
+        setBakeryDataCompletedAt(new Date().toISOString());
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
 
-      if (!controller.signal.aborted) {
+      if (
+        !controller.signal.aborted &&
+        activeRunIdRef.current === requestRunId
+      ) {
         setBakeryDataError(
           error instanceof Error
             ? error.message
             : "제과점 실데이터 조회에 실패했습니다.",
         );
         setBakeryDataStatus("error");
+        setBakeryDataCompletedAt(new Date().toISOString());
       }
     } finally {
       if (bakeryDataControllerRef.current === controller) {
@@ -1737,7 +1849,7 @@ export default function MarketSpatialViewer({
               selectedOfficialMarketCode={selectedOfficialMarketCode}
               onSelectOfficialMarket={handleKakaoOfficialMarketSelect}
               onAnalysisExecuted={handleAnalysisExecuted}
-              onNearbySearchChange={setKakaoNearby}
+              onNearbySearchChange={handleKakaoNearbyChange}
               onOpenAnalysisSummary={onOpenAnalysisSummary}
               pointSelectionEnabled={pointSelectionEnabled}
               view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
