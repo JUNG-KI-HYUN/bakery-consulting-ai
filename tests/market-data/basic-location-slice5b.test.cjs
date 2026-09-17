@@ -315,6 +315,105 @@ test("Slice 5B: STAFF View Model receives internal results but never HIDDEN resu
   assert.equal(model.analysisContext.frameone.marketId, "sample-market");
 });
 
+test("V3-A: STAFF audit context produces a customer-friendly presentation header", () => {
+  const { model } = buildFor("STAFF");
+  assert.deepEqual(model.presentation.header, {
+    marketName: "Sample Market",
+    submarketName: "Sample Submarket",
+    radiusMeters: 500,
+    targetSourceLabel: "주소 검색",
+    confirmedAddress: "Sample confirmed address",
+  });
+});
+
+test("V3-A: presentation header is null-safe when no submarket is selected", () => {
+  const results = fixtureResults().filter((result) =>
+    result.metricKey !== "frameone.submarket.name");
+  const { model } = buildFor("STAFF", results);
+  assert.equal(model.presentation.header.marketName, "Sample Market");
+  assert.equal(model.presentation.header.submarketName, null);
+});
+
+test("V3-A: presentation always contains the four compact status cards", () => {
+  const { model } = buildFor("STAFF");
+  assert.deepEqual(model.presentation.statusCards.map((card) => card.id), [
+    "radius",
+    "kakao",
+    "official-market",
+    "analysis-stage",
+  ]);
+  assert.equal(model.presentation.statusCards.find((card) => card.id === "kakao").value, "일부 자료 확인 필요");
+  assert.equal(model.presentation.statusCards.find((card) => card.id === "official-market").value, "포함 0 · 교차 1");
+});
+
+test("V3-A: complete customer-displayable Kakao categories advance the P0 status", () => {
+  const results = fixtureResults().filter((result) =>
+    result.metricKey !== "kakao.nearby.cafe.returned_count");
+  results.push(
+    available({
+      metricKey: "kakao.nearby.confectionery.returned_count",
+      metricLabel: "제과점 검색 반환건수",
+      value: 1,
+      resultUnit: "places",
+      valueType: "OBSERVED_SOURCE_VALUE",
+      analysisLayer: "COMPETITION",
+      policy: "CUSTOMER_WITH_NOTE",
+      limitations: [note("SEARCH_NOT_CENSUS", "검색 반환건수는 전체 경쟁점 수가 아닙니다.")],
+    }),
+    available({
+      metricKey: "kakao.nearby.cafe.returned_count",
+      metricLabel: "카페 검색 반환건수",
+      value: 2,
+      resultUnit: "places",
+      valueType: "OBSERVED_SOURCE_VALUE",
+      analysisLayer: "COMPETITION",
+      policy: "CUSTOMER_WITH_NOTE",
+      limitations: [note("SEARCH_NOT_CENSUS", "검색 반환건수는 전체 경쟁점 수가 아닙니다.")],
+    }),
+  );
+  const { model } = buildFor("STAFF", results);
+  assert.equal(model.presentation.statusCards.find((card) => card.id === "kakao").value, "Kakao 확인");
+  assert.equal(model.presentation.statusCards.find((card) => card.id === "analysis-stage").value, "P0 기초근거 확인");
+});
+
+test("V3-A: official-market status counts customer-displayable inside and overlap relations", () => {
+  const results = fixtureResults();
+  results.push(available({
+    metricKey: "official_commercial_area.spatial_relation",
+    metricLabel: "공식상권 공간관계",
+    value: "INSIDE",
+    analysisUnit: { type: "OFFICIAL_COMMERCIAL_AREA", id: "sample-official-inside", label: "Sample Inside Area" },
+    policy: "CUSTOMER_WITH_NOTE",
+    limitations: [note("BOUNDARY_DISTINCT", "FRAMEONE Market과 동일 경계를 의미하지 않습니다.")],
+  }));
+  const { model } = buildFor("STAFF", results);
+  assert.equal(model.presentation.statusCards.find((card) => card.id === "official-market").value, "포함 1 · 교차 1");
+});
+
+test("V3-A: confirmed feature lineage excludes INTERNAL_ONLY and HIDDEN results", () => {
+  const rawResults = fixtureResults();
+  const forbiddenIds = new Set(rawResults
+    .filter((result) => result.customerDisplayPolicy === "INTERNAL_ONLY" || result.customerDisplayPolicy === "HIDDEN")
+    .map((result) => result.resultId));
+  const { model } = buildFor("STAFF", rawResults);
+  const featureBasisIds = model.presentation.summary.confirmedFeatures.flatMap((feature) => feature.basisResultIds);
+  assert.ok(featureBasisIds.length > 0);
+  assert.ok(featureBasisIds.every((resultId) => !forbiddenIds.has(resultId)));
+  assert.ok(!JSON.stringify(model.presentation).includes("secret"));
+});
+
+test("V3-A: unavailable and next-analysis items remain explicit static scope", () => {
+  const { model } = buildFor("STAFF");
+  assert.deepEqual(model.presentation.summary.unavailableNow.map((item) => item.label), [
+    "생활인구 기반 수요",
+    "실제 보행 흐름",
+    "체류 가능성",
+    "출점 유망구간",
+  ]);
+  assert.ok(model.presentation.summary.nextAnalysis.length > 0);
+  assert.ok(model.presentation.summary.nextAnalysis.every((item) => item.statusLabel === "추가 분석 예정"));
+});
+
 test("Slice 5B: Market Identity preserves input collection order", () => {
   const { model } = buildFor("CUSTOMER");
   assert.deepEqual(model.marketIdentity.map((item) => item.metricKey), [
@@ -400,6 +499,7 @@ test("Slice 5B: builder does not mutate Result or Interpretation input", () => {
   assert.equal(JSON.stringify(base.interpretation), interpretationBefore);
   assert.ok(Object.isFrozen(base.model));
   assert.ok(Object.isFrozen(base.model.dataEvidence));
+  assert.ok(Object.isFrozen(base.model.presentation));
 });
 
 test("Slice 5B: empty and partial inputs produce valid deterministic sections", () => {

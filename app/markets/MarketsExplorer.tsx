@@ -781,14 +781,14 @@ export default function MarketsExplorer({
         </section>
       ) : null}
         </>
-      ) : (
+      ) : activeTab !== "market-map" ? (
         <section className="panel-card px-5 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">상권분석 업무</p>
           <h2 className="mt-1 text-xl font-bold text-slate-950">
             {WORKSPACE_TABS.find((tab) => tab.id === activeTab)?.label}
           </h2>
         </section>
-      )}
+      ) : null}
 
       {activeTab === "market-map" ? (
         analysisMode === "market-area" ? <MarketAreaAnalysisSummary snapshot={marketAreaAnalysis} onEditConditions={() => setActiveTab("briefing")} /> :

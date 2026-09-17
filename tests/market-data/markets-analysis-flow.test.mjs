@@ -690,12 +690,28 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.equal(firstViewModel.analysisContext.target.confirmedAddress, "fixture resolved address");
     assert.ok(firstViewModel.availableEvidence.kakaoObserved.some((item) => item.value === 0));
     assert.ok(firstViewModel.limitations.results.some((item) => item.status === "BLOCKED"));
-    for (const section of ["1. 분석 기준", "2. 현재 상권 / 공간단위", "3. 현재 확인된 근거", "4. 서울시 공식상권 참고자료", "5. 현재 해석", "6. 데이터 한계 / 분석 불가", "7. 현장 확인 필요사항", "8. 데이터 근거"]) {
+    for (const section of ["기초입지 요약", "현재 확인된 특징", "현재 판단할 수 없는 부분", "다음 분석 방향", "주변 업종 관측", "서울시 공식상권 참고자료", "확인 필요 / 분석 한계", "현장 확인 필요사항", "데이터 근거 상세보기"]) {
       assert.ok(summaryHtml().includes(section));
     }
     const fullSummaryHtml = summaryHtml();
-    const mainSummaryHtml = fullSummaryHtml.split('<section aria-label="8. 데이터 근거"')[0];
+    const customerShellHtml = fullSummaryHtml.split('<section aria-label="주변 업종 관측"')[0];
+    const mainSummaryHtml = fullSummaryHtml.split('<section aria-label="데이터 근거 상세보기"')[0];
     const countText = (haystack, needle) => haystack.split(needle).length - 1;
+    assert.ok(customerShellHtml.includes("fixture-A / 500m"));
+    assert.ok(customerShellHtml.includes("주소 검색 · fixture resolved address"));
+    assert.ok(customerShellHtml.includes("후보건물 검증주소를 의미하지 않습니다."));
+    assert.equal(firstViewModel.presentation.statusCards.length, 4);
+    for (const label of ["분석 반경", "주변 업종 관측", "서울시 공식상권", "현재 분석 단계"]) {
+      assert.ok(customerShellHtml.includes(label));
+    }
+    for (const rawTerm of ["canonical", "geometry", "BLOCKED", "NOT_AVAILABLE", "UNKNOWN", "RADIUS_OVERLAP", "INSIDE", "places", "areas", "resultId", "analysisRunId", "Confidence", "Value Type"]) {
+      assert.ok(!customerShellHtml.includes(rawTerm), `Header/A must not expose ${rawTerm}`);
+    }
+    for (const removedSection of ["1. 분석 기준", "2. 현재 상권 / 공간단위", "5. 현재 해석"]) {
+      assert.ok(!fullSummaryHtml.includes(removedSection));
+    }
+    assert.ok(!nodes(explorer.tree).some((node) =>
+      node.type === "h2" && text(node) === "기초입지 분석결과"));
     const relationResults = firstViewModel.dataEvidence.filter((item) =>
       item.metricKey === "official_commercial_area.spatial_relation");
     const insideResults = relationResults.filter((item) => item.value === "INSIDE");

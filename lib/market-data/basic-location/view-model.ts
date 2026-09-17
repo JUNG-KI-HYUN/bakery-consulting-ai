@@ -15,6 +15,7 @@ import type {
   BasicLocationAudience,
   DisplayableBasicLocationResult,
 } from "./display-policy";
+import { applyBasicLocationDisplayPolicy } from "./display-policy";
 import type {
   BasicLocationInterpretation,
   BasicLocationInterpretationSignal,
@@ -108,6 +109,46 @@ export interface P0BasicLocationFieldHandoffViewModel {
   nextChecks: readonly BasicLocationInterpretationSignal[];
 }
 
+export interface P0BasicLocationPresentationFeatureViewModel {
+  id: string;
+  message: string;
+  basisResultIds: readonly string[];
+}
+
+export interface P0BasicLocationPresentationStatusCardViewModel {
+  id: "radius" | "kakao" | "official-market" | "analysis-stage";
+  label: string;
+  value: string;
+}
+
+export interface P0BasicLocationPresentationRoadmapItemViewModel {
+  id: string;
+  label: string;
+  statusLabel: "추가 분석 예정";
+}
+
+export interface P0BasicLocationPresentationUnavailableItemViewModel {
+  id: string;
+  label: string;
+  stateLabel: string;
+}
+
+export interface P0BasicLocationPresentationViewModel {
+  header: {
+    marketName: string | null;
+    submarketName: string | null;
+    radiusMeters: 300 | 500 | null;
+    targetSourceLabel: "주소 검색" | "지도 선택" | "위치 선택 방식 확인 필요";
+    confirmedAddress: string | null;
+  };
+  statusCards: readonly P0BasicLocationPresentationStatusCardViewModel[];
+  summary: {
+    confirmedFeatures: readonly P0BasicLocationPresentationFeatureViewModel[];
+    unavailableNow: readonly P0BasicLocationPresentationUnavailableItemViewModel[];
+    nextAnalysis: readonly P0BasicLocationPresentationRoadmapItemViewModel[];
+  };
+}
+
 export interface P0BasicLocationViewModel {
   schemaVersion: typeof VIEW_MODEL_SCHEMA_VERSION;
   analysisRunId: string;
@@ -120,6 +161,7 @@ export interface P0BasicLocationViewModel {
   limitations: P0BasicLocationLimitationsViewModel;
   fieldHandoff: P0BasicLocationFieldHandoffViewModel;
   dataEvidence: readonly P0BasicLocationResultViewModel[];
+  presentation: P0BasicLocationPresentationViewModel;
 }
 
 export interface BuildP0BasicLocationViewModelInput {
@@ -263,6 +305,159 @@ function buildAnalysisContext(
   };
 }
 
+function presentationTargetSourceLabel(
+  source: P0BasicLocationAnalysisContextViewModel["target"]["source"],
+): P0BasicLocationPresentationViewModel["header"]["targetSourceLabel"] {
+  if (source === "address") return "주소 검색";
+  if (source === "map") return "지도 선택";
+  return "위치 선택 방식 확인 필요";
+}
+
+function findDisplayableResult(
+  results: readonly DisplayableBasicLocationResult[],
+  metricKey: string,
+): DisplayableBasicLocationResult | undefined {
+  return results.find(({ result }) => result.metricKey === metricKey);
+}
+
+function availableResultIds(
+  results: readonly DisplayableBasicLocationResult[],
+  metricKeys: readonly string[],
+): string[] {
+  return results
+    .filter(({ result }) =>
+      metricKeys.includes(result.metricKey) &&
+      result.status !== "BLOCKED" &&
+      result.status !== "NOT_AVAILABLE" &&
+      result.value !== null,
+    )
+    .map(({ result }) => result.resultId);
+}
+
+function relationResults(
+  results: readonly DisplayableBasicLocationResult[],
+  relation: "INSIDE" | "RADIUS_OVERLAP",
+) {
+  return results.filter(({ result }) =>
+    result.metricKey === "official_commercial_area.spatial_relation" &&
+    result.status === "AVAILABLE" &&
+    result.value === relation,
+  );
+}
+
+const KAKAO_CATEGORY_METRIC_KEYS = [
+  "kakao.nearby.bakery.returned_count",
+  "kakao.nearby.confectionery.returned_count",
+  "kakao.nearby.cafe.returned_count",
+] as const;
+
+const PRESENTATION_UNAVAILABLE_ITEMS: readonly P0BasicLocationPresentationUnavailableItemViewModel[] = Object.freeze([
+  Object.freeze({ id: "living-population-demand", label: "생활인구 기반 수요", stateLabel: "아직 분석 전" }),
+  Object.freeze({ id: "pedestrian-flow", label: "실제 보행 흐름", stateLabel: "추가 데이터 분석 필요" }),
+  Object.freeze({ id: "stay-potential", label: "체류 가능성", stateLabel: "추가 분석 예정" }),
+  Object.freeze({ id: "promising-segment", label: "출점 유망구간", stateLabel: "후속 분석 단계" }),
+]);
+
+const PRESENTATION_NEXT_ANALYSIS: readonly P0BasicLocationPresentationRoadmapItemViewModel[] = Object.freeze([
+  Object.freeze({ id: "living-population", label: "생활인구 기반 수요", statusLabel: "추가 분석 예정" }),
+  Object.freeze({ id: "transit-pedestrian", label: "지하철·버스 및 보행 연결", statusLabel: "추가 분석 예정" }),
+  Object.freeze({ id: "stay-facilities", label: "체류 유발시설 / Stay Potential", statusLabel: "추가 분석 예정" }),
+  Object.freeze({ id: "competition-structure", label: "경쟁점 구조", statusLabel: "추가 분석 예정" }),
+]);
+
+function buildPresentation(
+  analysisContext: P0BasicLocationAnalysisContextViewModel,
+  staffDisplayableResults: readonly DisplayableBasicLocationResult[],
+): P0BasicLocationPresentationViewModel {
+  const customerResults = applyBasicLocationDisplayPolicy(
+    staffDisplayableResults.map(({ result }) => result),
+    "CUSTOMER",
+  );
+  const kakaoCategoryResults = KAKAO_CATEGORY_METRIC_KEYS.map((metricKey) =>
+    findDisplayableResult(customerResults, metricKey),
+  );
+  const availableKakaoResults = kakaoCategoryResults.filter(
+    (displayable) => displayable?.result.status === "AVAILABLE",
+  );
+  const kakaoStatus = availableKakaoResults.length === KAKAO_CATEGORY_METRIC_KEYS.length
+    ? "Kakao 확인"
+    : availableKakaoResults.length > 0
+      ? "일부 자료 확인 필요"
+      : "자료 확인 필요";
+
+  const insideResults = relationResults(customerResults, "INSIDE");
+  const overlapResults = relationResults(customerResults, "RADIUS_OVERLAP");
+  const relatedCount = findDisplayableResult(
+    customerResults,
+    "official_commercial_area.related_count",
+  );
+  const officialRelationCalculated = insideResults.length > 0 ||
+    overlapResults.length > 0 ||
+    (relatedCount?.result.status === "AVAILABLE" && relatedCount.result.value === 0);
+  const officialStatus = officialRelationCalculated
+    ? `포함 ${insideResults.length} · 교차 ${overlapResults.length}`
+    : "자료 확인 필요";
+  const analysisStage = kakaoStatus === "Kakao 확인" && officialRelationCalculated
+    ? "P0 기초근거 확인"
+    : "일부 자료 확인 필요";
+
+  const confirmedFeatures: P0BasicLocationPresentationFeatureViewModel[] = [];
+  const kakaoBasisResultIds = availableResultIds(
+    customerResults,
+    KAKAO_CATEGORY_METRIC_KEYS,
+  );
+  if (kakaoBasisResultIds.length > 0) {
+    confirmedFeatures.push({
+      id: "kakao-observation-confirmed",
+      message: kakaoStatus === "Kakao 확인"
+        ? "베이커리·제과점·카페 장소검색 결과를 확인했습니다."
+        : "주변 업종 장소검색 결과 일부를 확인했습니다.",
+      basisResultIds: kakaoBasisResultIds,
+    });
+  }
+  if (insideResults.length > 0) {
+    confirmedFeatures.push({
+      id: "official-market-inside-confirmed",
+      message: `분석지점이 서울시 공식상권 ${insideResults.length}개에 포함됩니다.`,
+      basisResultIds: insideResults.map(({ result }) => result.resultId),
+    });
+  }
+  if (overlapResults.length > 0) {
+    confirmedFeatures.push({
+      id: "official-market-overlap-confirmed",
+      message: `${analysisContext.target.radiusMeters ?? "분석"}m 반경이 서울시 공식상권 ${overlapResults.length}개와 교차합니다.`,
+      basisResultIds: overlapResults.map(({ result }) => result.resultId),
+    });
+  }
+
+  return {
+    header: {
+      marketName: analysisContext.frameone.marketName,
+      submarketName: analysisContext.frameone.submarketName,
+      radiusMeters: analysisContext.target.radiusMeters,
+      targetSourceLabel: presentationTargetSourceLabel(analysisContext.target.source),
+      confirmedAddress: analysisContext.target.confirmedAddress,
+    },
+    statusCards: [
+      {
+        id: "radius",
+        label: "분석 반경",
+        value: analysisContext.target.radiusMeters
+          ? `${analysisContext.target.radiusMeters}m`
+          : "반경 확인 필요",
+      },
+      { id: "kakao", label: "주변 업종 관측", value: kakaoStatus },
+      { id: "official-market", label: "서울시 공식상권", value: officialStatus },
+      { id: "analysis-stage", label: "현재 분석 단계", value: analysisStage },
+    ],
+    summary: {
+      confirmedFeatures,
+      unavailableNow: PRESENTATION_UNAVAILABLE_ITEMS,
+      nextAnalysis: PRESENTATION_NEXT_ANALYSIS,
+    },
+  };
+}
+
 function isAvailableEvidence(result: BasicLocationResult): boolean {
   return (
     result.status !== "BLOCKED" &&
@@ -379,14 +574,15 @@ export function buildP0BasicLocationViewModel(
       ? cloneSignal(input.interpretation.summary)
       : null;
 
+  const analysisContext = buildAnalysisContext(
+    input.analysisRunId,
+    input.displayableResults,
+  );
   const model: P0BasicLocationViewModel = {
     schemaVersion: VIEW_MODEL_SCHEMA_VERSION,
     analysisRunId: input.analysisRunId,
     audience: input.audience,
-    analysisContext: buildAnalysisContext(
-      input.analysisRunId,
-      input.displayableResults,
-    ),
+    analysisContext,
     marketIdentity,
     availableEvidence: {
       target: targetEvidence,
@@ -436,6 +632,7 @@ export function buildP0BasicLocationViewModel(
       nextChecks: filterSignals(input.interpretation.nextChecks, visibleResultIds),
     },
     dataEvidence: resultViewModels,
+    presentation: buildPresentation(analysisContext, input.displayableResults),
   };
 
   return deepFreeze(model);
