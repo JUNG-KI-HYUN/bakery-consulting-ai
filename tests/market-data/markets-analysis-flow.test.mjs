@@ -690,15 +690,22 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.equal(firstViewModel.analysisContext.target.confirmedAddress, "fixture resolved address");
     assert.ok(firstViewModel.availableEvidence.kakaoObserved.some((item) => item.value === 0));
     assert.ok(firstViewModel.limitations.results.some((item) => item.status === "BLOCKED"));
-    for (const section of ["기초입지 요약", "현재 확인된 특징", "현재 판단할 수 없는 부분", "다음 분석 방향", "상권 데이터 근거", "확인 필요 / 분석 한계", "현장 확인 필요사항", "데이터 근거 상세보기"]) {
-      assert.ok(summaryHtml().includes(section));
+    for (const section of ["기초입지 요약", "현재 확인된 특징", "현재 판단할 수 없는 부분", "상권 데이터 근거", "다음 조사 단계", "데이터 근거"]) {
+      assert.ok(summaryHtml().includes(section), `Missing summary section: ${section}`);
     }
     const fullSummaryHtml = summaryHtml();
     const customerShellHtml = fullSummaryHtml.split('<section aria-label="상권 데이터 근거"')[0];
-    const evidenceHtml = fullSummaryHtml
-      .split('<section aria-label="상권 데이터 근거"')[1]
-      .split('<section aria-label="확인 필요 / 분석 한계"')[0];
-    const mainSummaryHtml = fullSummaryHtml.split('<section aria-label="데이터 근거 상세보기"')[0];
+    const evidenceAndFollowingHtml = fullSummaryHtml.split('<section aria-label="상권 데이터 근거"')[1];
+    const evidenceHtml = evidenceAndFollowingHtml.split(
+      firstViewModel.presentation.limitations.length > 0
+        ? '<section aria-label="확인 필요 / 분석 한계"'
+        : '<section aria-label="다음 조사 단계"',
+    )[0];
+    const mainSummaryHtml = fullSummaryHtml.split('<section aria-label="데이터 근거"')[0];
+    const auditHtml = fullSummaryHtml.split('<section aria-label="데이터 근거"')[1];
+    const nextActionHtml = fullSummaryHtml
+      .split('<section aria-label="다음 조사 단계"')[1]
+      .split('<section aria-label="데이터 근거"')[0];
     const countText = (haystack, needle) => haystack.split(needle).length - 1;
     assert.ok(customerShellHtml.includes("fixture-A / 500m"));
     assert.ok(customerShellHtml.includes("주소 검색 · fixture resolved address"));
@@ -713,6 +720,9 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     for (const removedSection of ["1. 분석 기준", "2. 현재 상권 / 공간단위", "5. 현재 해석"]) {
       assert.ok(!fullSummaryHtml.includes(removedSection));
     }
+    for (const internalTerm of ["P0", "V3", "canonical", "geometry", "Result", "Result ID", "Analysis Run ID", "BLOCKED", "NOT_AVAILABLE", "UNKNOWN", "Value Type", "Confidence", "Stay Potential"]) {
+      assert.ok(!mainSummaryHtml.includes(internalTerm), `Customer view must not expose ${internalTerm}`);
+    }
     assert.ok(!nodes(explorer.tree).some((node) =>
       node.type === "h2" && text(node) === "기초입지 분석결과"));
     const relationResults = firstViewModel.dataEvidence.filter((item) =>
@@ -724,6 +734,8 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.ok(evidenceHtml.includes("분석지점 포함"));
     assert.ok(evidenceHtml.includes("500m 반경 교차"));
     assert.ok(evidenceHtml.includes(`교차 공식상권 ${overlapResults.length}개 보기`));
+    assert.ok(evidenceHtml.includes("grid items-start"));
+    if (insideResults.length === 0) assert.ok(evidenceHtml.includes("포함된 공식상권 없음"));
     const officialDetailsHtml = evidenceHtml.slice(
       evidenceHtml.indexOf("<details"),
       evidenceHtml.indexOf("</details>") + "</details>".length,
@@ -743,22 +755,44 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.ok(!evidenceHtml.includes("INSIDE"));
     assert.ok(!evidenceHtml.includes("SOURCE_ERROR"));
     assert.ok(!evidenceHtml.includes("canonical"));
-    assert.equal(countText(evidenceHtml, "서울시 공식상권은 현재 300m/500m 분석반경 및 FRAMEONE 주요상권과 서로 다른 공간단위입니다."), 1);
+    assert.equal(
+      countText(evidenceHtml, "서울시 공식상권은 현재 300m/500m 분석반경 및 FRAMEONE 주요상권과 서로 다른 공간단위입니다.") +
+        countText(evidenceHtml, "서울시 공식상권 전체 범위의 통계이며 현재"),
+      1,
+    );
     assert.equal(countText(evidenceHtml, "※ Kakao 장소검색 반환결과이며 실제 전체 경쟁점 전수자료가 아닙니다."), 1);
     for (const label of ["베이커리 검색", "제과점 검색", "카페 검색", "중복 제거 장소"]) {
       assert.equal(countText(evidenceHtml, `>${label}</p>`), 1);
     }
     assert.ok(!evidenceHtml.includes("경쟁점 수"));
     for (const blocked of firstViewModel.limitations.results.filter((item) => item.status === "BLOCKED")) {
-      assert.equal(countText(mainSummaryHtml, blocked.metricLabel), 1);
+      assert.equal(countText(mainSummaryHtml, blocked.metricLabel), 0);
     }
-    assert.equal(countText(mainSummaryHtml, "Kakao 장소의 실제 영업 여부를 현장에서 확인합니다."), 1);
-    assert.ok(mainSummaryHtml.includes("현재 분석 불가"));
-    assert.ok(mainSummaryHtml.includes("자료 확인 필요"));
-    assert.ok(fullSummaryHtml.includes(`Result 근거 ${firstViewModel.dataEvidence.length}개 보기`));
-    for (const result of firstViewModel.dataEvidence) assert.ok(fullSummaryHtml.includes(result.resultId));
+    assert.equal(countText(mainSummaryHtml, "검색된 장소의 실제 영업 여부와 업종을 확인합니다."), 1);
+    if (firstViewModel.presentation.limitations.length > 0) {
+      assert.ok(mainSummaryHtml.includes("확인 필요 / 분석 한계"));
+      assert.ok(mainSummaryHtml.includes(firstViewModel.presentation.limitations[0].title));
+    } else {
+      assert.ok(!mainSummaryHtml.includes("확인 필요 / 분석 한계"));
+    }
+    assert.ok(!mainSummaryHtml.includes("해당 항목 없음"));
+    assert.ok(mainSummaryHtml.includes("현장에서 확인할 사항"));
+    assert.ok(mainSummaryHtml.includes("다음 데이터 분석"));
+    assert.equal(countText(nextActionHtml, "추가 분석 예정"), 4);
+    assert.ok(fullSummaryHtml.includes(`데이터 근거 <span class="text-lg font-bold tabular-nums text-slate-950">${firstViewModel.dataEvidence.length}건`));
+    assert.ok(auditHtml.includes("직원용 상세 근거 보기"));
+    assert.ok(auditHtml.includes("Analysis Run ID"));
+    assert.ok(auditHtml.includes("Confidence"));
+    assert.ok(auditHtml.includes("Result ID"));
+    assert.ok(auditHtml.includes("Missing reason"));
+    assert.ok(!auditHtml.includes("<details open"));
+    const auditResultIds = firstViewModel.presentation.audit.groups.flatMap((group) => group.resultIds);
+    assert.equal(auditResultIds.length, firstViewModel.dataEvidence.length);
+    for (const result of firstViewModel.dataEvidence) assert.ok(auditHtml.includes(result.resultId));
     assert.ok(evidenceHtml.includes("중복 제거 장소"));
     assert.ok(!mainSummaryHtml.includes("Kakao 중복정규화 검색 반환건수"));
+    assert.ok(evidenceHtml.includes("sm:grid-cols-2 xl:grid-cols-3"));
+    assert.ok(mainSummaryHtml.includes("비교 가능한 분기 변화 자료가 없습니다."));
 
     viewerProps().onKakaoNearbySourceChange({
       status: "success",

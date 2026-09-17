@@ -174,6 +174,43 @@ export interface P0BasicLocationPresentationEvidenceViewModel {
   } | null;
 }
 
+export interface P0BasicLocationPresentationLimitationItemViewModel {
+  id: string;
+  label: string;
+  stateLabel: "현재 제외" | "추가 자료 필요" | "해석 주의";
+  description: string;
+  basisResultIds: readonly string[];
+}
+
+export interface P0BasicLocationPresentationLimitationGroupViewModel {
+  id: "excluded" | "additional" | "caution";
+  title: "현재 분석에서 제외된 항목" | "추가 자료가 필요한 항목" | "해석할 때 주의할 점";
+  items: readonly P0BasicLocationPresentationLimitationItemViewModel[];
+}
+
+export interface P0BasicLocationPresentationFieldActionViewModel {
+  id: string;
+  message: string;
+  basisResultIds: readonly string[];
+}
+
+export interface P0BasicLocationPresentationFieldActionGroupViewModel {
+  id: "operating" | "competition" | "size" | "customer" | "access" | "other";
+  title: string;
+  actions: readonly P0BasicLocationPresentationFieldActionViewModel[];
+}
+
+export interface P0BasicLocationPresentationAuditGroupViewModel {
+  id: "analysis-frameone" | "kakao" | "official-market" | "other";
+  label: string;
+  resultIds: readonly string[];
+}
+
+export interface P0BasicLocationPresentationAuditViewModel {
+  totalCount: number;
+  groups: readonly P0BasicLocationPresentationAuditGroupViewModel[];
+}
+
 export interface P0BasicLocationPresentationViewModel {
   header: {
     marketName: string | null;
@@ -189,6 +226,9 @@ export interface P0BasicLocationPresentationViewModel {
     nextAnalysis: readonly P0BasicLocationPresentationRoadmapItemViewModel[];
   };
   evidence: P0BasicLocationPresentationEvidenceViewModel;
+  limitations: readonly P0BasicLocationPresentationLimitationGroupViewModel[];
+  fieldActions: readonly P0BasicLocationPresentationFieldActionGroupViewModel[];
+  audit: P0BasicLocationPresentationAuditViewModel;
 }
 
 export interface P0BasicLocationViewModel {
@@ -404,13 +444,12 @@ const PRESENTATION_UNAVAILABLE_ITEMS: readonly P0BasicLocationPresentationUnavai
   Object.freeze({ id: "living-population-demand", label: "생활인구 기반 수요", stateLabel: "아직 분석 전" }),
   Object.freeze({ id: "pedestrian-flow", label: "실제 보행 흐름", stateLabel: "추가 데이터 분석 필요" }),
   Object.freeze({ id: "stay-potential", label: "체류 가능성", stateLabel: "추가 분석 예정" }),
-  Object.freeze({ id: "promising-segment", label: "출점 유망구간", stateLabel: "후속 분석 단계" }),
 ]);
 
 const PRESENTATION_NEXT_ANALYSIS: readonly P0BasicLocationPresentationRoadmapItemViewModel[] = Object.freeze([
   Object.freeze({ id: "living-population", label: "생활인구 기반 수요", statusLabel: "추가 분석 예정" }),
   Object.freeze({ id: "transit-pedestrian", label: "지하철·버스 및 보행 연결", statusLabel: "추가 분석 예정" }),
-  Object.freeze({ id: "stay-facilities", label: "체류 유발시설 / Stay Potential", statusLabel: "추가 분석 예정" }),
+  Object.freeze({ id: "stay-facilities", label: "체류 유발시설과 체류 가능성", statusLabel: "추가 분석 예정" }),
   Object.freeze({ id: "competition-structure", label: "경쟁점 구조", statusLabel: "추가 분석 예정" }),
 ]);
 
@@ -572,15 +611,242 @@ function buildPresentationEvidence(
   };
 }
 
+function isContextualScopeResult(result: BasicLocationResult): boolean {
+  return result.metricKey.startsWith("kakao.nearby.") ||
+    result.metricKey.startsWith("official_commercial_area.") ||
+    result.metricKey === "analysis.target.confirmed_address";
+}
+
+function customerLimitationLabel(result: BasicLocationResult): string {
+  if (
+    result.metricKey.includes("floating_population") ||
+    result.metricKey.includes("living_population")
+  ) {
+    return "생활인구 권역 분석";
+  }
+  if (result.analysisLayer === "MARKET_IDENTITY") return "권역 단위 공간 분석";
+  return "추가 분석 자료";
+}
+
+function pushPresentationLimitation(
+  items: P0BasicLocationPresentationLimitationItemViewModel[],
+  item: P0BasicLocationPresentationLimitationItemViewModel,
+) {
+  const existingIndex = items.findIndex((candidate) =>
+    candidate.label === item.label &&
+    candidate.stateLabel === item.stateLabel &&
+    candidate.description === item.description,
+  );
+  if (existingIndex < 0) {
+    items.push(item);
+    return;
+  }
+  const existing = items[existingIndex];
+  items[existingIndex] = {
+    ...existing,
+    basisResultIds: [
+      ...existing.basisResultIds,
+      ...item.basisResultIds.filter((resultId) => !existing.basisResultIds.includes(resultId)),
+    ],
+  };
+}
+
+function buildPresentationLimitations(
+  customerResults: readonly DisplayableBasicLocationResult[],
+  interpretation: BasicLocationInterpretation,
+): P0BasicLocationPresentationLimitationGroupViewModel[] {
+  const excluded: P0BasicLocationPresentationLimitationItemViewModel[] = [];
+  const additional: P0BasicLocationPresentationLimitationItemViewModel[] = [];
+  const caution: P0BasicLocationPresentationLimitationItemViewModel[] = [];
+  const representedResultIds = new Set<string>();
+
+  for (const { result } of customerResults) {
+    const isUnavailable = result.status === "NOT_AVAILABLE" ||
+      result.valueType === "UNKNOWN" ||
+      result.value === null;
+    const isBlocked = result.status === "BLOCKED";
+    if (!isBlocked && !isUnavailable && result.limitations.length === 0) continue;
+    representedResultIds.add(result.resultId);
+
+    if (isBlocked) {
+      const livingPopulation = result.metricKey.includes("floating_population") ||
+        result.metricKey.includes("living_population");
+      pushPresentationLimitation(excluded, {
+        id: `excluded:${result.resultId}`,
+        label: customerLimitationLabel(result),
+        stateLabel: "현재 제외",
+        description: livingPopulation
+          ? "검증된 FRAMEONE 공간경계가 없어 권역 단위 집계는 적용하지 않았습니다."
+          : "현재 필요한 공간 기준이 확인되지 않아 이번 분석에서는 제외했습니다.",
+        basisResultIds: [result.resultId],
+      });
+      continue;
+    }
+
+    if (isUnavailable) {
+      if (isContextualScopeResult(result)) continue;
+      pushPresentationLimitation(additional, {
+        id: `additional:${result.resultId}`,
+        label: customerLimitationLabel(result),
+        stateLabel: "추가 자료 필요",
+        description: "현재 연결된 자료만으로 확인할 수 없어 추가 자료가 필요합니다.",
+        basisResultIds: [result.resultId],
+      });
+      continue;
+    }
+
+    if (!isContextualScopeResult(result)) {
+      pushPresentationLimitation(caution, {
+        id: `caution:${result.resultId}`,
+        label: customerLimitationLabel(result),
+        stateLabel: "해석 주의",
+        description: "자료의 범위와 기준시점을 함께 확인해야 합니다.",
+        basisResultIds: [result.resultId],
+      });
+    }
+  }
+
+  const customerResultIds = new Set(
+    customerResults.map(({ result }) => result.resultId),
+  );
+  for (const unknown of filterSignals(interpretation.unknowns, customerResultIds)) {
+    if (unknown.basisResultIds.every((resultId) => representedResultIds.has(resultId))) {
+      continue;
+    }
+    pushPresentationLimitation(additional, {
+      id: `additional:${unknown.id}`,
+      label: "추가 확인이 필요한 자료",
+      stateLabel: "추가 자료 필요",
+      description: "현재 자료만으로 확인할 수 없어 추가 확인이 필요합니다.",
+      basisResultIds: [...unknown.basisResultIds],
+    });
+  }
+
+  return [
+    { id: "excluded" as const, title: "현재 분석에서 제외된 항목" as const, items: excluded },
+    { id: "additional" as const, title: "추가 자료가 필요한 항목" as const, items: additional },
+    { id: "caution" as const, title: "해석할 때 주의할 점" as const, items: caution },
+  ].filter((group) => group.items.length > 0);
+}
+
+const FIELD_ACTION_ORDER: readonly P0BasicLocationPresentationFieldActionGroupViewModel["id"][] = [
+  "operating",
+  "competition",
+  "size",
+  "customer",
+  "access",
+  "other",
+];
+
+function fieldActionCategory(
+  signal: BasicLocationInterpretationSignal,
+  resultById: ReadonlyMap<string, BasicLocationResult>,
+): { id: P0BasicLocationPresentationFieldActionGroupViewModel["id"]; title: string; message: string } {
+  const results = signal.basisResultIds
+    .map((resultId) => resultById.get(resultId))
+    .filter((result): result is BasicLocationResult => Boolean(result));
+  const keys = results.flatMap((result) => [result.metricKey, ...result.fieldCheckKeys]).join(" ").toLowerCase();
+  const message = signal.message.toLowerCase();
+  if (results.some((result) => result.metricKey.startsWith("kakao.nearby.")) || keys.includes("operating")) {
+    return { id: "operating", title: "영업·업종", message: "검색된 장소의 실제 영업 여부와 업종을 확인합니다." };
+  }
+  if (keys.includes("entrance") || keys.includes("address") || message.includes("접근")) {
+    return { id: "access", title: "접근성", message: "분석 위치와 실제 출입구·도보 접근 경로를 확인합니다." };
+  }
+  if (message.includes("규모") || message.includes("좌석") || message.includes("테이크아웃")) {
+    return { id: "size", title: "점포 규모", message: "점포 규모·좌석·테이크아웃 형태를 확인합니다." };
+  }
+  if (message.includes("고객") || message.includes("혼잡")) {
+    return { id: "customer", title: "고객 이용", message: "주요 이용객과 혼잡시간을 확인합니다." };
+  }
+  if (results.some((result) => result.analysisLayer === "COMPETITION")) {
+    return { id: "competition", title: "상품·경쟁", message: "상품 구성과 직접 경쟁 여부를 확인합니다." };
+  }
+  return { id: "other", title: "추가 확인", message: "관련 현장 상태를 직접 확인합니다." };
+}
+
+function buildPresentationFieldActions(
+  customerResults: readonly DisplayableBasicLocationResult[],
+  interpretation: BasicLocationInterpretation,
+): P0BasicLocationPresentationFieldActionGroupViewModel[] {
+  const customerResultIds = new Set(customerResults.map(({ result }) => result.resultId));
+  const resultById = new Map(customerResults.map(({ result }) => [result.resultId, result]));
+  const groups = new Map<P0BasicLocationPresentationFieldActionGroupViewModel["id"], {
+    title: string;
+    actions: P0BasicLocationPresentationFieldActionViewModel[];
+  }>();
+
+  for (const signal of filterSignals(interpretation.nextChecks, customerResultIds)) {
+    const category = fieldActionCategory(signal, resultById);
+    const group = groups.get(category.id) ?? { title: category.title, actions: [] };
+    const existingIndex = group.actions.findIndex((action) => action.message === category.message);
+    if (existingIndex >= 0) {
+      const existing = group.actions[existingIndex];
+      group.actions[existingIndex] = {
+        ...existing,
+        basisResultIds: [
+          ...existing.basisResultIds,
+          ...signal.basisResultIds.filter((resultId) => !existing.basisResultIds.includes(resultId)),
+        ],
+      };
+    } else {
+      group.actions.push({
+        id: `field:${category.id}:${signal.id}`,
+        message: category.message,
+        basisResultIds: [...signal.basisResultIds],
+      });
+    }
+    groups.set(category.id, group);
+  }
+
+  return FIELD_ACTION_ORDER.flatMap((id) => {
+    const group = groups.get(id);
+    return group ? [{ id, title: group.title, actions: group.actions }] : [];
+  });
+}
+
+function auditGroupId(result: BasicLocationResult): P0BasicLocationPresentationAuditGroupViewModel["id"] {
+  if (result.metricKey.startsWith("analysis.target.") || result.metricKey.startsWith("frameone.")) {
+    return "analysis-frameone";
+  }
+  if (result.metricKey.startsWith("kakao.nearby.")) return "kakao";
+  if (result.metricKey.startsWith("official_commercial_area.")) return "official-market";
+  return "other";
+}
+
+function buildPresentationAudit(
+  staffResults: readonly DisplayableBasicLocationResult[],
+): P0BasicLocationPresentationAuditViewModel {
+  const definitions = [
+    { id: "analysis-frameone" as const, label: "분석 실행 / FRAMEONE" },
+    { id: "kakao" as const, label: "Kakao" },
+    { id: "official-market" as const, label: "서울시 공식상권" },
+    { id: "other" as const, label: "기타" },
+  ];
+  return {
+    totalCount: staffResults.length,
+    groups: definitions.map((definition) => ({
+      ...definition,
+      resultIds: staffResults
+        .filter(({ result }) => auditGroupId(result) === definition.id)
+        .map(({ result }) => result.resultId),
+    })).filter((group) => group.resultIds.length > 0),
+  };
+}
+
 function buildPresentation(
   analysisContext: P0BasicLocationAnalysisContextViewModel,
   staffDisplayableResults: readonly DisplayableBasicLocationResult[],
+  interpretation: BasicLocationInterpretation,
 ): P0BasicLocationPresentationViewModel {
   const customerResults = applyBasicLocationDisplayPolicy(
     staffDisplayableResults.map(({ result }) => result),
     "CUSTOMER",
   );
   const evidence = buildPresentationEvidence(customerResults);
+  const limitations = buildPresentationLimitations(customerResults, interpretation);
+  const fieldActions = buildPresentationFieldActions(customerResults, interpretation);
+  const audit = buildPresentationAudit(staffDisplayableResults);
   const kakaoStatus = evidence.kakao.statusLabel === "확인"
     ? "Kakao 확인"
     : evidence.kakao.statusLabel;
@@ -588,7 +854,7 @@ function buildPresentation(
     ? `포함 ${evidence.officialRelation.included.length} · 교차 ${evidence.officialRelation.overlapping.length}`
     : "자료 확인 필요";
   const analysisStage = kakaoStatus === "Kakao 확인" && evidence.officialRelation.available
-    ? "P0 기초근거 확인"
+    ? "기초입지 1차 분석 완료"
     : "일부 자료 확인 필요";
 
   const confirmedFeatures: P0BasicLocationPresentationFeatureViewModel[] = [];
@@ -646,6 +912,9 @@ function buildPresentation(
       nextAnalysis: PRESENTATION_NEXT_ANALYSIS,
     },
     evidence,
+    limitations,
+    fieldActions,
+    audit,
   };
 }
 
@@ -823,7 +1092,11 @@ export function buildP0BasicLocationViewModel(
       nextChecks: filterSignals(input.interpretation.nextChecks, visibleResultIds),
     },
     dataEvidence: resultViewModels,
-    presentation: buildPresentation(analysisContext, input.displayableResults),
+    presentation: buildPresentation(
+      analysisContext,
+      input.displayableResults,
+      input.interpretation,
+    ),
   };
 
   return deepFreeze(model);

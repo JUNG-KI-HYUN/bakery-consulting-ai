@@ -383,7 +383,7 @@ test("V3-A: complete customer-displayable Kakao categories advance the P0 status
   );
   const { model } = buildFor("STAFF", results);
   assert.equal(model.presentation.statusCards.find((card) => card.id === "kakao").value, "Kakao 확인");
-  assert.equal(model.presentation.statusCards.find((card) => card.id === "analysis-stage").value, "P0 기초근거 확인");
+  assert.equal(model.presentation.statusCards.find((card) => card.id === "analysis-stage").value, "기초입지 1차 분석 완료");
 });
 
 test("V3-A: official-market status counts customer-displayable inside and overlap relations", () => {
@@ -418,8 +418,8 @@ test("V3-A: unavailable and next-analysis items remain explicit static scope", (
     "생활인구 기반 수요",
     "실제 보행 흐름",
     "체류 가능성",
-    "출점 유망구간",
   ]);
+  assert.ok(!JSON.stringify(model.presentation.summary).includes("출점 유망구간"));
   assert.ok(model.presentation.summary.nextAnalysis.length > 0);
   assert.ok(model.presentation.summary.nextAnalysis.every((item) => item.statusLabel === "추가 분석 예정"));
 });
@@ -556,6 +556,75 @@ test("V3-B: customer evidence lineage excludes INTERNAL_ONLY and HIDDEN results"
   assert.ok(basisResultIds.length > 0);
   assert.ok(basisResultIds.every((resultId) => !forbiddenIds.has(resultId)));
   assert.ok(!JSON.stringify(evidence).includes("secret"));
+});
+
+test("V3-C: customer limitations are compact, deterministic and free of technical metric labels", () => {
+  const { model } = buildFor("STAFF");
+  assert.deepEqual(model.presentation.limitations.map((group) => group.id), ["excluded", "caution"]);
+  const excluded = model.presentation.limitations.find((group) => group.id === "excluded");
+  assert.equal(excluded.items.length, 1);
+  assert.equal(excluded.items[0].label, "생활인구 권역 분석");
+  assert.equal(excluded.items[0].stateLabel, "현재 제외");
+  assert.ok(excluded.items[0].description.includes("검증된 FRAMEONE 공간경계"));
+  const customerText = JSON.stringify(model.presentation.limitations);
+  assert.ok(!customerText.includes("Market 생활인구 공간집계"));
+  assert.ok(!customerText.includes("geometry"));
+  assert.ok(!customerText.includes("BLOCKED"));
+  assert.ok(model.presentation.limitations.every((group) => group.items.length > 0));
+});
+
+test("V3-C: field checks are grouped into customer actions with complete lineage", () => {
+  const { model } = buildFor("STAFF");
+  assert.deepEqual(model.presentation.fieldActions.map((group) => group.id), ["operating", "access"]);
+  const actionBasisIds = model.presentation.fieldActions.flatMap((group) =>
+    group.actions.flatMap((action) => action.basisResultIds));
+  const originalBasisIds = new Set(model.fieldHandoff.nextChecks.flatMap((signal) => signal.basisResultIds));
+  assert.ok(actionBasisIds.length > 0);
+  assert.ok(actionBasisIds.every((resultId) => originalBasisIds.has(resultId)));
+  assert.ok([...originalBasisIds].every((resultId) => actionBasisIds.includes(resultId)));
+  assert.equal(new Set(model.presentation.fieldActions.flatMap((group) =>
+    group.actions.map((action) => action.message))).size,
+  model.presentation.fieldActions.flatMap((group) => group.actions).length);
+});
+
+test("V3-C: next analysis uses only customer roadmap wording", () => {
+  const { model } = buildFor("STAFF");
+  assert.deepEqual(model.presentation.summary.nextAnalysis.map((item) => item.label), [
+    "생활인구 기반 수요",
+    "지하철·버스 및 보행 연결",
+    "체류 유발시설과 체류 가능성",
+    "경쟁점 구조",
+  ]);
+  assert.ok(model.presentation.summary.nextAnalysis.every((item) => item.statusLabel === "추가 분석 예정"));
+  assert.ok(!JSON.stringify(model.presentation.summary.nextAnalysis).includes("Stay Potential"));
+});
+
+test("V3-C: audit summary preserves every STAFF evidence result exactly once", () => {
+  const { model } = buildFor("STAFF");
+  const auditIds = model.presentation.audit.groups.flatMap((group) => group.resultIds);
+  assert.equal(model.presentation.audit.totalCount, model.dataEvidence.length);
+  assert.equal(auditIds.length, model.dataEvidence.length);
+  assert.equal(new Set(auditIds).size, auditIds.length);
+  assert.deepEqual(new Set(auditIds), new Set(model.dataEvidence.map((result) => result.resultId)));
+  assert.deepEqual(model.presentation.audit.groups.map((group) => group.id), [
+    "analysis-frameone",
+    "kakao",
+    "official-market",
+  ]);
+});
+
+test("V3-C: empty input creates no limitation or field-action cards", () => {
+  const interpretation = buildBasicLocationInterpretation({ analysisRunId: RUN_ID, results: [] });
+  const model = buildP0BasicLocationViewModel({
+    analysisRunId: RUN_ID,
+    audience: "STAFF",
+    displayableResults: [],
+    interpretation,
+  });
+  assert.deepEqual(model.presentation.limitations, []);
+  assert.deepEqual(model.presentation.fieldActions, []);
+  assert.equal(model.presentation.audit.totalCount, 0);
+  assert.deepEqual(model.presentation.audit.groups, []);
 });
 
 test("Slice 5B: Market Identity preserves input collection order", () => {
