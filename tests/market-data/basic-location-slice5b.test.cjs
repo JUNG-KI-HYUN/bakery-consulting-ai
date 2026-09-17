@@ -370,6 +370,16 @@ test("V3-A: complete customer-displayable Kakao categories advance the P0 status
       policy: "CUSTOMER_WITH_NOTE",
       limitations: [note("SEARCH_NOT_CENSUS", "검색 반환건수는 전체 경쟁점 수가 아닙니다.")],
     }),
+    available({
+      metricKey: "kakao.nearby.unique_returned_count",
+      metricLabel: "Kakao 중복정규화 검색 반환건수",
+      value: 2,
+      resultUnit: "places",
+      valueType: "OBSERVED_SOURCE_VALUE",
+      analysisLayer: "COMPETITION",
+      policy: "CUSTOMER_WITH_NOTE",
+      limitations: [note("SEARCH_NOT_CENSUS", "검색 반환건수는 전체 경쟁점 수가 아닙니다.")],
+    }),
   );
   const { model } = buildFor("STAFF", results);
   assert.equal(model.presentation.statusCards.find((card) => card.id === "kakao").value, "Kakao 확인");
@@ -412,6 +422,140 @@ test("V3-A: unavailable and next-analysis items remain explicit static scope", (
   ]);
   assert.ok(model.presentation.summary.nextAnalysis.length > 0);
   assert.ok(model.presentation.summary.nextAnalysis.every((item) => item.statusLabel === "추가 분석 예정"));
+});
+
+test("V3-B: Kakao projection keeps four deterministic metrics without summing categories", () => {
+  const results = fixtureResults().filter((result) =>
+    result.metricKey !== "kakao.nearby.cafe.returned_count");
+  results.push(
+    available({
+      metricKey: "kakao.nearby.confectionery.returned_count",
+      metricLabel: "제과점 검색 반환건수",
+      value: 28,
+      resultUnit: "places",
+      valueType: "OBSERVED_SOURCE_VALUE",
+      analysisLayer: "COMPETITION",
+      policy: "CUSTOMER_WITH_NOTE",
+      limitations: [note("SEARCH_NOT_CENSUS", "검색 반환건수는 전체 경쟁점 수가 아닙니다.")],
+    }),
+    available({
+      metricKey: "kakao.nearby.cafe.returned_count",
+      metricLabel: "카페 검색 반환건수",
+      value: 205,
+      resultUnit: "places",
+      valueType: "OBSERVED_SOURCE_VALUE",
+      analysisLayer: "COMPETITION",
+      policy: "CUSTOMER_WITH_NOTE",
+      limitations: [note("SEARCH_NOT_CENSUS", "검색 반환건수는 전체 경쟁점 수가 아닙니다.")],
+    }),
+    available({
+      metricKey: "kakao.nearby.unique_returned_count",
+      metricLabel: "Kakao 중복정규화 검색 반환건수",
+      value: 30,
+      resultUnit: "places",
+      valueType: "OBSERVED_SOURCE_VALUE",
+      analysisLayer: "COMPETITION",
+      policy: "CUSTOMER_WITH_NOTE",
+      limitations: [note("SEARCH_NOT_CENSUS", "검색 반환건수는 전체 경쟁점 수가 아닙니다.")],
+    }),
+  );
+  const { model } = buildFor("STAFF", results);
+  assert.deepEqual(model.presentation.evidence.kakao.metrics.map((metric) => metric.label), [
+    "베이커리 검색",
+    "제과점 검색",
+    "카페 검색",
+    "중복 제거 장소",
+  ]);
+  assert.deepEqual(model.presentation.evidence.kakao.metrics.map((metric) => metric.value), [0, 28, 205, 30]);
+  assert.equal(model.presentation.evidence.kakao.statusLabel, "확인");
+  assert.ok(!model.presentation.evidence.kakao.metrics.some((metric) => metric.value === 233));
+  assert.ok(model.presentation.evidence.kakao.metrics.every((metric) => metric.basisResultIds.length === 1));
+});
+
+test("V3-B: successful Kakao zero and Source failure stay distinct", () => {
+  const { model } = buildFor("STAFF");
+  const bakery = model.presentation.evidence.kakao.metrics.find((metric) => metric.id.includes("bakery"));
+  const cafe = model.presentation.evidence.kakao.metrics.find((metric) => metric.id.includes("cafe"));
+  assert.equal(bakery.value, 0);
+  assert.equal(bakery.statusLabel, "확인");
+  assert.equal(cafe.value, null);
+  assert.equal(cafe.statusLabel, "자료 확인 필요");
+  assert.equal(model.presentation.evidence.kakao.statusLabel, "일부 자료 확인 필요");
+});
+
+test("V3-B: official relation projection separates included and overlapping areas", () => {
+  const results = fixtureResults();
+  results.push(
+    available({
+      metricKey: "official_commercial_area.spatial_relation",
+      metricLabel: "공식상권 공간관계",
+      value: "INSIDE",
+      analysisUnit: { type: "OFFICIAL_COMMERCIAL_AREA", id: "sample-inside", label: "Sample Inside Area" },
+      policy: "CUSTOMER_WITH_NOTE",
+      limitations: [note("BOUNDARY_DISTINCT", "FRAMEONE Market과 동일 경계를 의미하지 않습니다.")],
+    }),
+  );
+  const { model } = buildFor("STAFF", results);
+  assert.deepEqual(model.presentation.evidence.officialRelation.included.map((area) => area.name), ["Sample Inside Area"]);
+  assert.deepEqual(model.presentation.evidence.officialRelation.overlapping.map((area) => area.name), ["Sample Official Area"]);
+  assert.equal(model.presentation.evidence.officialRelation.basisResultIds.length, 2);
+});
+
+test("V3-B: official statistics and trend retain source values, scope and lineage", () => {
+  const results = fixtureResults();
+  results.push(available({
+    metricKey: "official_commercial_area.trend.stores_qoq_change",
+    metricLabel: "공식상권 점포 수 변화",
+    value: -2,
+    resultUnit: "stores",
+    valueType: "CALCULATED_VALUE",
+    analysisLayer: "MARKET_CHANGE",
+    analysisUnit: units.official,
+    policy: "CUSTOMER_WITH_NOTE",
+    limitations: [note("NO_PROSPECT_JUDGMENT", "증감만으로 유망 여부를 판단하지 않습니다.")],
+    referenceDate: null,
+    referencePeriod: "2026-Q1",
+  }));
+  const { model } = buildFor("STAFF", results);
+  const stats = model.presentation.evidence.officialStats;
+  assert.equal(stats.marketName, "Sample Official Area");
+  assert.equal(stats.referencePeriod, "2026-Q1");
+  assert.equal(stats.sales[0].value, 123456);
+  assert.equal(stats.sales[0].valueType, "ESTIMATED_VALUE");
+  assert.equal(stats.stores[0].value, 42);
+  assert.ok([...stats.sales, ...stats.stores].every((metric) => metric.basisResultIds.length === 1));
+  assert.deepEqual(model.presentation.evidence.trend.metrics.map((metric) => metric.value), [2.5, -2]);
+  assert.ok(!JSON.stringify(model.presentation.evidence.trend).includes("성장 상권"));
+  assert.ok(!JSON.stringify(model.presentation.evidence.trend).includes("쇠퇴 상권"));
+});
+
+test("V3-B: empty official statistics remain absent without creating values", () => {
+  const results = fixtureResults().filter((result) =>
+    !result.metricKey.includes(".sales.") &&
+    !result.metricKey.includes(".stores.") &&
+    !result.metricKey.includes(".trend."));
+  const { model } = buildFor("STAFF", results);
+  assert.equal(model.presentation.evidence.officialStats, null);
+  assert.equal(model.presentation.evidence.trend, null);
+  assert.equal(model.presentation.evidence.officialRelation.available, true);
+});
+
+test("V3-B: customer evidence lineage excludes INTERNAL_ONLY and HIDDEN results", () => {
+  const rawResults = fixtureResults();
+  const forbiddenIds = new Set(rawResults
+    .filter((result) => result.customerDisplayPolicy === "INTERNAL_ONLY" || result.customerDisplayPolicy === "HIDDEN")
+    .map((result) => result.resultId));
+  const { model } = buildFor("STAFF", rawResults);
+  const evidence = model.presentation.evidence;
+  const basisResultIds = [
+    ...evidence.kakao.metrics.flatMap((metric) => metric.basisResultIds),
+    ...evidence.officialRelation.basisResultIds,
+    ...(evidence.officialStats ? [...evidence.officialStats.sales, ...evidence.officialStats.stores].flatMap((metric) => metric.basisResultIds) : []),
+    ...(evidence.trend ? evidence.trend.metrics.flatMap((metric) => metric.basisResultIds) : []),
+  ];
+  assert.ok(basisResultIds.length > 0);
+  assert.ok(basisResultIds.every((resultId) => !forbiddenIds.has(resultId)));
+  assert.ok(!JSON.stringify(evidence).includes("secret"));
 });
 
 test("Slice 5B: Market Identity preserves input collection order", () => {

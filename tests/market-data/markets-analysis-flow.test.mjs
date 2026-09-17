@@ -690,11 +690,14 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.equal(firstViewModel.analysisContext.target.confirmedAddress, "fixture resolved address");
     assert.ok(firstViewModel.availableEvidence.kakaoObserved.some((item) => item.value === 0));
     assert.ok(firstViewModel.limitations.results.some((item) => item.status === "BLOCKED"));
-    for (const section of ["기초입지 요약", "현재 확인된 특징", "현재 판단할 수 없는 부분", "다음 분석 방향", "주변 업종 관측", "서울시 공식상권 참고자료", "확인 필요 / 분석 한계", "현장 확인 필요사항", "데이터 근거 상세보기"]) {
+    for (const section of ["기초입지 요약", "현재 확인된 특징", "현재 판단할 수 없는 부분", "다음 분석 방향", "상권 데이터 근거", "확인 필요 / 분석 한계", "현장 확인 필요사항", "데이터 근거 상세보기"]) {
       assert.ok(summaryHtml().includes(section));
     }
     const fullSummaryHtml = summaryHtml();
-    const customerShellHtml = fullSummaryHtml.split('<section aria-label="주변 업종 관측"')[0];
+    const customerShellHtml = fullSummaryHtml.split('<section aria-label="상권 데이터 근거"')[0];
+    const evidenceHtml = fullSummaryHtml
+      .split('<section aria-label="상권 데이터 근거"')[1]
+      .split('<section aria-label="확인 필요 / 분석 한계"')[0];
     const mainSummaryHtml = fullSummaryHtml.split('<section aria-label="데이터 근거 상세보기"')[0];
     const countText = (haystack, needle) => haystack.split(needle).length - 1;
     assert.ok(customerShellHtml.includes("fixture-A / 500m"));
@@ -716,18 +719,36 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
       item.metricKey === "official_commercial_area.spatial_relation");
     const insideResults = relationResults.filter((item) => item.value === "INSIDE");
     const overlapResults = relationResults.filter((item) => item.value === "RADIUS_OVERLAP");
-    assert.ok(mainSummaryHtml.includes(`분석지점 포함 · ${insideResults.length}개`));
-    assert.ok(mainSummaryHtml.includes(`500m 반경 교차 · ${overlapResults.length}개`));
-    for (const result of relationResults) assert.ok(mainSummaryHtml.includes(result.analysisUnit.label));
+    assert.equal(firstViewModel.presentation.evidence.officialRelation.included.length, insideResults.length);
+    assert.equal(firstViewModel.presentation.evidence.officialRelation.overlapping.length, overlapResults.length);
+    assert.ok(evidenceHtml.includes("분석지점 포함"));
+    assert.ok(evidenceHtml.includes("500m 반경 교차"));
+    assert.ok(evidenceHtml.includes(`교차 공식상권 ${overlapResults.length}개 보기`));
+    const officialDetailsHtml = evidenceHtml.slice(
+      evidenceHtml.indexOf("<details"),
+      evidenceHtml.indexOf("</details>") + "</details>".length,
+    );
+    for (const area of firstViewModel.presentation.evidence.officialRelation.included) {
+      assert.ok(evidenceHtml.includes(area.name));
+      assert.ok(!officialDetailsHtml.includes(area.name));
+    }
+    for (const area of firstViewModel.presentation.evidence.officialRelation.overlapping) {
+      assert.ok(officialDetailsHtml.includes(area.name));
+    }
     for (const idResult of firstViewModel.dataEvidence.filter((item) =>
       item.metricKey === "official_commercial_area.id")) {
-      assert.ok(!mainSummaryHtml.includes(String(idResult.value)));
+      assert.ok(!evidenceHtml.includes(String(idResult.value)));
     }
-    assert.ok(!mainSummaryHtml.includes("RADIUS_OVERLAP"));
-    assert.ok(!mainSummaryHtml.includes("INSIDE"));
-    assert.ok(!mainSummaryHtml.includes("canonical"));
-    assert.equal(countText(mainSummaryHtml, "서울시 공식상권은 분석지점의 300m/500m 반경 및 FRAMEONE 주요상권과 서로 다른 공간단위입니다."), 1);
-    assert.equal(countText(mainSummaryHtml, "※ Kakao 장소검색 반환값이며 실제 전체 경쟁점 수가 아닙니다."), 1);
+    assert.ok(!evidenceHtml.includes("RADIUS_OVERLAP"));
+    assert.ok(!evidenceHtml.includes("INSIDE"));
+    assert.ok(!evidenceHtml.includes("SOURCE_ERROR"));
+    assert.ok(!evidenceHtml.includes("canonical"));
+    assert.equal(countText(evidenceHtml, "서울시 공식상권은 현재 300m/500m 분석반경 및 FRAMEONE 주요상권과 서로 다른 공간단위입니다."), 1);
+    assert.equal(countText(evidenceHtml, "※ Kakao 장소검색 반환결과이며 실제 전체 경쟁점 전수자료가 아닙니다."), 1);
+    for (const label of ["베이커리 검색", "제과점 검색", "카페 검색", "중복 제거 장소"]) {
+      assert.equal(countText(evidenceHtml, `>${label}</p>`), 1);
+    }
+    assert.ok(!evidenceHtml.includes("경쟁점 수"));
     for (const blocked of firstViewModel.limitations.results.filter((item) => item.status === "BLOCKED")) {
       assert.equal(countText(mainSummaryHtml, blocked.metricLabel), 1);
     }
@@ -736,7 +757,7 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.ok(mainSummaryHtml.includes("자료 확인 필요"));
     assert.ok(fullSummaryHtml.includes(`Result 근거 ${firstViewModel.dataEvidence.length}개 보기`));
     for (const result of firstViewModel.dataEvidence) assert.ok(fullSummaryHtml.includes(result.resultId));
-    assert.ok(mainSummaryHtml.includes("중복 제거 후 확인된 장소"));
+    assert.ok(evidenceHtml.includes("중복 제거 장소"));
     assert.ok(!mainSummaryHtml.includes("Kakao 중복정규화 검색 반환건수"));
 
     viewerProps().onKakaoNearbySourceChange({

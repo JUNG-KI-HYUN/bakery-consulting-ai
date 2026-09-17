@@ -133,6 +133,47 @@ export interface P0BasicLocationPresentationUnavailableItemViewModel {
   stateLabel: string;
 }
 
+export interface P0BasicLocationPresentationMetricViewModel {
+  id: string;
+  label: string;
+  value: BasicLocationResultValue;
+  unit: string | null;
+  statusLabel: "확인" | "일부 확인" | "자료 확인 필요";
+  referencePeriod: string | null;
+  analysisUnitLabel: string | null;
+  valueType: BasicLocationValueType | null;
+  basisResultIds: readonly string[];
+}
+
+export interface P0BasicLocationPresentationOfficialAreaViewModel {
+  name: string;
+  basisResultIds: readonly string[];
+}
+
+export interface P0BasicLocationPresentationEvidenceViewModel {
+  kakao: {
+    statusLabel: "확인" | "일부 자료 확인 필요" | "자료 확인 필요";
+    metrics: readonly P0BasicLocationPresentationMetricViewModel[];
+  };
+  officialRelation: {
+    available: boolean;
+    included: readonly P0BasicLocationPresentationOfficialAreaViewModel[];
+    overlapping: readonly P0BasicLocationPresentationOfficialAreaViewModel[];
+    basisResultIds: readonly string[];
+  };
+  officialStats: {
+    marketName: string;
+    referencePeriod: string | null;
+    sales: readonly P0BasicLocationPresentationMetricViewModel[];
+    stores: readonly P0BasicLocationPresentationMetricViewModel[];
+  } | null;
+  trend: {
+    marketName: string;
+    referencePeriod: string | null;
+    metrics: readonly P0BasicLocationPresentationMetricViewModel[];
+  } | null;
+}
+
 export interface P0BasicLocationPresentationViewModel {
   header: {
     marketName: string | null;
@@ -147,6 +188,7 @@ export interface P0BasicLocationPresentationViewModel {
     unavailableNow: readonly P0BasicLocationPresentationUnavailableItemViewModel[];
     nextAnalysis: readonly P0BasicLocationPresentationRoadmapItemViewModel[];
   };
+  evidence: P0BasicLocationPresentationEvidenceViewModel;
 }
 
 export interface P0BasicLocationViewModel {
@@ -351,6 +393,13 @@ const KAKAO_CATEGORY_METRIC_KEYS = [
   "kakao.nearby.cafe.returned_count",
 ] as const;
 
+const KAKAO_PRESENTATION_METRICS = [
+  { metricKey: "kakao.nearby.bakery.returned_count", label: "베이커리 검색" },
+  { metricKey: "kakao.nearby.confectionery.returned_count", label: "제과점 검색" },
+  { metricKey: "kakao.nearby.cafe.returned_count", label: "카페 검색" },
+  { metricKey: "kakao.nearby.unique_returned_count", label: "중복 제거 장소" },
+] as const;
+
 const PRESENTATION_UNAVAILABLE_ITEMS: readonly P0BasicLocationPresentationUnavailableItemViewModel[] = Object.freeze([
   Object.freeze({ id: "living-population-demand", label: "생활인구 기반 수요", stateLabel: "아직 분석 전" }),
   Object.freeze({ id: "pedestrian-flow", label: "실제 보행 흐름", stateLabel: "추가 데이터 분석 필요" }),
@@ -365,6 +414,164 @@ const PRESENTATION_NEXT_ANALYSIS: readonly P0BasicLocationPresentationRoadmapIte
   Object.freeze({ id: "competition-structure", label: "경쟁점 구조", statusLabel: "추가 분석 예정" }),
 ]);
 
+function presentationMetricStatus(
+  displayable: DisplayableBasicLocationResult | undefined,
+): P0BasicLocationPresentationMetricViewModel["statusLabel"] {
+  if (displayable?.result.status === "AVAILABLE") return "확인";
+  if (displayable?.result.status === "PARTIAL" && displayable.result.value !== null) {
+    return "일부 확인";
+  }
+  return "자료 확인 필요";
+}
+
+function toPresentationMetric(
+  displayable: DisplayableBasicLocationResult | undefined,
+  id: string,
+  label: string,
+): P0BasicLocationPresentationMetricViewModel {
+  const result = displayable?.result;
+  return {
+    id,
+    label,
+    value: result?.value ?? null,
+    unit: result?.unit ?? null,
+    statusLabel: presentationMetricStatus(displayable),
+    referencePeriod: result?.referencePeriod ?? result?.referenceDate ?? null,
+    analysisUnitLabel: result?.analysisUnit.label ?? null,
+    valueType: result?.valueType ?? null,
+    basisResultIds: result ? [result.resultId] : [],
+  };
+}
+
+function isPresentationValue(
+  result: BasicLocationResult,
+): boolean {
+  return result.value !== null &&
+    result.status !== "BLOCKED" &&
+    result.status !== "NOT_AVAILABLE";
+}
+
+function officialAreas(
+  results: readonly DisplayableBasicLocationResult[],
+  excludedKeys: ReadonlySet<string> = new Set(),
+): P0BasicLocationPresentationOfficialAreaViewModel[] {
+  const areas: P0BasicLocationPresentationOfficialAreaViewModel[] = [];
+  const seen = new Set<string>();
+  for (const { result } of results) {
+    const key = result.analysisUnit.id || result.analysisUnit.label;
+    if (excludedKeys.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    areas.push({
+      name: result.analysisUnit.label,
+      basisResultIds: [result.resultId],
+    });
+  }
+  return areas;
+}
+
+function buildPresentationEvidence(
+  customerResults: readonly DisplayableBasicLocationResult[],
+): P0BasicLocationPresentationEvidenceViewModel {
+  const kakaoMetrics = KAKAO_PRESENTATION_METRICS.map(({ metricKey, label }) =>
+    toPresentationMetric(
+      findDisplayableResult(customerResults, metricKey),
+      metricKey,
+      label,
+    ),
+  );
+  const confirmedKakaoCount = kakaoMetrics.filter(
+    (metric) => metric.statusLabel === "확인",
+  ).length;
+  const kakaoStatus = confirmedKakaoCount === kakaoMetrics.length
+    ? "확인"
+    : kakaoMetrics.some((metric) => metric.basisResultIds.length > 0)
+      ? "일부 자료 확인 필요"
+      : "자료 확인 필요";
+
+  const insideResults = relationResults(customerResults, "INSIDE");
+  const overlapResults = relationResults(customerResults, "RADIUS_OVERLAP");
+  const included = officialAreas(insideResults);
+  const includedKeys = new Set(
+    insideResults.map(({ result }) => result.analysisUnit.id || result.analysisUnit.label),
+  );
+  const overlapping = officialAreas(overlapResults, includedKeys);
+  const relatedCount = findDisplayableResult(
+    customerResults,
+    "official_commercial_area.related_count",
+  );
+  const officialRelationAvailable = included.length > 0 ||
+    overlapping.length > 0 ||
+    (relatedCount?.result.status === "AVAILABLE" && relatedCount.result.value === 0);
+  const officialRelationBasisIds = [
+    ...included.flatMap((area) => area.basisResultIds),
+    ...overlapping.flatMap((area) => area.basisResultIds),
+    ...(relatedCount ? [relatedCount.result.resultId] : []),
+  ];
+
+  const salesResults = customerResults.filter(({ result }) =>
+    result.analysisUnit.type === "OFFICIAL_COMMERCIAL_AREA" &&
+    !result.metricKey.includes(".trend.") &&
+    result.metricKey.includes(".sales.") &&
+    isPresentationValue(result),
+  );
+  const storeResults = customerResults.filter(({ result }) =>
+    result.analysisUnit.type === "OFFICIAL_COMMERCIAL_AREA" &&
+    !result.metricKey.includes(".trend.") &&
+    result.metricKey.includes(".stores.") &&
+    isPresentationValue(result),
+  );
+  const trendResults = customerResults.filter(({ result }) =>
+    result.analysisUnit.type === "OFFICIAL_COMMERCIAL_AREA" &&
+    result.metricKey.includes(".trend.") &&
+    isPresentationValue(result),
+  );
+  const officialStatsResults = [...salesResults, ...storeResults];
+  const statsContextResult = officialStatsResults[0]?.result;
+  const trendContextResult = trendResults[0]?.result;
+
+  return {
+    kakao: {
+      statusLabel: kakaoStatus,
+      metrics: kakaoMetrics,
+    },
+    officialRelation: {
+      available: officialRelationAvailable,
+      included,
+      overlapping,
+      basisResultIds: officialRelationBasisIds,
+    },
+    officialStats: statsContextResult ? {
+      marketName: statsContextResult.analysisUnit.label,
+      referencePeriod: officialStatsResults.find(({ result }) =>
+        result.referencePeriod || result.referenceDate)?.result.referencePeriod ??
+        officialStatsResults.find(({ result }) =>
+          result.referencePeriod || result.referenceDate)?.result.referenceDate ?? null,
+      sales: salesResults.map((displayable) => toPresentationMetric(
+        displayable,
+        displayable.result.metricKey,
+        displayable.result.metricLabel,
+      )),
+      stores: storeResults.map((displayable) => toPresentationMetric(
+        displayable,
+        displayable.result.metricKey,
+        displayable.result.metricLabel,
+      )),
+    } : null,
+    trend: trendContextResult ? {
+      marketName: trendContextResult.analysisUnit.label,
+      referencePeriod: trendResults.find(({ result }) =>
+        result.referencePeriod || result.referenceDate)?.result.referencePeriod ??
+        trendResults.find(({ result }) =>
+          result.referencePeriod || result.referenceDate)?.result.referenceDate ?? null,
+      metrics: trendResults.map((displayable) => toPresentationMetric(
+        displayable,
+        displayable.result.metricKey,
+        displayable.result.metricLabel,
+      )),
+    } : null,
+  };
+}
+
 function buildPresentation(
   analysisContext: P0BasicLocationAnalysisContextViewModel,
   staffDisplayableResults: readonly DisplayableBasicLocationResult[],
@@ -373,31 +580,14 @@ function buildPresentation(
     staffDisplayableResults.map(({ result }) => result),
     "CUSTOMER",
   );
-  const kakaoCategoryResults = KAKAO_CATEGORY_METRIC_KEYS.map((metricKey) =>
-    findDisplayableResult(customerResults, metricKey),
-  );
-  const availableKakaoResults = kakaoCategoryResults.filter(
-    (displayable) => displayable?.result.status === "AVAILABLE",
-  );
-  const kakaoStatus = availableKakaoResults.length === KAKAO_CATEGORY_METRIC_KEYS.length
+  const evidence = buildPresentationEvidence(customerResults);
+  const kakaoStatus = evidence.kakao.statusLabel === "확인"
     ? "Kakao 확인"
-    : availableKakaoResults.length > 0
-      ? "일부 자료 확인 필요"
-      : "자료 확인 필요";
-
-  const insideResults = relationResults(customerResults, "INSIDE");
-  const overlapResults = relationResults(customerResults, "RADIUS_OVERLAP");
-  const relatedCount = findDisplayableResult(
-    customerResults,
-    "official_commercial_area.related_count",
-  );
-  const officialRelationCalculated = insideResults.length > 0 ||
-    overlapResults.length > 0 ||
-    (relatedCount?.result.status === "AVAILABLE" && relatedCount.result.value === 0);
-  const officialStatus = officialRelationCalculated
-    ? `포함 ${insideResults.length} · 교차 ${overlapResults.length}`
+    : evidence.kakao.statusLabel;
+  const officialStatus = evidence.officialRelation.available
+    ? `포함 ${evidence.officialRelation.included.length} · 교차 ${evidence.officialRelation.overlapping.length}`
     : "자료 확인 필요";
-  const analysisStage = kakaoStatus === "Kakao 확인" && officialRelationCalculated
+  const analysisStage = kakaoStatus === "Kakao 확인" && evidence.officialRelation.available
     ? "P0 기초근거 확인"
     : "일부 자료 확인 필요";
 
@@ -415,18 +605,18 @@ function buildPresentation(
       basisResultIds: kakaoBasisResultIds,
     });
   }
-  if (insideResults.length > 0) {
+  if (evidence.officialRelation.included.length > 0) {
     confirmedFeatures.push({
       id: "official-market-inside-confirmed",
-      message: `분석지점이 서울시 공식상권 ${insideResults.length}개에 포함됩니다.`,
-      basisResultIds: insideResults.map(({ result }) => result.resultId),
+      message: `분석지점이 서울시 공식상권 ${evidence.officialRelation.included.length}개에 포함됩니다.`,
+      basisResultIds: evidence.officialRelation.included.flatMap((area) => area.basisResultIds),
     });
   }
-  if (overlapResults.length > 0) {
+  if (evidence.officialRelation.overlapping.length > 0) {
     confirmedFeatures.push({
       id: "official-market-overlap-confirmed",
-      message: `${analysisContext.target.radiusMeters ?? "분석"}m 반경이 서울시 공식상권 ${overlapResults.length}개와 교차합니다.`,
-      basisResultIds: overlapResults.map(({ result }) => result.resultId),
+      message: `${analysisContext.target.radiusMeters ?? "분석"}m 반경이 서울시 공식상권 ${evidence.officialRelation.overlapping.length}개와 교차합니다.`,
+      basisResultIds: evidence.officialRelation.overlapping.flatMap((area) => area.basisResultIds),
     });
   }
 
@@ -455,6 +645,7 @@ function buildPresentation(
       unavailableNow: PRESENTATION_UNAVAILABLE_ITEMS,
       nextAnalysis: PRESENTATION_NEXT_ANALYSIS,
     },
+    evidence,
   };
 }
 

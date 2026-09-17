@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import type {
+  P0BasicLocationPresentationMetricViewModel,
   P0BasicLocationResultViewModel,
   P0BasicLocationViewModel,
 } from "@/lib/market-data/basic-location/view-model";
@@ -41,7 +42,7 @@ function displayValue(
       : String(value);
   if (!unit) return text;
   if (unit === "KRW") return `${text}원`;
-  if (unit === "percent") return `${text}%`;
+  if (unit === "percent" || unit === "%") return `${text}%`;
   if (unit === "m") return `${text}m`;
   if (unit === "places") return `${text}곳`;
   if (unit === "areas" || unit === "stores") return `${text}개`;
@@ -50,12 +51,21 @@ function displayValue(
   return `${text} ${unit}`;
 }
 
-function kakaoMetricLabel(metricKey: string, fallback: string) {
-  if (metricKey === "kakao.nearby.bakery.returned_count") return "베이커리 검색";
-  if (metricKey === "kakao.nearby.confectionery.returned_count") return "제과점 검색";
-  if (metricKey === "kakao.nearby.cafe.returned_count") return "카페 검색";
-  if (metricKey === "kakao.nearby.unique_returned_count") return "중복 제거 후 확인된 장소";
-  return fallback.replace(/^Kakao\s+/, "").replace(/\s*반환건수$/, "");
+function presentationValue(
+  metric: P0BasicLocationPresentationMetricViewModel,
+  signed = false,
+) {
+  if (metric.value === null) return "자료 확인 필요";
+  const displayed = displayValue(metric.value, metric.unit);
+  return signed && typeof metric.value === "number" && metric.value > 0
+    ? `+${displayed}`
+    : displayed;
+}
+
+function referencePeriodLabel(referencePeriod: string | null) {
+  if (!referencePeriod) return "기준기간 확인 필요";
+  const quarter = /^(\d{4})-Q([1-4])$/.exec(referencePeriod);
+  return quarter ? `${quarter[1]}년 ${quarter[2]}분기` : referencePeriod;
 }
 
 function statusLabel(status: P0BasicLocationResultViewModel["status"]) {
@@ -66,31 +76,22 @@ function statusLabel(status: P0BasicLocationResultViewModel["status"]) {
   return "현재 분석 불가";
 }
 
-function ResultCards({
-  results,
-  empty,
-  labelForResult,
+function PresentationMetricGrid({
+  metrics,
+  signed = false,
 }: {
-  results: readonly P0BasicLocationResultViewModel[];
-  empty: string;
-  labelForResult?: (result: P0BasicLocationResultViewModel) => string;
+  metrics: readonly P0BasicLocationPresentationMetricViewModel[];
+  signed?: boolean;
 }) {
-  if (results.length === 0) {
-    return <p className="mt-3 text-sm leading-6 text-slate-500">{empty}</p>;
-  }
   return (
-    <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {results.map((result) => (
-        <article key={result.resultId} className="min-w-0 rounded-lg bg-slate-50 p-4">
-          <p className="text-xs font-semibold leading-5 text-slate-600">
-            {labelForResult?.(result) ?? result.metricLabel}
+    <div className="mt-3 grid min-w-0 grid-cols-2 gap-2 lg:grid-cols-4">
+      {metrics.map((metric) => (
+        <article key={metric.id} className="min-w-0 rounded-lg border border-slate-200 bg-white p-3">
+          <p className="text-xs font-semibold leading-5 text-slate-600">{metric.label}</p>
+          <p className="mt-1.5 break-words text-lg font-bold tabular-nums text-slate-950">
+            {presentationValue(metric, signed)}
           </p>
-          <p className="mt-2 break-words text-lg font-bold tabular-nums text-slate-950">
-            {displayValue(result.value, result.unit)}
-          </p>
-          <p className="mt-2 text-[11px] leading-5 text-slate-500">
-            {result.analysisUnit.label} · {statusLabel(result.status)}
-          </p>
+          <p className="mt-1 text-[11px] font-semibold leading-5 text-slate-500">{metric.statusLabel}</p>
         </article>
       ))}
     </div>
@@ -226,15 +227,6 @@ export default function MarketAnalysisSummary({
   }
 
   const { analysisContext } = viewModel;
-  const radiusOfficialRelations = viewModel.availableEvidence.other.filter(
-    (result) => result.metricKey.startsWith("official_commercial_area."),
-  );
-  const nearbyEvidence = [
-    ...viewModel.availableEvidence.kakaoObserved,
-    ...viewModel.availableEvidence.other.filter(
-      (result) => !result.metricKey.startsWith("official_commercial_area."),
-    ),
-  ];
   const blockingLimitations = viewModel.limitations.results.filter(
     (item) => item.status === "BLOCKED",
   );
@@ -254,31 +246,8 @@ export default function MarketAnalysisSummary({
     { title: "자료 확인 필요", items: groupLimitations(unavailableLimitations) },
     { title: "데이터 범위 주의", items: groupLimitations(scopeLimitations) },
   ];
-  const officialRelationResults = [
-    ...radiusOfficialRelations,
-    ...viewModel.officialMarketReference.relation,
-  ];
-  const officialSpatialRelations = officialRelationResults.filter(
-    (result) => result.metricKey === "official_commercial_area.spatial_relation",
-  );
-  const insideOfficialAreas = officialSpatialRelations.filter(
-    (result) => result.value === "INSIDE",
-  );
-  const overlapOfficialAreas = officialSpatialRelations.filter(
-    (result) => result.value === "RADIUS_OVERLAP",
-  );
-  const officialRelationCount = officialRelationResults.find(
-    (result) => result.metricKey === "official_commercial_area.related_count",
-  );
-  const hasConfirmedOfficialRelations = officialSpatialRelations.length > 0 ||
-    (officialRelationCount?.status === "AVAILABLE" && officialRelationCount.value === 0);
-  const officialGroups = [
-    { title: "SALES · 공식상권 추정매출", results: viewModel.officialMarketReference.sales },
-    { title: "STORES · 공식상권 점포 통계", results: viewModel.officialMarketReference.stores },
-    { title: "Trend · 공식상권 분기 변화", results: viewModel.officialMarketReference.trend },
-    { title: "기타 공식상권 근거", results: viewModel.officialMarketReference.other },
-  ];
   const { presentation } = viewModel;
+  const { evidence } = presentation;
   const headerLocation = [
     presentation.header.marketName,
     presentation.header.submarketName,
@@ -376,56 +345,100 @@ export default function MarketAnalysisSummary({
       </div>
 
       <div className="space-y-4 p-4 sm:p-5">
-        <SummarySection title="주변 업종 관측" description={`${analysisContext.target.radiusMeters ?? "선택"}m 반경에서 확인한 Kakao 장소검색 결과입니다.`}>
-          <ResultCards results={nearbyEvidence} empty="현재 표시할 반경 기반 장소검색 근거가 없습니다." labelForResult={(result) => kakaoMetricLabel(result.metricKey, result.metricLabel)} />
-          <p className="mt-3 text-xs leading-5 text-slate-500">
-            ※ Kakao 장소검색 반환값이며 실제 전체 경쟁점 수가 아닙니다. 카테고리별 값과 중복 제거 후 확인된 장소 수는 서로 합산하지 않습니다. 실제 장소목록은 ‘경쟁 환경’ 탭에서 확인합니다.
-          </p>
-        </SummarySection>
-
-        <SummarySection title="서울시 공식상권 참고자료" description="분석지점과 공간관계가 확인된 공식상권 및 해당 공식상권 전체 범위의 통계입니다.">
-          <div className="mt-4 space-y-5">
-            <div>
-              <h4 className="text-sm font-bold text-blue-900">서울시 공식상권</h4>
-              {hasConfirmedOfficialRelations ? <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-lg bg-slate-50 p-4">
-                  <dt className="text-xs font-semibold text-slate-600">분석지점 포함 · {insideOfficialAreas.length}개</dt>
-                  <dd className="mt-2 text-sm leading-6 text-slate-800">
-                    {insideOfficialAreas.length > 0
-                      ? insideOfficialAreas.map((result) => result.analysisUnit.label).join(" · ")
-                      : "확인된 상권 없음"}
-                  </dd>
-                </div>
-                <div className="rounded-lg bg-slate-50 p-4">
-                  <dt className="text-xs font-semibold text-slate-600">{analysisContext.target.radiusMeters ?? "분석"}m 반경 교차 · {overlapOfficialAreas.length}개</dt>
-                  <dd className="mt-2 text-sm leading-6 text-slate-800">
-                    {overlapOfficialAreas.length > 0
-                      ? overlapOfficialAreas.map((result) => result.analysisUnit.label).join(" · ")
-                      : "확인된 상권 없음"}
-                  </dd>
-                </div>
-              </dl> : (
-                <p className="mt-3 rounded-lg bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                  현재 서울시 공식상권과의 공간관계를 확인할 수 없습니다.
-                </p>
-              )}
-              <p className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
-                서울시 공식상권은 분석지점의 300m/500m 반경 및 FRAMEONE 주요상권과 서로 다른 공간단위입니다.
-              </p>
-            </div>
-            {officialGroups.map(({ title, results }) => results.length > 0 ? (
-              <div key={title}>
-                <h4 className="text-sm font-bold text-blue-900">{title}</h4>
-                <ResultCards results={results} empty="" />
+        <SummarySection title="상권 데이터 근거" description="현재 위치에서 확인 가능한 주변 업종 관측과 서울시 공식상권 참고자료입니다.">
+          <div className="mt-4 divide-y divide-slate-200">
+            <section aria-label={`${analysisContext.target.radiusMeters ?? "선택"}m Kakao 장소검색`} className="pb-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h4 className="text-sm font-bold text-slate-950">
+                  {analysisContext.target.radiusMeters ?? "선택"}m Kakao 장소검색
+                </h4>
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600">
+                  {evidence.kakao.statusLabel}
+                </span>
               </div>
-            ) : null)}
-            {officialRelationResults.length === 0 && officialGroups.every(({ results }) => results.length === 0) ? (
-              <p className="text-sm leading-6 text-slate-500">현재 연결된 서울시 공식상권 참고자료가 없습니다.</p>
+              <PresentationMetricGrid metrics={evidence.kakao.metrics} />
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                ※ Kakao 장소검색 반환결과이며 실제 전체 경쟁점 전수자료가 아닙니다. 카테고리별 값과 중복 제거 장소는 합산하지 않으며, 실제 장소 상세는 ‘경쟁 환경’ 탭에서 확인합니다.
+              </p>
+            </section>
+
+            <section aria-label="서울시 공식상권" className="py-5">
+              <h4 className="text-sm font-bold text-slate-950">서울시 공식상권</h4>
+              {evidence.officialRelation.available ? (
+                <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-4">
+                    <dt className="text-xs font-semibold text-slate-600">분석지점 포함</dt>
+                    <dd className="mt-1 text-xl font-bold tabular-nums text-slate-950">{evidence.officialRelation.included.length}개</dd>
+                    <dd className="mt-1 text-sm leading-6 text-slate-700">
+                      {evidence.officialRelation.included.length > 0
+                        ? evidence.officialRelation.included.map((area) => area.name).join(" · ")
+                        : "포함된 공식상권 없음"}
+                    </dd>
+                  </div>
+                  <div className="rounded-lg border border-blue-100 bg-blue-50/60 p-4">
+                    <dt className="text-xs font-semibold text-slate-600">{analysisContext.target.radiusMeters ?? "분석"}m 반경 교차</dt>
+                    <dd className="mt-1 text-xl font-bold tabular-nums text-slate-950">{evidence.officialRelation.overlapping.length}개</dd>
+                    {evidence.officialRelation.overlapping.length > 0 ? (
+                      <details className="mt-2 rounded-lg border border-blue-100 bg-white">
+                        <summary className="cursor-pointer px-3 py-2 text-xs font-bold text-blue-800">
+                          교차 공식상권 {evidence.officialRelation.overlapping.length}개 보기
+                        </summary>
+                        <ul className="space-y-1 border-t border-blue-100 px-3 py-2 text-xs leading-5 text-slate-700">
+                          {evidence.officialRelation.overlapping.map((area) => (
+                            <li key={area.basisResultIds.join(":")}>• {area.name}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    ) : <p className="mt-1 text-sm text-slate-600">교차한 공식상권 없음</p>}
+                  </div>
+                </dl>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-slate-500">현재 서울시 공식상권과의 공간관계를 확인할 수 없습니다.</p>
+              )}
+              <p className="mt-3 text-xs leading-5 text-blue-900">
+                서울시 공식상권은 현재 300m/500m 분석반경 및 FRAMEONE 주요상권과 서로 다른 공간단위입니다.
+              </p>
+            </section>
+
+            {evidence.officialStats ? (
+              <section aria-label="선택 공식상권 통계" className="py-5">
+                <h4 className="text-sm font-bold text-slate-950">선택 공식상권 통계</h4>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  서울시 공식상권 · {evidence.officialStats.marketName} · {referencePeriodLabel(evidence.officialStats.referencePeriod)}
+                </p>
+                {evidence.officialStats.sales.length > 0 ? (
+                  <div className="mt-4">
+                    <h5 className="text-xs font-bold text-blue-900">서울시 공식상권 추정매출</h5>
+                    <PresentationMetricGrid metrics={evidence.officialStats.sales} />
+                  </div>
+                ) : null}
+                {evidence.officialStats.stores.length > 0 ? (
+                  <div className="mt-4">
+                    <h5 className="text-xs font-bold text-blue-900">서울시 공식상권 점포 통계</h5>
+                    <PresentationMetricGrid metrics={evidence.officialStats.stores} />
+                  </div>
+                ) : null}
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  ※ 서울시 공식상권 전체 범위의 통계이며 현재 {analysisContext.target.radiusMeters ?? "300m/500m"} 반경 또는 특정 후보점포의 실적이 아닙니다. Kakao 장소검색 값과 합산하지 않습니다.
+                </p>
+              </section>
             ) : null}
+
+            <section aria-label="상권 변화 참고" className="pt-5">
+              <h4 className="text-sm font-bold text-slate-950">상권 변화 참고</h4>
+              {evidence.trend ? (
+                <>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    서울시 공식상권 · {evidence.trend.marketName} · {referencePeriodLabel(evidence.trend.referencePeriod)}
+                  </p>
+                  <PresentationMetricGrid metrics={evidence.trend.metrics} signed />
+                  <p className="mt-3 text-xs leading-5 text-slate-500">분기 변화 자료이며 상권의 성장·쇠퇴 또는 출점 적합성을 판정하지 않습니다.</p>
+                </>
+              ) : (
+                <p className="mt-2 text-sm leading-6 text-slate-500">비교 가능한 분기 변화 자료 없음</p>
+              )}
+            </section>
           </div>
-          <p className="mt-4 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-blue-900">
-            공식상권 SALES는 서울시 추정매출이며 후보점포 매출이 아닙니다. STORES는 공식상권 통계이며 Kakao 반환건수와 합산하지 않습니다.
-          </p>
         </SummarySection>
 
         <SummarySection title="확인 필요 / 분석 한계" description="값이 0인 상태와 자료 없음·분석 불가 상태를 구분합니다.">
