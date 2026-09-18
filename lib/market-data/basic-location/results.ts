@@ -161,6 +161,11 @@ export type AvailableResultInput = ResultBaseInput & {
   confidence: Exclude<BasicLocationConfidence, "UNKNOWN">;
 };
 
+export type PartialResultInput = ResultBaseInput & {
+  value: Exclude<BasicLocationResultValue, null>;
+  confidence: Exclude<BasicLocationConfidence, "UNKNOWN">;
+};
+
 export type BlockedResultInput = Omit<
   ResultBaseInput,
   "valueType" | "confidenceReasons"
@@ -241,6 +246,26 @@ export function createAvailableResult(input: AvailableResultInput): BasicLocatio
     contractVersion: "FRAMEONE_BASIC_LOCATION_RESULT_V1",
     resultId: resultIdFor(input),
     status: "AVAILABLE",
+    missingReason: null,
+  }));
+}
+
+export function createPartialResult(input: PartialResultInput): BasicLocationResult {
+  validateBase(input);
+  if (typeof input.value === "number" && !Number.isFinite(input.value)) {
+    throw new BasicLocationResultValidationError("Result의 숫자 value는 finite여야 합니다.");
+  }
+  if (input.limitations.length === 0) {
+    throw new BasicLocationResultValidationError(
+      "PARTIAL Result에는 limitation이 필요합니다.",
+    );
+  }
+
+  return freezeResult(structuredClone({
+    ...input,
+    contractVersion: "FRAMEONE_BASIC_LOCATION_RESULT_V1",
+    resultId: resultIdFor(input),
+    status: "PARTIAL",
     missingReason: null,
   }));
 }
