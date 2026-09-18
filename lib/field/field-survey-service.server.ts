@@ -18,6 +18,9 @@ import {
   type SiteSurveyStatus,
   type SurveyStageStates,
 } from "./types";
+import { applyFieldSurveyDraftPatch, type FieldSurveyDraftPatchInput } from "./survey-draft-patch";
+import type { FacilityObservations } from "./facility";
+import type { MeasurementSet } from "./measurement";
 
 export const DEFAULT_FIELD_SURVEY_ROOT = path.join(process.cwd(), "data", "field-surveys");
 const FIELD_STAFF_SURVEYOR = "field-staff";
@@ -51,6 +54,10 @@ export interface FieldSurveyService extends SiteSurveyDraftStore {
     expectedDraftVersion: number;
     stageStates?: SurveyStageStates;
     status?: SiteSurveyStatus;
+    measurementSet?: MeasurementSet;
+    facility?: FacilityObservations;
+    completeStageIds?: FieldSurveyDraftPatchInput["completeStageIds"];
+    touchStageIds?: FieldSurveyDraftPatchInput["touchStageIds"];
   }): Promise<FieldStorageResult<SiteSurvey>>;
 }
 
@@ -301,16 +308,73 @@ export function createFieldSurveyService(options: FieldSurveyServiceOptions = {}
     expectedDraftVersion: number;
     stageStates?: SurveyStageStates;
     status?: SiteSurveyStatus;
+    measurementSet?: MeasurementSet;
+    facility?: FacilityObservations;
+    completeStageIds?: FieldSurveyDraftPatchInput["completeStageIds"];
+    touchStageIds?: FieldSurveyDraftPatchInput["touchStageIds"];
   }): Promise<FieldStorageResult<SiteSurvey>> {
     const loaded = await getSurvey(input.surveyId);
     if (!loaded.ok) return loaded;
+
+    // Phase 3.5 호환: status만 바꾸는 경우에도 draftVersion conflict 검사를 유지한다.
+    // Phase 4는 READY_FOR_REVIEW 자동 승격을 하지 않지만, 테스트·재방문용 COMPLETED 설정은 허용한다.
+    if (
+      input.status === undefined &&
+      input.measurementSet === undefined &&
+      input.facility === undefined &&
+      input.stageStates === undefined &&
+      input.completeStageIds === undefined &&
+      input.touchStageIds === undefined
+    ) {
+      return storageFail("INVALID_DATA", "updateSurveyDraft requires at least one change");
+    }
+
+    if (
+      input.measurementSet !== undefined ||
+      input.facility !== undefined ||
+      input.completeStageIds !== undefined ||
+      input.touchStageIds !== undefined ||
+      input.stageStates !== undefined
+    ) {
+      const applied = applyFieldSurveyDraftPatch(
+        loaded.value,
+        {
+          expectedDraftVersion: input.expectedDraftVersion,
+          measurementSet: input.measurementSet,
+          facility: input.facility,
+          stageStates: input.stageStates,
+          completeStageIds: input.completeStageIds,
+          touchStageIds: input.touchStageIds,
+        },
+        now(),
+      );
+      if (!applied.ok) {
+        return storageFail(applied.code, applied.message);
+      }
+      let next = applied.survey;
+      if (input.status !== undefined) {
+        next = Object.freeze({ ...next, status: input.status });
+      }
+      const file = surveyPath(next.surveyId);
+      if (!file.ok) return file;
+      try {
+        await writeJsonBestEffort(file.value, next);
+      } catch (error) {
+        return ioFail(error);
+      }
+      return storageOk(next);
+    }
+
+    // status-only update (Phase 3.5 persistence contract)
     if (loaded.value.draftVersion !== input.expectedDraftVersion) {
       return storageFail("VERSION_CONFLICT", "SiteSurvey draftVersion does not match the stored draft");
     }
+    if (input.status === undefined) {
+      return storageFail("INVALID_DATA", "status required for status-only update");
+    }
     const next = Object.freeze({
       ...loaded.value,
-      stageStates: input.stageStates ?? loaded.value.stageStates,
-      status: input.status ?? loaded.value.status,
+      status: input.status,
       draftVersion: loaded.value.draftVersion + 1,
       updatedAt: now(),
     });
@@ -341,7 +405,8 @@ export function createFieldSurveyService(options: FieldSurveyServiceOptions = {}
         surveyId: survey.surveyId,
         expectedDraftVersion: survey.draftVersion,
         stageStates: survey.stageStates,
-        status: survey.status,
+        measurementSet: survey.measurementSet,
+        facility: survey.facility,
       });
       if (!updated.ok) throw new Error(updated.code);
       return toSiteSurveyDraftRef(updated.value);

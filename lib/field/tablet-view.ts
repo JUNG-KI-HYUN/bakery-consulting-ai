@@ -32,7 +32,14 @@ export interface FieldTabletSurveySummary {
   readonly surveyId: string | null;
   readonly surveySequence: number | null;
   readonly statusLabel: string;
+  readonly status: SiteSurvey["status"] | "DRAFT";
   readonly persisted: boolean;
+  readonly draftVersion: number | null;
+  readonly measurementSet: SiteSurvey["measurementSet"] | null;
+  readonly facility: SiteSurvey["facility"] | null;
+  readonly stageStates: SiteSurvey["stageStates"];
+  readonly surveyor: string | null;
+  readonly candidateStoreId: string | null;
 }
 
 export interface FieldTabletGroupView {
@@ -91,8 +98,8 @@ function buildNotices(reference: CandidateStoreReference, hasSurvey: boolean): r
   } else if (!hasSurvey) {
     notices.push("현장조사가 아직 시작되지 않았습니다.");
   }
-  notices.push("실제 조사 입력은 Phase 4에서 제공합니다.");
   notices.push("조사 수행 진행률은 자료 확인도, 위험, 계약 판정이 아닙니다.");
+  notices.push("실측·시설 입력은 Evidence 확인완료를 뜻하지 않습니다.");
   return Object.freeze(notices);
 }
 
@@ -147,7 +154,14 @@ export function buildFieldTabletView(
       surveyId: survey?.surveyId ?? null,
       surveySequence: survey?.surveySequence ?? null,
       statusLabel: getSiteSurveyStatusLabel(survey?.status ?? "DRAFT"),
+      status: survey?.status ?? "DRAFT",
       persisted: survey !== null,
+      draftVersion: survey?.draftVersion ?? null,
+      measurementSet: survey?.measurementSet ?? null,
+      facility: survey?.facility ?? null,
+      stageStates: survey?.stageStates ?? createInitialSurveyStageStates(),
+      surveyor: survey?.surveyor ?? null,
+      candidateStoreId: survey?.candidateStoreId ?? null,
     }),
     progress,
     groups: Object.freeze(groups),

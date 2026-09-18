@@ -1,4 +1,6 @@
+import { parseFacilityObservations } from "./facility";
 import { isCandidateStoreId, isSiteSurveyId } from "./identifiers";
+import { parseMeasurementSet } from "./measurement";
 import { SURVEY_STAGE_IDS, isSurveyStageId } from "./stages";
 import { storageFail, type FieldStorageResult } from "./storage-result";
 import {
@@ -92,6 +94,31 @@ export function parseSiteSurvey(value: unknown): FieldStorageResult<SiteSurvey> 
   const stageStates = parseStageStates(value.stageStates);
   if (!stageStates.ok) return stageStates;
 
+  // Phase 3.5 Draft는 measurementSet/facility가 없어도 유효하다.
+  let measurementSet: SiteSurvey["measurementSet"];
+  if (value.measurementSet !== undefined) {
+    const parsed = parseMeasurementSet(value.measurementSet);
+    if (!parsed) {
+      return storageFail("INVALID_DATA", "SiteSurvey.measurementSet is invalid");
+    }
+    if (parsed.surveyId !== value.surveyId) {
+      return storageFail("INVALID_DATA", "SiteSurvey.measurementSet.surveyId mismatch");
+    }
+    if (parsed.candidateStoreId !== value.candidateStoreId) {
+      return storageFail("INVALID_DATA", "SiteSurvey.measurementSet.candidateStoreId mismatch");
+    }
+    measurementSet = parsed;
+  }
+
+  let facility: SiteSurvey["facility"];
+  if (value.facility !== undefined) {
+    const parsed = parseFacilityObservations(value.facility);
+    if (!parsed) {
+      return storageFail("INVALID_DATA", "SiteSurvey.facility is invalid");
+    }
+    facility = parsed;
+  }
+
   return {
     ok: true,
     value: Object.freeze({
@@ -108,6 +135,8 @@ export function parseSiteSurvey(value: unknown): FieldStorageResult<SiteSurvey> 
       updatedAt: value.updatedAt,
       stageStates: stageStates.value,
       draftVersion: value.draftVersion,
+      ...(measurementSet ? { measurementSet } : {}),
+      ...(facility ? { facility } : {}),
     }),
   };
 }

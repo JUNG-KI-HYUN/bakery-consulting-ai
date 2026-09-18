@@ -91,7 +91,9 @@ export function FieldSurveyGate({
           </>
         )}
         {error && <p className="mt-4 text-sm text-amber-800">{error}</p>}
-        <p className="mt-6 text-xs text-slate-500">실제 조사 입력은 Phase 4에서 제공합니다.</p>
+        <p className="mt-6 text-xs text-slate-500">
+          실측·시설 입력을 사용할 수 있습니다. 사진·인터뷰·SPACE FIT은 이후 단계에서 제공합니다.
+        </p>
       </section>
     </div>
   );

@@ -124,8 +124,8 @@ export const TABLET_GROUPS: readonly TabletGroupDefinition[] = Object.freeze(
       stageIds: Object.freeze(
         SURVEY_STAGES.filter((stage) => stage.groupId === groupId).map((stage) => stage.stageId),
       ),
-      // Phase 3은 Shell만 구현한다. 실제 조사 입력은 Phase 4다.
-      inputImplemented: false,
+      // Phase 4: 실측·구조 / 시설만 실제 입력 UI를 제공한다.
+      inputImplemented: groupId === "MEASUREMENT_STRUCTURE" || groupId === "FACILITY",
     }),
   ),
 );

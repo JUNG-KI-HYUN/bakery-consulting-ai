@@ -15,8 +15,9 @@
 const UUID_PATTERN = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const CANDIDATE_STORE_ID_PATTERN = new RegExp(`^store_${UUID_PATTERN}$`, "i");
 const SITE_SURVEY_ID_PATTERN = new RegExp(`^survey_${UUID_PATTERN}$`, "i");
+const MEASUREMENT_ID_PATTERN = new RegExp(`^measurement_${UUID_PATTERN}$`, "i");
 
-function createOpaqueId(prefix: "store" | "survey"): string {
+function createOpaqueId(prefix: "store" | "survey" | "measurement"): string {
   if (typeof globalThis.crypto?.randomUUID !== "function") {
     throw new RangeError("FIELD identifier creation requires crypto.randomUUID()");
   }
@@ -46,4 +47,13 @@ export function createSiteSurveyId(): string {
 
 export function isSiteSurveyId(value: unknown): value is string {
   return typeof value === "string" && SITE_SURVEY_ID_PATTERN.test(value);
+}
+
+/** 실측 세트 ID. 주소·점포명 등 변경 가능한 값을 넣지 않는다. */
+export function createMeasurementId(): string {
+  return createOpaqueId("measurement");
+}
+
+export function isMeasurementId(value: unknown): value is string {
+  return typeof value === "string" && MEASUREMENT_ID_PATTERN.test(value);
 }

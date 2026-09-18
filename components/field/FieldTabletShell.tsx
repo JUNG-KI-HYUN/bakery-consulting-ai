@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { MeasurementFacilityForm } from "@/components/field/MeasurementFacilityForm";
 import type { FieldTabletView } from "@/lib/field/tablet-view";
 import type { TabletGroupId } from "@/lib/field/stages";
 
@@ -50,11 +51,13 @@ function GroupButton({
 }
 
 /**
- * FIELD 태블릿 Shell. 조사 입력 form은 포함하지 않는다.
- * 그룹 선택은 현재 그룹을 보는 동작이며, 미구현 입력을 시작하는 버튼이 아니다.
+ * FIELD 태블릿 Shell.
+ * Phase 4: MEASUREMENT_STRUCTURE / FACILITY 그룹에만 실제 입력 Form을 제공한다.
  */
 export function FieldTabletShell({ view }: { view: FieldTabletView }) {
   const [currentGroupId, setCurrentGroupId] = useState<TabletGroupId>(view.defaultGroupId);
+  const [pendingGroupId, setPendingGroupId] = useState<TabletGroupId | null>(null);
+  const [formDirty, setFormDirty] = useState(false);
   const currentGroup =
     view.groups.find((group) => group.groupId === currentGroupId) ?? view.groups[0];
   if (!currentGroup) return null;
@@ -64,6 +67,15 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
     view.survey.surveySequence === null
       ? "저장된 회차 없음"
       : `현장조사 #${view.survey.surveySequence}`;
+
+  function requestGroupChange(groupId: TabletGroupId) {
+    if (groupId === currentGroupId) return;
+    if (formDirty) {
+      setPendingGroupId(groupId);
+      return;
+    }
+    setCurrentGroupId(groupId);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F6F8FB] text-[#0B1220]">
@@ -85,7 +97,9 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
       <section className="border-b border-slate-200 bg-white px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           {view.sampleData && <span className="badge-sample">SAMPLE</span>}
-          <p className="text-sm font-bold text-[#0B1220]">조사 수행 진행률 {view.progress.completionPercent}%</p>
+          <p className="text-sm font-bold text-[#0B1220]">
+            조사 수행 진행률 {view.progress.completionPercent}%
+          </p>
           <p className="text-xs text-slate-600">
             {view.progress.completedStageCount}/{view.progress.stageCount}단계 완료
           </p>
@@ -104,14 +118,22 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
           />
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          이 수치는 직원이 조사 단계를 얼마나 수행했는지만 나타냅니다. 자료 확인도, 위험, 추천/계약 가능 여부가 아닙니다.
+          이 수치는 직원이 조사 단계를 얼마나 수행했는지만 나타냅니다. 자료 확인도, 위험, 추천/계약
+          가능 여부가 아닙니다.
         </p>
         <dl className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-5">
           <MetaItem label="상담" value={view.consultationId} />
           <MetaItem label="후보점포 ID" value={storeIdLabel} />
           <MetaItem label="후보점포" value={`${view.store.floor} · ${view.store.address}`} />
           <MetaItem label="현장조사 회차" value={surveyRoundLabel} />
-          <MetaItem label="조사상태" value={view.survey.persisted ? view.survey.statusLabel : `${view.survey.statusLabel} (저장 없음)`} />
+          <MetaItem
+            label="조사상태"
+            value={
+              view.survey.persisted
+                ? view.survey.statusLabel
+                : `${view.survey.statusLabel} (저장 없음)`
+            }
+          />
         </dl>
       </section>
 
@@ -119,6 +141,33 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
           <p className="font-bold">FIELD 데이터 연결 불가</p>
           <p className="mt-1">{view.candidateStoreBlockedReasonLabel}</p>
+        </div>
+      )}
+
+      {pendingGroupId && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-bold">저장하지 않은 변경이 있습니다</p>
+          <p className="mt-1">그룹을 바꾸면 입력 내용이 사라질 수 있습니다.</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="min-h-11 rounded-lg border border-amber-400 bg-white px-3 font-semibold"
+              onClick={() => setPendingGroupId(null)}
+            >
+              계속 편집
+            </button>
+            <button
+              type="button"
+              className="min-h-11 rounded-lg border border-[#0B1220] bg-[#0B1220] px-3 font-semibold text-white"
+              onClick={() => {
+                setFormDirty(false);
+                setCurrentGroupId(pendingGroupId);
+                setPendingGroupId(null);
+              }}
+            >
+              버리고 이동
+            </button>
+          </div>
         </div>
       )}
 
@@ -134,7 +183,7 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
                 key={group.groupId}
                 group={group}
                 selected={group.groupId === currentGroup.groupId}
-                onSelect={setCurrentGroupId}
+                onSelect={requestGroupChange}
               />
             ))}
           </div>
@@ -146,7 +195,8 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
             {currentGroup.specGroup}. {currentGroup.label}
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            진행 {currentGroup.completedStageCount}/{currentGroup.stageCount} · {currentGroup.inputImplemented ? "입력 가능" : "입력 미구현"}
+            진행 {currentGroup.completedStageCount}/{currentGroup.stageCount} ·{" "}
+            {currentGroup.inputImplemented ? "입력 가능" : "입력 미구현"}
           </p>
           <ul className="mt-4 space-y-2">
             {currentGroup.stageLabels.map((label, index) => (
@@ -161,14 +211,26 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
               </li>
             ))}
           </ul>
-          {!currentGroup.inputImplemented && (
+
+          {currentGroup.groupId === "MEASUREMENT_STRUCTURE" ||
+          currentGroup.groupId === "FACILITY" ? (
+            <MeasurementFacilityForm
+              key={currentGroup.groupId}
+              consultationId={view.consultationId}
+              groupId={currentGroup.groupId}
+              survey={view.survey}
+              onDirtyChange={setFormDirty}
+            />
+          ) : !currentGroup.inputImplemented ? (
             <div className="mt-4 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700">
-              <p className="font-bold text-[#0B1220]">Phase 4에서 입력기능 제공</p>
+              <p className="font-bold text-[#0B1220]">입력기능 미구현</p>
               <p className="mt-1">
-                이 그룹의 실제 현장 입력은 아직 제공하지 않습니다. 지금은 조사 단계 구성과 진행 상태만 확인할 수 있습니다.
+                이 그룹의 실제 현장 입력은 아직 제공하지 않습니다. 지금은 조사 단계 구성과 진행 상태만
+                확인할 수 있습니다.
               </p>
             </div>
-          )}
+          ) : null}
+
           <ul className="mt-4 space-y-2 text-xs text-slate-600">
             {view.notices.map((notice) => (
               <li key={notice}>{notice}</li>
