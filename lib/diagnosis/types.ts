@@ -24,6 +24,13 @@ export interface ConsultationInput {
 }
 
 export interface CandidateStoreInput {
+  /**
+   * 후보점포 안정 식별자(`store_<uuid>`). 1회 생성 후 저장되는 opaque ID다.
+   * 누락은 하위 FIELD 데이터가 아직 붙지 않은 기존 record를 뜻한다.
+   * 읽기 경로에서 자동 부여하거나 일괄 backfill하지 않으며, 부여는 직원의 명시적 행위다.
+   * 해석은 lib/field/candidate-store-ref.ts를 사용한다.
+   */
+  candidateStoreId?: string;
   address: string;
   deposit: number;
   rent: number;

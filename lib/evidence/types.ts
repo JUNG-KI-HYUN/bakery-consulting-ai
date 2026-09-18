@@ -18,6 +18,22 @@ export type EvidenceSourceType =
   | "SYSTEM_CALCULATION"
   | "CUSTOMER_INPUT";
 
+/**
+ * 이 값을 확정하려면 누구의 확인이 필요한가. 검증상태·출처와 독립된 세 번째 축이다.
+ * "무엇이 부족한가"만 나타내며 값의 진위나 시설 가능 여부를 뜻하지 않는다.
+ * VerificationStatus·EvidenceSourceType과 하나의 enum으로 합치지 않는다.
+ * 예: OWNER_STATEMENT는 출처이고, 같은 값이 DOCUMENT_REQUIRED일 수 있다.
+ */
+export type ConfirmationRequirement =
+  | "NONE"
+  | "FIELD_CHECK_REQUIRED"
+  | "OWNER_CONFIRMATION_REQUIRED"
+  | "AGENT_CONFIRMATION_REQUIRED"
+  | "EXPERT_CONFIRMATION_REQUIRED"
+  | "AUTHORITY_CONFIRMATION_REQUIRED"
+  | "DOCUMENT_REQUIRED"
+  | "NO_SOURCE_AVAILABLE";
+
 /** JSON snapshot 값. 유한수·순환참조 등 런타임 검증은 후속 저장 단계에서 다룬다. */
 export type EvidenceValue =
   | string
@@ -61,4 +77,9 @@ export interface Evidence {
   /** 근거 기록 생성 시점(ISO 8601). 자동 부여 규칙은 후속 저장 단계에서 다룬다. */
   createdAt?: string;
   limitation?: string;
+  /**
+   * 확정에 필요한 확인주체. 누락은 확인주체가 아직 기록되지 않았다는 뜻이며
+   * NONE(추가 확인 불필요)과 다르다. verificationStatus를 이 값으로 추론하지 않는다.
+   */
+  confirmationRequirement?: ConfirmationRequirement;
 }
