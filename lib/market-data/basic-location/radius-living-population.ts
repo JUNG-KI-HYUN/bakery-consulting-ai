@@ -1,5 +1,5 @@
 import type { MarketDataObservation, MarketDataStatus } from "../types";
-import type { AnalysisRunSnapshot, BasicLocationRadiusMeters } from "./run";
+import type { BasicLocationRadiusMeters } from "./run";
 
 export const RADIUS_LIVING_POPULATION_CONTRACT_VERSION =
   "FRAMEONE_RADIUS_LIVING_POPULATION_V1" as const;
@@ -134,6 +134,16 @@ export interface RadiusLivingPopulationAnalysis {
       inclusionMethod: typeof RADIUS_LIVING_POPULATION_INCLUSION_METHOD;
       rowSemantics: typeof RADIUS_LIVING_POPULATION_ROW_SEMANTICS;
     }>;
+  }>;
+}
+
+export interface RadiusLivingPopulationRunInput {
+  analysisRunId: string;
+  createdAt: string;
+  target: Readonly<{
+    latitude: number;
+    longitude: number;
+    radiusMeters: BasicLocationRadiusMeters;
   }>;
 }
 
@@ -594,7 +604,7 @@ function buildSummary(
 }
 
 export function aggregateRadiusLivingPopulation(
-  snapshot: AnalysisRunSnapshot,
+  snapshot: RadiusLivingPopulationRunInput,
   index: RadiusLivingPopulationIndex,
 ): RadiusLivingPopulationAnalysis {
   const internal = INDEX_DATA.get(index);
