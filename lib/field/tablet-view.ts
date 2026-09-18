@@ -3,17 +3,22 @@ import {
   resolveCandidateStoreReference,
   type CandidateStoreReference,
 } from "./candidate-store-ref";
+import { isCandidateStoreId } from "./identifiers";
 import { getSurveyStage, TABLET_GROUPS, type SurveyStageId, type TabletGroupId } from "./stages";
 import { calculateSurveyProgress, type SurveyProgressResult } from "./survey-progress";
-import { createInitialSurveyStageStates, getSiteSurveyStatusLabel } from "./types";
+import {
+  createInitialSurveyStageStates,
+  getSiteSurveyStatusLabel,
+  getSurveyStageStateLabel,
+  type SiteSurvey,
+} from "./types";
 import type { ConsultationRecord } from "../diagnosis/types";
 
 /**
  * FIELD 태블릿 Shell에 필요한 읽기 전용 view model.
  *
- * 상담 record를 해석만 하며 저장·ID 부여·조사회차 생성을 하지 않는다.
+ * 상담 record와 저장된 조사를 해석만 하며 저장·ID 부여·조사회차 생성을 하지 않는다.
  * 진행률은 `calculateSurveyProgress` 결과만 담는다. 화면에서 다시 계산하지 않는다.
- * Evidence Coverage·Risk·Verdict를 포함하지 않는다.
  */
 
 export const DEFAULT_TABLET_GROUP_ID: TabletGroupId = TABLET_GROUPS[0].groupId;
@@ -24,11 +29,10 @@ export interface FieldTabletStoreSummary {
 }
 
 export interface FieldTabletSurveySummary {
-  /** 저장된 회차가 없으면 null이다. 화면용 임시 ID를 만들지 않는다. */
-  readonly surveyId: null;
-  readonly surveySequence: null;
+  readonly surveyId: string | null;
+  readonly surveySequence: number | null;
   readonly statusLabel: string;
-  readonly persisted: false;
+  readonly persisted: boolean;
 }
 
 export interface FieldTabletGroupView {
@@ -37,6 +41,7 @@ export interface FieldTabletGroupView {
   readonly specGroup: string;
   readonly stageIds: readonly SurveyStageId[];
   readonly stageLabels: readonly string[];
+  readonly stageStateLabels: readonly string[];
   readonly inputImplemented: boolean;
   readonly completionPercent: number;
   readonly completedStageCount: number;
@@ -57,15 +62,34 @@ export interface FieldTabletView {
   readonly notices: readonly string[];
 }
 
-function buildNotices(reference: CandidateStoreReference): readonly string[] {
+export interface BuildFieldTabletViewOptions {
+  readonly survey?: SiteSurvey | null;
+  readonly linkedCandidateStoreId?: string | null;
+}
+
+function resolveViewCandidateStore(
+  record: ConsultationRecord,
+  linkedCandidateStoreId?: string | null,
+): CandidateStoreReference {
+  const fromRecord = resolveCandidateStoreReference(record);
+  if (fromRecord.resolution === "explicit") return fromRecord;
+  if (linkedCandidateStoreId && isCandidateStoreId(linkedCandidateStoreId)) {
+    return {
+      resolution: "explicit",
+      consultationId: record.consultation.id,
+      candidateStoreId: linkedCandidateStoreId,
+      canAttachFieldData: true,
+    };
+  }
+  return fromRecord;
+}
+
+function buildNotices(reference: CandidateStoreReference, hasSurvey: boolean): readonly string[] {
   const notices: string[] = [];
   if (reference.resolution === "legacy_embedded") {
     notices.push(getCandidateStoreBlockedReasonLabel(reference.blockedReason));
-    notices.push(
-      "기존 상담 기록은 변경하지 않습니다. 후보점포 ID 부여는 후속 단계에서 직원이 명시적으로 수행합니다.",
-    );
-  } else {
-    notices.push("저장된 조사 회차는 아직 없습니다. 초안 저장은 이후 단계에서 제공합니다.");
+  } else if (!hasSurvey) {
+    notices.push("현장조사가 아직 시작되지 않았습니다.");
   }
   notices.push("실제 조사 입력은 Phase 4에서 제공합니다.");
   notices.push("조사 수행 진행률은 자료 확인도, 위험, 계약 판정이 아닙니다.");
@@ -76,9 +100,13 @@ function buildNotices(reference: CandidateStoreReference): readonly string[] {
  * 상담 상세에서 FIELD Shell로 들어갈 때 쓰는 순수 변환.
  * 전달된 record를 수정하지 않고, 없는 ID나 조사 회차를 만들지 않는다.
  */
-export function buildFieldTabletView(record: ConsultationRecord): FieldTabletView {
-  const candidateStore = resolveCandidateStoreReference(record);
-  const progress = calculateSurveyProgress(createInitialSurveyStageStates());
+export function buildFieldTabletView(
+  record: ConsultationRecord,
+  options: BuildFieldTabletViewOptions = {},
+): FieldTabletView {
+  const candidateStore = resolveViewCandidateStore(record, options.linkedCandidateStoreId);
+  const survey = options.survey ?? null;
+  const progress = calculateSurveyProgress(survey?.stageStates ?? createInitialSurveyStageStates());
   const groups = TABLET_GROUPS.map((group): FieldTabletGroupView => {
     const groupProgress = progress.groups.find((item) => item.groupId === group.groupId);
     if (!groupProgress) {
@@ -90,6 +118,11 @@ export function buildFieldTabletView(record: ConsultationRecord): FieldTabletVie
       specGroup: group.specGroup,
       stageIds: group.stageIds,
       stageLabels: Object.freeze(group.stageIds.map((stageId) => getSurveyStage(stageId).label)),
+      stageStateLabels: Object.freeze(
+        group.stageIds.map((stageId) =>
+          getSurveyStageStateLabel(survey?.stageStates[stageId] ?? "NOT_STARTED"),
+        ),
+      ),
       inputImplemented: group.inputImplemented,
       completionPercent: groupProgress.completionPercent,
       completedStageCount: groupProgress.completedStageCount,
@@ -111,14 +144,14 @@ export function buildFieldTabletView(record: ConsultationRecord): FieldTabletVie
       address: record.candidateStore.address,
     }),
     survey: Object.freeze({
-      surveyId: null,
-      surveySequence: null,
-      statusLabel: getSiteSurveyStatusLabel("DRAFT"),
-      persisted: false,
+      surveyId: survey?.surveyId ?? null,
+      surveySequence: survey?.surveySequence ?? null,
+      statusLabel: getSiteSurveyStatusLabel(survey?.status ?? "DRAFT"),
+      persisted: survey !== null,
     }),
     progress,
     groups: Object.freeze(groups),
     defaultGroupId: DEFAULT_TABLET_GROUP_ID,
-    notices: buildNotices(candidateStore),
+    notices: buildNotices(candidateStore, survey !== null),
   });
 }

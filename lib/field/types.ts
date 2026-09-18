@@ -27,6 +27,13 @@ export const SITE_SURVEY_SCHEMA_VERSION = "site-survey-v1";
  */
 export type SiteSurveyStatus = "DRAFT" | "IN_PROGRESS" | "READY_FOR_REVIEW" | "COMPLETED";
 
+/** 새 회차를 만들지 않고 이어서 열 조사 상태. COMPLETED는 포함하지 않는다. */
+export const ACTIVE_SITE_SURVEY_STATUSES = Object.freeze([
+  "DRAFT",
+  "IN_PROGRESS",
+  "READY_FOR_REVIEW",
+] as const satisfies readonly SiteSurveyStatus[]);
+
 /**
  * 단계별 조사 수행 상태.
  *
@@ -57,7 +64,7 @@ export interface SiteSurvey {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly stageStates: SurveyStageStates;
-  /** 초안 저장 회차. 실제 저장은 Phase 4다. */
+  /** 초안 저장 회차. 저장에 성공하면 증가한다. */
   readonly draftVersion: number;
 }
 

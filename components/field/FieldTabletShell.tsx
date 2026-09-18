@@ -59,11 +59,11 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
     view.groups.find((group) => group.groupId === currentGroupId) ?? view.groups[0];
   if (!currentGroup) return null;
   const storeIdLabel =
-    view.candidateStore.resolution === "explicit"
-      ? view.candidateStore.candidateStoreId
-      : "미부여";
+    view.candidateStore.resolution === "explicit" ? "연결됨" : "미연결";
   const surveyRoundLabel =
-    view.survey.surveySequence === null ? "저장된 회차 없음" : `${view.survey.surveySequence}회차`;
+    view.survey.surveySequence === null
+      ? "저장된 회차 없음"
+      : `현장조사 #${view.survey.surveySequence}`;
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F6F8FB] text-[#0B1220]">
@@ -111,7 +111,7 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
           <MetaItem label="후보점포 ID" value={storeIdLabel} />
           <MetaItem label="후보점포" value={`${view.store.floor} · ${view.store.address}`} />
           <MetaItem label="현장조사 회차" value={surveyRoundLabel} />
-          <MetaItem label="조사상태" value={`${view.survey.statusLabel} (저장 없음)`} />
+          <MetaItem label="조사상태" value={view.survey.persisted ? view.survey.statusLabel : `${view.survey.statusLabel} (저장 없음)`} />
         </dl>
       </section>
 
@@ -155,7 +155,9 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
                 className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2"
               >
                 <span className="text-sm font-semibold text-[#0B1220]">{label}</span>
-                <span className="text-xs font-semibold text-slate-600">시작 전</span>
+                <span className="text-xs font-semibold text-slate-600">
+                  {currentGroup.stageStateLabels[index]}
+                </span>
               </li>
             ))}
           </ul>
