@@ -1,8 +1,8 @@
 import type { AnalysisRunSnapshot } from "./run";
 import type {
-  RadiusLivingPopulationAnalysis,
   RadiusLivingPopulationHour,
 } from "./radius-living-population";
+import type { RadiusLivingPopulationRuntimeAnalysis } from "./radius-living-population-runtime";
 import {
   createAvailableResult,
   createPartialResult,
@@ -19,7 +19,7 @@ const PRIMARY_SOURCE = {
 } as const;
 
 function limitationsFor(
-  analysis: RadiusLivingPopulationAnalysis,
+  analysis: RadiusLivingPopulationRuntimeAnalysis,
 ): BasicLocationLimitation[] {
   return analysis.limitations.map((limitation) => ({
     code: limitation.code,
@@ -31,7 +31,7 @@ function limitationsFor(
 }
 
 function analysisUnit(
-  analysis: RadiusLivingPopulationAnalysis,
+  analysis: RadiusLivingPopulationRuntimeAnalysis,
 ): BasicLocationAnalysisUnit {
   return {
     type: analysis.analysisUnit,
@@ -40,7 +40,7 @@ function analysisUnit(
   };
 }
 
-function sourceReferences(analysis: RadiusLivingPopulationAnalysis) {
+function sourceReferences(analysis: RadiusLivingPopulationRuntimeAnalysis) {
   return [
     {
       sourceId: analysis.lineage.livingPopulation.sourceId,
@@ -55,7 +55,7 @@ function sourceReferences(analysis: RadiusLivingPopulationAnalysis) {
   ];
 }
 
-function methodologyNote(analysis: RadiusLivingPopulationAnalysis): string {
+function methodologyNote(analysis: RadiusLivingPopulationRuntimeAnalysis): string {
   return [
     `inclusionMethod=${analysis.inclusionMethod}`,
     `rowSemantics=${analysis.rowSemantics}`,
@@ -65,7 +65,7 @@ function methodologyNote(analysis: RadiusLivingPopulationAnalysis): string {
 
 function hourlyResult(
   snapshot: AnalysisRunSnapshot,
-  analysis: RadiusLivingPopulationAnalysis,
+  analysis: RadiusLivingPopulationRuntimeAnalysis,
   hour: RadiusLivingPopulationHour,
 ): BasicLocationResult {
   const base = {
@@ -113,7 +113,7 @@ function hourlyResult(
 
 export function adaptRadiusLivingPopulationResults(
   snapshot: AnalysisRunSnapshot,
-  analysis: RadiusLivingPopulationAnalysis,
+  analysis: RadiusLivingPopulationRuntimeAnalysis,
 ): readonly BasicLocationResult[] {
   if (
     analysis.analysisRunId !== snapshot.analysisRunId ||

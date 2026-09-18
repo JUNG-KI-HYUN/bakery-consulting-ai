@@ -7,6 +7,7 @@ export const BASIC_LOCATION_RESULT_GROUP_ORDER = [
   "kakao",
   "officialRelation",
   "officialStats",
+  "demand",
 ] as const;
 
 export type BasicLocationResultGroupName =

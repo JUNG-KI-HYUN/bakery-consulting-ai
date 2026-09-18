@@ -98,6 +98,118 @@ function PresentationMetricGrid({
   );
 }
 
+const DAY_LABELS = {
+  MONDAY: "월",
+  TUESDAY: "화",
+  WEDNESDAY: "수",
+  THURSDAY: "목",
+  FRIDAY: "금",
+  SATURDAY: "토",
+  SUNDAY: "일",
+} as const;
+
+function LivingPopulationEvidence({
+  evidence,
+}: {
+  evidence: P0BasicLocationViewModel["presentation"]["evidence"]["livingPopulation"];
+}) {
+  const knownValues = evidence.hourlyProfile.flatMap((hour) =>
+    hour.population === null ? [] : [hour.population],
+  );
+  const maximum = knownValues.length > 0 ? Math.max(...knownValues) : 0;
+  const limitedValue = evidence.summary?.status === "PARTIAL"
+    ? "부분자료로 확인 제한"
+    : "자료 확인 필요";
+  const formatPeople = (value: number | null) => value === null
+    ? limitedValue
+    : `${new Intl.NumberFormat("ko-KR", { maximumFractionDigits: 1 }).format(value)}명`;
+  const summaryCards = [
+    {
+      id: "mean",
+      label: "24시간 평균",
+      value: formatPeople(evidence.summary?.dailyMeanPopulation ?? null),
+    },
+    {
+      id: "peak",
+      label: "관측 최대",
+      value: evidence.summary?.observedPeakPopulation === null || evidence.summary?.observedPeakPopulation === undefined
+        ? limitedValue
+        : `${evidence.summary.observedPeakHour}시 · ${formatPeople(evidence.summary.observedPeakPopulation)}`,
+    },
+    {
+      id: "minimum",
+      label: "관측 최소",
+      value: evidence.summary?.observedMinimumPopulation === null || evidence.summary?.observedMinimumPopulation === undefined
+        ? limitedValue
+        : `${evidence.summary.observedMinimumHour}시 · ${formatPeople(evidence.summary.observedMinimumPopulation)}`,
+    },
+  ];
+
+  return (
+    <section aria-label="반경 생활인구 수요 참고" className="py-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="text-sm font-bold text-slate-950">반경 생활인구 수요 참고</h4>
+        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600">
+          {evidence.statusLabel}
+        </span>
+      </div>
+      {evidence.requestStatus === "loading" ? (
+        <p role="status" className="mt-3 text-sm leading-6 text-slate-600">생활인구 자료를 분석하고 있습니다.</p>
+      ) : evidence.requestStatus === "error" ? (
+        <p role="status" className="mt-3 text-sm leading-6 text-slate-600">생활인구 자료를 현재 불러오지 못했습니다. 다른 근거 분석은 계속 확인할 수 있습니다.</p>
+      ) : evidence.requestStatus !== "success" || !evidence.summary ? (
+        <p className="mt-3 text-sm leading-6 text-slate-500">생활인구 분석 결과가 아직 없습니다.</p>
+      ) : (
+        <>
+          <p className="mt-1 text-xs leading-5 text-slate-500">
+            {evidence.sourceName ?? "서울 생활인구 250m Grid"} · {evidence.referenceDate ?? "기준일 확인 필요"}
+            {evidence.dayOfWeek ? `(${DAY_LABELS[evidence.dayOfWeek]})` : ""} · {evidence.radiusMeters ?? "선택"}m 반경
+          </p>
+          <dl className="mt-3 grid gap-2 sm:grid-cols-3">
+            {summaryCards.map((card) => (
+              <div key={card.id} className="rounded-lg border border-blue-100 bg-blue-50/50 p-3">
+                <dt className="text-xs font-semibold text-slate-600">{card.label}</dt>
+                <dd className="mt-1 text-sm font-bold tabular-nums text-slate-950">{card.value}</dd>
+              </div>
+            ))}
+          </dl>
+          <div className="mt-4" aria-label="24시간 생활인구 프로필">
+            <p className="text-xs font-bold text-blue-900">24시간 Profile</p>
+            <div className="mt-2 grid h-32 items-end gap-0.5 rounded-lg border border-slate-200 bg-slate-50 px-2 pt-3" style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}>
+              {evidence.hourlyProfile.map((hour) => {
+                const height = hour.population === null || maximum <= 0
+                  ? 4
+                  : Math.max(8, (hour.population / maximum) * 100);
+                const state = hour.population === null
+                  ? "확인 제한"
+                  : hour.status === "PARTIAL" ? "부분자료" : "확인";
+                return (
+                  <div key={hour.hour} className="flex h-full min-w-0 flex-col justify-end" title={`${hour.hour}시 · ${formatPeople(hour.population)} · ${state}`}>
+                    <div
+                      className={`w-full rounded-t-sm ${hour.population === null ? "bg-slate-300" : hour.status === "PARTIAL" ? "bg-amber-400" : "bg-blue-500"}`}
+                      style={{ height: `${height}%` }}
+                      role="img"
+                      aria-label={`${hour.hour}시 생활인구 ${formatPeople(hour.population)}, ${state}`}
+                    />
+                    <span className="mt-1 text-center text-[8px] leading-3 text-slate-500">
+                      {Number(hour.hour) % 3 === 0 ? hour.hour : ""}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          <div className="mt-3 space-y-1 text-xs leading-5 text-slate-500">
+            <p>※ {evidence.referenceDate}({evidence.dayOfWeek ? DAY_LABELS[evidence.dayOfWeek] : "요일 확인 필요"}) 단일 날짜 기준 생활인구 추정치입니다.</p>
+            <p>※ 생활인구는 통계적 추정자료이며 실제 방문객 또는 매장 고객 수와 동일하지 않습니다.</p>
+            <p>※ 반경 경계의 250m 격자는 중심점 기준으로 포함됩니다.</p>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 function EvidenceDetails({ result }: { result: P0BasicLocationResultViewModel }) {
   const reference = result.referencePeriod ?? result.referenceDate ?? "미확인";
   return (
@@ -112,6 +224,7 @@ function EvidenceDetails({ result }: { result: P0BasicLocationResultViewModel })
         <div><dt className="text-slate-500">기준시점</dt><dd className="mt-1 text-slate-700">{reference}</dd></div>
         <div><dt className="text-slate-500">상태 / 값 성격</dt><dd className="mt-1 text-slate-700">{result.status} · {result.valueType}</dd></div>
         <div><dt className="text-slate-500">Confidence</dt><dd className="mt-1 text-slate-700">{result.confidence}</dd></div>
+        {result.methodologyNote ? <div className="sm:col-span-2 xl:col-span-3"><dt className="text-slate-500">분석방법</dt><dd className="mt-1 break-words font-mono text-[11px] text-slate-600">{result.methodologyNote}</dd></div> : null}
         {result.missingReason ? <div><dt className="text-slate-500">Missing reason</dt><dd className="mt-1 text-slate-700">{result.missingReason}</dd></div> : null}
         <div className="sm:col-span-2 xl:col-span-3"><dt className="text-slate-500">Result ID</dt><dd className="mt-1 break-all font-mono text-[11px] text-slate-600">{result.resultId}</dd></div>
         {result.limitations.length > 0 ? (
@@ -259,6 +372,8 @@ export default function MarketAnalysisSummary({
                 </p>
               ) : null}
             </section>
+
+            <LivingPopulationEvidence evidence={evidence.livingPopulation} />
 
             <section aria-label="서울시 공식상권" className="py-5">
               <h4 className="text-sm font-bold text-slate-950">서울시 공식상권</h4>

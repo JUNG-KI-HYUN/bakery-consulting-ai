@@ -17,15 +17,8 @@ import {
   type LoadedLivingPopulationGeometry,
   type LoadedLivingPopulationMetricSnapshot,
 } from "./living-population-current.server";
-
-export type LivingPopulationDayOfWeek =
-  | "MONDAY"
-  | "TUESDAY"
-  | "WEDNESDAY"
-  | "THURSDAY"
-  | "FRIDAY"
-  | "SATURDAY"
-  | "SUNDAY";
+import type { LivingPopulationDayOfWeek } from "./radius-living-population-runtime";
+export type { LivingPopulationDayOfWeek } from "./radius-living-population-runtime";
 
 export interface RadiusLivingPopulationServerInput {
   analysisRunId: string;

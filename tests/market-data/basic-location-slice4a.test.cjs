@@ -99,6 +99,7 @@ function groups(overrides = {}) {
     kakao: [],
     officialRelation: [],
     officialStats: [],
+    demand: [],
     ...overrides,
   };
 }
@@ -110,11 +111,12 @@ test("Slice 4A: multiple adapter groups are collected in the fixed group order",
   const kakao = availableResult({ metricKey: "kakao" });
   const relation = availableResult({ metricKey: "relation" });
   const stats = availableResult({ metricKey: "stats" });
+  const demand = availableResult({ metricKey: "demand" });
   const result = collectBasicLocationResults({
     analysisRunId: RUN_A,
-    resultGroups: groups({ target: [target], frameone: [frameone], blocked: [blocked], kakao: [kakao], officialRelation: [relation], officialStats: [stats] }),
+    resultGroups: groups({ target: [target], frameone: [frameone], blocked: [blocked], kakao: [kakao], officialRelation: [relation], officialStats: [stats], demand: [demand] }),
   });
-  assert.deepEqual(result, [target, frameone, blocked, kakao, relation, stats]);
+  assert.deepEqual(result, [target, frameone, blocked, kakao, relation, stats, demand]);
 });
 
 test("Slice 4A: matching analysisRunId Results are accepted", () => {

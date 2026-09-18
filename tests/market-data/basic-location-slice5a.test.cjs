@@ -155,6 +155,7 @@ test("Slice 5A: matching Source results and completion metadata belong to their 
     kakaoCompletedAt: "2026-09-16T01:00:10.000Z",
     officialRelationCompletedAt: "2026-09-16T01:00:11.000Z",
     officialStatsCompletedAt: "2026-09-16T01:00:12.000Z",
+    livingPopulationCompletedAt: null,
   });
   assert.equal(context.kakaoNearby.status, "success");
   assert.equal(context.officialMarkets.status, "success");
@@ -180,6 +181,7 @@ test("Slice 5A: stale Kakao, Relation and official statistics cannot overwrite R
     kakaoCompletedAt: null,
     officialRelationCompletedAt: null,
     officialStatsCompletedAt: null,
+    livingPopulationCompletedAt: null,
   });
 });
 

@@ -138,12 +138,69 @@ function installMapFixture() {
     },
   } } };
   global.ResizeObserver = class { observe() {} disconnect() {} };
-  global.fetch = async (input) => {
+  global.fetch = async (input, options = {}) => {
     const url = new URL(input, "http://fixture.invalid"); requests.push(url);
     if (url.pathname === "/api/markets/geocode") return Response.json(
       failGeocode ? { message: "fixture failure" } : { latitude: 37.5, longitude: 127.1, resolvedAddress: "fixture resolved address" },
       { status: failGeocode ? 422 : 200 },
     );
+    if (url.pathname === "/api/markets/living-population") {
+      const request = JSON.parse(options.body);
+      const hourly = Array.from({ length: 24 }, (_, index) => ({
+        hour: String(index).padStart(2, "0"),
+        population: 100 + index,
+        status: "AVAILABLE",
+        includedCellCount: 2,
+        contributingCellCount: 2,
+        completeCellCount: 2,
+        partiallyKnownCellCount: 0,
+        unavailableCellCount: 0,
+        noObservationCellCount: 0,
+        suppressedObservationCount: 0,
+        missingObservationCount: 0,
+        invalidObservationCount: 0,
+        excludedMetricOnlyCellCount: 0,
+      }));
+      return Response.json({
+        referenceDate: "2026-09-06",
+        dayOfWeek: "SUNDAY",
+        analysis: {
+          contractVersion: "FRAMEONE_RADIUS_LIVING_POPULATION_V1",
+          analysisRunId: request.analysisRunId,
+          generatedAt: "2026-09-18T00:00:00.000Z",
+          sourceId: "SRC-SEOUL-LIVING",
+          sourceSnapshotId: "SAMPLE-LIVING-20260906",
+          referenceDate: "2026-09-06",
+          radiusMeters: request.radiusMeters,
+          analysisUnit: request.radiusMeters === 300 ? "RADIUS_300M" : "RADIUS_500M",
+          inclusionMethod: "CELL_CENTROID_WITHIN_RADIUS",
+          rowSemantics: "SUM_H_DNG_ROWS_PER_CELL_HOUR",
+          includedCellCount: 2,
+          includedMetricCellCount: 2,
+          geometryOnlyIncludedCellCount: 0,
+          excludedMetricOnlyCellCount: 0,
+          hourly,
+          summary: {
+            status: "AVAILABLE",
+            observedPeakHour: "23",
+            observedPeakPopulation: 123,
+            observedMinimumHour: "00",
+            observedMinimumPopulation: 100,
+            dailyMeanPopulation: 111.5,
+            meaning: "REFERENCE_DATE_24_HOUR_PROFILE",
+          },
+          limitations: [
+            { code: "STATISTICAL_ESTIMATE_NOT_ACTUAL", message: "SAMPLE 통계적 추정자료입니다." },
+            { code: "CENTROID_INCLUSION", message: "SAMPLE 격자 중심점 포함 방식입니다." },
+          ],
+          lineage: {
+            livingPopulation: { sourceId: "SRC-SEOUL-LIVING", sourceName: "[내국인] 서울 생활인구(250m)", snapshotId: "SAMPLE-LIVING-20260906", referenceDate: "2026-09-06", locator: "sample/normalized" },
+            gridGeometry: { sourceId: "SRC-SEOUL-LIVING-GRID", geometryVersion: "SAMPLE-GRID-V1", outputCrs: "EPSG:4326", locator: "sample/grid" },
+            methodology: { version: "RADIUS_LIVING_POPULATION_CENTROID_V1", inclusionMethod: "CELL_CENTROID_WITHIN_RADIUS", rowSemantics: "SUM_H_DNG_ROWS_PER_CELL_HOUR" },
+          },
+        },
+      });
+    }
     assert.equal(url.pathname, "/api/markets/nearby-places");
     return Response.json({
       center: { latitude: Number(url.searchParams.get("lat")), longitude: Number(url.searchParams.get("lng")) },
@@ -689,6 +746,10 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.equal(firstViewModel.analysisContext.target.radiusMeters, 500);
     assert.equal(firstViewModel.analysisContext.target.confirmedAddress, "fixture resolved address");
     assert.ok(firstViewModel.availableEvidence.kakaoObserved.some((item) => item.value === 0));
+    assert.equal(firstViewModel.availableEvidence.demand.filter((item) => item.analysisLayer === "DEMAND").length, 24);
+    assert.equal(firstViewModel.presentation.evidence.livingPopulation.statusLabel, "확인");
+    assert.ok(!firstViewModel.presentation.summary.unavailableNow.some((item) => item.id === "living-population-demand"));
+    assert.ok(!firstViewModel.presentation.summary.nextAnalysis.some((item) => item.id === "living-population"));
     assert.ok(firstViewModel.limitations.results.some((item) => item.status === "BLOCKED"));
     for (const section of ["기초입지 요약", "현재 확인된 특징", "현재 판단할 수 없는 부분", "상권 데이터 근거", "다음 조사 단계", "데이터 근거"]) {
       assert.ok(summaryHtml().includes(section), `Missing summary section: ${section}`);
@@ -761,6 +822,13 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
       1,
     );
     assert.equal(countText(evidenceHtml, "※ Kakao 장소검색 반환결과이며 실제 전체 경쟁점 전수자료가 아닙니다."), 1);
+    for (const livingText of ["반경 생활인구 수요 참고", "24시간 평균", "관측 최대", "관측 최소", "24시간 Profile", "단일 날짜 기준 생활인구 추정치입니다.", "실제 방문객 또는 매장 고객 수와 동일하지 않습니다.", "격자는 중심점 기준으로 포함됩니다."]) {
+      assert.ok(evidenceHtml.includes(livingText), `Missing living-population evidence: ${livingText}`);
+    }
+    assert.ok(evidenceHtml.includes("111.5명"));
+    assert.ok(evidenceHtml.includes("23시 · 123명"));
+    assert.ok(evidenceHtml.includes("00시 · 100명"));
+    assert.ok(evidenceHtml.includes("2026-09-06(일) 단일 날짜 기준 생활인구 추정치입니다."));
     for (const label of ["베이커리 검색", "제과점 검색", "카페 검색", "중복 제거 장소"]) {
       assert.equal(countText(evidenceHtml, `>${label}</p>`), 1);
     }
@@ -778,12 +846,14 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.ok(!mainSummaryHtml.includes("해당 항목 없음"));
     assert.ok(mainSummaryHtml.includes("현장에서 확인할 사항"));
     assert.ok(mainSummaryHtml.includes("다음 데이터 분석"));
-    assert.equal(countText(nextActionHtml, "추가 분석 예정"), 4);
+    assert.equal(countText(nextActionHtml, "추가 분석 예정"), 3);
     assert.ok(fullSummaryHtml.includes(`데이터 근거 <span class="text-lg font-bold tabular-nums text-slate-950">${firstViewModel.dataEvidence.length}건`));
     assert.ok(auditHtml.includes("직원용 상세 근거 보기"));
     assert.ok(auditHtml.includes("Analysis Run ID"));
     assert.ok(auditHtml.includes("Confidence"));
     assert.ok(auditHtml.includes("Result ID"));
+    assert.ok(auditHtml.includes("분석방법"));
+    assert.ok(auditHtml.includes("서울 생활인구"));
     assert.ok(auditHtml.includes("Missing reason"));
     assert.ok(!auditHtml.includes("<details open"));
     const auditResultIds = firstViewModel.presentation.audit.groups.flatMap((group) => group.resultIds);

@@ -23,6 +23,11 @@ import {
   type AnalysisRunSnapshot,
 } from "@/lib/market-data/basic-location/run";
 import {
+  createRadiusLivingPopulationApiRequest,
+  parseRadiusLivingPopulationApiResponse,
+  type LivingPopulationSourceState,
+} from "@/lib/market-data/basic-location/radius-living-population-runtime";
+import {
   findRelatedOfficialMarkets,
   OFFICIAL_MARKET_RELATION_LABELS,
   officialMarketRelationDescription,
@@ -623,6 +628,13 @@ export default function MarketSpatialViewer({
     analysisRunId: null,
     completedAt: null,
   });
+  const [livingPopulation, setLivingPopulation] = useState<LivingPopulationSourceState>({
+    status: "idle",
+    response: null,
+    error: null,
+    analysisRunId: null,
+    completedAt: null,
+  });
   const [officialRelationCompletion, setOfficialRelationCompletion] = useState<{
     analysisRunId: string | null;
     completedAt: string | null;
@@ -664,6 +676,7 @@ export default function MarketSpatialViewer({
   const panOffsetRef = useRef(panOffset);
   const canvasSizeRef = useRef(canvasSize);
   const bakeryDataControllerRef = useRef<AbortController | null>(null);
+  const livingPopulationControllerRef = useRef<AbortController | null>(null);
   const activeRunIdRef = useRef<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectionCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -675,14 +688,72 @@ export default function MarketSpatialViewer({
     );
   }, []);
 
+  const requestLivingPopulation = useCallback((snapshot: AnalysisRunSnapshot) => {
+    livingPopulationControllerRef.current?.abort();
+    const controller = new AbortController();
+    livingPopulationControllerRef.current = controller;
+    const requestBody = createRadiusLivingPopulationApiRequest(snapshot);
+    setLivingPopulation({
+      status: "loading",
+      response: null,
+      error: null,
+      analysisRunId: snapshot.analysisRunId,
+      completedAt: null,
+    });
+
+    void fetch("/api/markets/living-population", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    }).then(async (response) => {
+      if (!response.ok) throw new Error("Living population request failed.");
+      return parseRadiusLivingPopulationApiResponse(await response.json(), requestBody);
+    }).then((response) => {
+      const incoming: LivingPopulationSourceState = {
+        status: "success",
+        response,
+        error: null,
+        analysisRunId: snapshot.analysisRunId,
+        completedAt: response.analysis.generatedAt,
+      };
+      setLivingPopulation((current) =>
+        acceptRunBoundSourceUpdate(activeRunIdRef.current, current, incoming),
+      );
+    }).catch(() => {
+      if (controller.signal.aborted) return;
+      const incoming: LivingPopulationSourceState = {
+        status: "error",
+        response: null,
+        error: "생활인구 자료를 불러오지 못했습니다.",
+        analysisRunId: snapshot.analysisRunId,
+        completedAt: new Date().toISOString(),
+      };
+      setLivingPopulation((current) =>
+        acceptRunBoundSourceUpdate(activeRunIdRef.current, current, incoming),
+      );
+    });
+  }, []);
+
+  useEffect(() => () => livingPopulationControllerRef.current?.abort(), []);
+
   const handleAnalysisExecuted = useCallback((analysis: ExecutedMarketAnalysis) => {
     setExecutedSpatialAnalysis(analysis);
 
     if (!selectedMarket) {
       activeRunIdRef.current = null;
+      livingPopulationControllerRef.current?.abort();
+      livingPopulationControllerRef.current = null;
       setRunSnapshot(null);
       setKakaoNearby({
         status: "loading",
+        response: null,
+        error: null,
+        analysisRunId: null,
+        completedAt: null,
+      });
+      setLivingPopulation({
+        status: "idle",
         response: null,
         error: null,
         analysisRunId: null,
@@ -732,8 +803,9 @@ export default function MarketSpatialViewer({
     setBakeryDataMarketCode(null);
     setBakeryDataRunId(nextRun.analysisRunId);
     setBakeryDataCompletedAt(null);
+    requestLivingPopulation(nextRun);
     return nextRun.analysisRunId;
-  }, [selectedMarket, selectedSubmarket]);
+  }, [requestLivingPopulation, selectedMarket, selectedSubmarket]);
 
   const selectedReference =
     selectedReferences[selectedReferenceIndex] ?? null;
@@ -1400,11 +1472,12 @@ export default function MarketSpatialViewer({
       analysisRunId: bakeryDataRunId,
       completedAt: bakeryDataCompletedAt,
     },
+    livingPopulation,
   }), [executedSpatialAnalysis, runSnapshot, selectedMarketId, selectedMarketName, selectedSubmarketId, selectedSubmarketName, kakaoNearby,
     officialMarketLayer, officialLayerError, officialLayerLoading, spatialRelations,
     officialRelationCompletion, selectedOfficialMarketCode, selectedOfficialMarketName,
     bakeryDataStatus, bakeryDataMarketCode, bakeryData, bakeryDataError,
-    bakeryDataRunId, bakeryDataCompletedAt]);
+    bakeryDataRunId, bakeryDataCompletedAt, livingPopulation]);
 
   // Single read-only output for future consumers; no new UI or persistence.
   useEffect(() => {

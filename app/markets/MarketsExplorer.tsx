@@ -16,6 +16,7 @@ import {
 import { adaptKakaoNearbyResults } from "@/lib/market-data/basic-location/kakao-nearby-adapter";
 import { adaptOfficialCommercialAreaRelationResults } from "@/lib/market-data/basic-location/official-commercial-area-adapter";
 import { adaptOfficialMarketStatisticsResults } from "@/lib/market-data/basic-location/official-market-stats-adapter";
+import { adaptRadiusLivingPopulationResults } from "@/lib/market-data/basic-location/radius-living-population-adapter";
 import { collectBasicLocationResults } from "@/lib/market-data/basic-location/result-collection";
 import { applyBasicLocationDisplayPolicy } from "@/lib/market-data/basic-location/display-policy";
 import { buildBasicLocationInterpretation } from "@/lib/market-data/basic-location/interpretation";
@@ -563,6 +564,13 @@ export default function MarketsExplorer({
           },
         })
       : [];
+    const demandResults = analysisContext.livingPopulation.requestStatus === "success" &&
+      analysisContext.livingPopulation.analysis
+      ? adaptRadiusLivingPopulationResults(
+          snapshot,
+          analysisContext.livingPopulation.analysis,
+        )
+      : [];
 
     const results = collectBasicLocationResults({
       analysisRunId: snapshot.analysisRunId,
@@ -573,6 +581,7 @@ export default function MarketsExplorer({
         kakao: kakaoResults,
         officialRelation: relationResults,
         officialStats: officialStatsResults,
+        demand: demandResults,
       },
     });
     const displayableResults = applyBasicLocationDisplayPolicy(results, "STAFF");
@@ -585,6 +594,7 @@ export default function MarketsExplorer({
       audience: "STAFF",
       displayableResults,
       interpretation,
+      livingPopulation: analysisContext.livingPopulation,
     });
   }, [analysisContext, hierarchy, kakaoNearbySource]);
 

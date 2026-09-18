@@ -7,6 +7,10 @@ import type {
   BakeryOfficialMarketDataStatus,
 } from "./services/bakery-official-market";
 import type { AnalysisRunSnapshot } from "./basic-location/run";
+import type {
+  LivingPopulationDayOfWeek,
+  LivingPopulationSourceState,
+} from "./basic-location/radius-living-population-runtime";
 
 export type MarketAnalysisRequestStatus = "idle" | "loading" | "success" | "error";
 
@@ -95,6 +99,7 @@ export type MarketAnalysisContext = DeepReadonly<{
     kakaoCompletedAt: string | null;
     officialRelationCompletedAt: string | null;
     officialStatsCompletedAt: string | null;
+    livingPopulationCompletedAt: string | null;
   };
   target: {
     source: ExecutedMarketAnalysis["source"];
@@ -132,6 +137,16 @@ export type MarketAnalysisContext = DeepReadonly<{
     selectedOfficialMarketData: BakeryOfficialMarketData | null;
     error: string | null;
   };
+  livingPopulation: {
+    requestStatus: MarketAnalysisRequestStatus;
+    analysisRunId: string | null;
+    completedAt: string | null;
+    referenceDate: string | null;
+    dayOfWeek: LivingPopulationDayOfWeek | null;
+    radiusMeters: 300 | 500 | null;
+    analysis: NonNullable<LivingPopulationSourceState["response"]>["analysis"] | null;
+    error: string | null;
+  };
 }>;
 
 export interface MarketAnalysisContextInput {
@@ -157,6 +172,7 @@ export interface MarketAnalysisContextInput {
     analysisRunId: string | null;
     completedAt: string | null;
   };
+  livingPopulation?: LivingPopulationSourceState;
 }
 
 function nearbyCategory(
@@ -215,6 +231,22 @@ export function buildMarketAnalysisContext(input: MarketAnalysisContextInput): M
   const publicDataInput = sourceBelongsToRun(input.publicData.analysisRunId)
     ? input.publicData
     : { requestStatus: "idle" as const, requestedOfficialMarketCode: null, data: null, error: null };
+  const livingPopulationInput = input.livingPopulation ?? {
+    status: "idle" as const,
+    response: null,
+    error: null,
+    analysisRunId: activeRunId,
+    completedAt: null,
+  };
+  const livingPopulation = sourceBelongsToRun(livingPopulationInput.analysisRunId)
+    ? livingPopulationInput
+    : {
+        status: "idle" as const,
+        response: null,
+        error: null,
+        analysisRunId: activeRunId,
+        completedAt: null,
+      };
   const manual = input.officialMarkets.manuallySelected;
   const spatialResults = execution && officialMarkets.status === "success"
     ? officialMarkets.results
@@ -240,6 +272,9 @@ export function buildMarketAnalysisContext(input: MarketAnalysisContextInput): M
         : null,
       officialStatsCompletedAt: sourceBelongsToRun(input.publicData.analysisRunId)
         ? input.publicData.completedAt ?? null
+        : null,
+      livingPopulationCompletedAt: sourceBelongsToRun(livingPopulationInput.analysisRunId)
+        ? livingPopulationInput.completedAt
         : null,
     },
     target: execution ? {
@@ -277,6 +312,16 @@ export function buildMarketAnalysisContext(input: MarketAnalysisContextInput): M
       status: publicData?.dataStatus ?? null,
       selectedOfficialMarketData: publicData,
       error: requestMatchesSelection ? publicDataInput.error : null,
+    },
+    livingPopulation: {
+      requestStatus: execution ? livingPopulation.status : "idle",
+      analysisRunId: execution ? livingPopulation.analysisRunId : null,
+      completedAt: execution ? livingPopulation.completedAt : null,
+      referenceDate: execution ? livingPopulation.response?.referenceDate ?? null : null,
+      dayOfWeek: execution ? livingPopulation.response?.dayOfWeek ?? null : null,
+      radiusMeters: execution ? livingPopulation.response?.analysis.radiusMeters ?? null : null,
+      analysis: execution ? livingPopulation.response?.analysis ?? null : null,
+      error: execution ? livingPopulation.error : null,
     },
   } satisfies MarketAnalysisContext));
 }

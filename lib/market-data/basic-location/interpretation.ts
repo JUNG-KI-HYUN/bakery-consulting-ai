@@ -178,6 +178,17 @@ function addAvailableResultSignal(
     return;
   }
 
+  if (result.metricKey.startsWith("living_population.radius.hour.")) {
+    addSignal(
+      reference,
+      result.resultId,
+      `reference:${result.resultId}`,
+      `${result.analysisUnit.label}의 ${periodLabel(result)} 생활인구 추정치는 ${valueLabel(result)}입니다. 통계적 추정값이며 실제 방문객·매장 고객 수 또는 수요의 높고 낮음 판정이 아닙니다.`,
+      result.resultId,
+    );
+    return;
+  }
+
   if (result.metricKey.includes("official_commercial_area.sales.")) {
     addSignal(
       reference,

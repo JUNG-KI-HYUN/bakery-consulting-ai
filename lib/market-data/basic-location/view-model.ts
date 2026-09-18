@@ -20,6 +20,10 @@ import type {
   BasicLocationInterpretation,
   BasicLocationInterpretationSignal,
 } from "./interpretation";
+import type {
+  LivingPopulationDayOfWeek,
+  RadiusLivingPopulationRuntimeAnalysis,
+} from "./radius-living-population-runtime";
 
 const VIEW_MODEL_SCHEMA_VERSION = "p0-basic-location-view-model-v1" as const;
 
@@ -44,6 +48,7 @@ export interface P0BasicLocationResultViewModel {
   fieldCheckRequired: boolean;
   fieldCheckKeys: readonly string[];
   requiresNote: boolean;
+  methodologyNote: string | null;
 }
 
 export interface P0BasicLocationAnalysisContextViewModel {
@@ -71,6 +76,7 @@ export interface P0BasicLocationAvailableEvidenceViewModel {
   target: readonly P0BasicLocationResultViewModel[];
   frameone: readonly P0BasicLocationResultViewModel[];
   kakaoObserved: readonly P0BasicLocationResultViewModel[];
+  demand: readonly P0BasicLocationResultViewModel[];
   other: readonly P0BasicLocationResultViewModel[];
 }
 
@@ -155,6 +161,30 @@ export interface P0BasicLocationPresentationEvidenceViewModel {
     statusLabel: "확인" | "일부 자료 확인 필요" | "자료 확인 필요";
     metrics: readonly P0BasicLocationPresentationMetricViewModel[];
   };
+  livingPopulation: {
+    requestStatus: "idle" | "loading" | "success" | "error";
+    statusLabel: "분석 전" | "분석 중" | "확인" | "일부 확인" | "자료 확인 필요" | "불러오기 실패";
+    referenceDate: string | null;
+    dayOfWeek: LivingPopulationDayOfWeek | null;
+    radiusMeters: 300 | 500 | null;
+    sourceName: string | null;
+    analysisUnitLabel: string | null;
+    summary: {
+      status: "AVAILABLE" | "PARTIAL" | "NOT_AVAILABLE";
+      observedPeakHour: string | null;
+      observedPeakPopulation: number | null;
+      observedMinimumHour: string | null;
+      observedMinimumPopulation: number | null;
+      dailyMeanPopulation: number | null;
+    } | null;
+    hourlyProfile: readonly {
+      hour: string;
+      population: number | null;
+      status: BasicLocationResultStatus;
+      basisResultIds: readonly string[];
+    }[];
+    basisResultIds: readonly string[];
+  };
   officialRelation: {
     available: boolean;
     included: readonly P0BasicLocationPresentationOfficialAreaViewModel[];
@@ -201,7 +231,7 @@ export interface P0BasicLocationPresentationFieldActionGroupViewModel {
 }
 
 export interface P0BasicLocationPresentationAuditGroupViewModel {
-  id: "analysis-frameone" | "kakao" | "official-market" | "other";
+  id: "analysis-frameone" | "kakao" | "official-market" | "living-population" | "other";
   label: string;
   resultIds: readonly string[];
 }
@@ -251,6 +281,13 @@ export interface BuildP0BasicLocationViewModelInput {
   audience: BasicLocationAudience;
   displayableResults: readonly DisplayableBasicLocationResult[];
   interpretation: BasicLocationInterpretation;
+  livingPopulation?: {
+    requestStatus: "idle" | "loading" | "success" | "error";
+    referenceDate: string | null;
+    dayOfWeek: LivingPopulationDayOfWeek | null;
+    radiusMeters: 300 | 500 | null;
+    analysis: Readonly<RadiusLivingPopulationRuntimeAnalysis> | null;
+  };
 }
 
 export class P0BasicLocationViewModelValidationError extends Error {
@@ -305,6 +342,7 @@ function toResultViewModel(
     fieldCheckRequired: result.fieldCheckRequired,
     fieldCheckKeys: [...result.fieldCheckKeys],
     requiresNote: displayable.requiresNote,
+    methodologyNote: result.methodologyNote,
   };
 }
 
@@ -510,6 +548,7 @@ function officialAreas(
 
 function buildPresentationEvidence(
   customerResults: readonly DisplayableBasicLocationResult[],
+  livingPopulation: BuildP0BasicLocationViewModelInput["livingPopulation"],
 ): P0BasicLocationPresentationEvidenceViewModel {
   const kakaoMetrics = KAKAO_PRESENTATION_METRICS.map(({ metricKey, label }) =>
     toPresentationMetric(
@@ -567,11 +606,59 @@ function buildPresentationEvidence(
   const officialStatsResults = [...salesResults, ...storeResults];
   const statsContextResult = officialStatsResults[0]?.result;
   const trendContextResult = trendResults[0]?.result;
+  const livingResults = customerResults.filter(({ result }) =>
+    result.metricKey.startsWith("living_population.radius."),
+  );
+  const livingResultIds = livingResults.map(({ result }) => result.resultId);
+  const livingAnalysis = livingPopulation?.requestStatus === "success"
+    ? livingPopulation.analysis
+    : null;
+  const livingStatusLabel: P0BasicLocationPresentationEvidenceViewModel["livingPopulation"]["statusLabel"] =
+    livingPopulation?.requestStatus === "loading" ? "분석 중"
+      : livingPopulation?.requestStatus === "error" ? "불러오기 실패"
+        : livingPopulation?.requestStatus === "success" && livingAnalysis?.summary.status === "AVAILABLE" ? "확인"
+          : livingPopulation?.requestStatus === "success" && livingAnalysis?.summary.status === "PARTIAL" ? "일부 확인"
+            : livingPopulation?.requestStatus === "success" ? "자료 확인 필요"
+              : "분석 전";
+  const livingHourlyProfile = Array.from({ length: 24 }, (_, index) => {
+    const hour = String(index).padStart(2, "0");
+    const displayable = findDisplayableResult(
+      livingResults,
+      `living_population.radius.hour.${hour}`,
+    );
+    return {
+      hour,
+      population: displayable && typeof displayable.result.value === "number"
+        ? displayable.result.value
+        : null,
+      status: displayable?.result.status ?? "NOT_AVAILABLE" as const,
+      basisResultIds: displayable ? [displayable.result.resultId] : [],
+    };
+  });
 
   return {
     kakao: {
       statusLabel: kakaoStatus,
       metrics: kakaoMetrics,
+    },
+    livingPopulation: {
+      requestStatus: livingPopulation?.requestStatus ?? "idle",
+      statusLabel: livingStatusLabel,
+      referenceDate: livingPopulation?.referenceDate ?? null,
+      dayOfWeek: livingPopulation?.dayOfWeek ?? null,
+      radiusMeters: livingPopulation?.radiusMeters ?? null,
+      sourceName: livingResults[0]?.result.primarySource?.sourceName ?? null,
+      analysisUnitLabel: livingResults[0]?.result.analysisUnit.label ?? null,
+      summary: livingAnalysis ? {
+        status: livingAnalysis.summary.status,
+        observedPeakHour: livingAnalysis.summary.observedPeakHour,
+        observedPeakPopulation: livingAnalysis.summary.observedPeakPopulation,
+        observedMinimumHour: livingAnalysis.summary.observedMinimumHour,
+        observedMinimumPopulation: livingAnalysis.summary.observedMinimumPopulation,
+        dailyMeanPopulation: livingAnalysis.summary.dailyMeanPopulation,
+      } : null,
+      hourlyProfile: livingHourlyProfile,
+      basisResultIds: livingResultIds,
     },
     officialRelation: {
       available: officialRelationAvailable,
@@ -811,6 +898,7 @@ function auditGroupId(result: BasicLocationResult): P0BasicLocationPresentationA
   }
   if (result.metricKey.startsWith("kakao.nearby.")) return "kakao";
   if (result.metricKey.startsWith("official_commercial_area.")) return "official-market";
+  if (result.metricKey.startsWith("living_population.radius.")) return "living-population";
   return "other";
 }
 
@@ -821,6 +909,7 @@ function buildPresentationAudit(
     { id: "analysis-frameone" as const, label: "분석 실행 / FRAMEONE" },
     { id: "kakao" as const, label: "Kakao" },
     { id: "official-market" as const, label: "서울시 공식상권" },
+    { id: "living-population" as const, label: "서울 생활인구" },
     { id: "other" as const, label: "기타" },
   ];
   return {
@@ -838,12 +927,13 @@ function buildPresentation(
   analysisContext: P0BasicLocationAnalysisContextViewModel,
   staffDisplayableResults: readonly DisplayableBasicLocationResult[],
   interpretation: BasicLocationInterpretation,
+  livingPopulation: BuildP0BasicLocationViewModelInput["livingPopulation"],
 ): P0BasicLocationPresentationViewModel {
   const customerResults = applyBasicLocationDisplayPolicy(
     staffDisplayableResults.map(({ result }) => result),
     "CUSTOMER",
   );
-  const evidence = buildPresentationEvidence(customerResults);
+  const evidence = buildPresentationEvidence(customerResults, livingPopulation);
   const limitations = buildPresentationLimitations(customerResults, interpretation);
   const fieldActions = buildPresentationFieldActions(customerResults, interpretation);
   const audit = buildPresentationAudit(staffDisplayableResults);
@@ -885,6 +975,31 @@ function buildPresentation(
       basisResultIds: evidence.officialRelation.overlapping.flatMap((area) => area.basisResultIds),
     });
   }
+  const livingSucceeded = evidence.livingPopulation.requestStatus === "success" &&
+    evidence.livingPopulation.basisResultIds.length > 0;
+  if (livingSucceeded) {
+    confirmedFeatures.push({
+      id: "living-population-radius-confirmed",
+      message: `선택 위치 ${evidence.livingPopulation.radiusMeters ?? analysisContext.target.radiusMeters ?? "분석"}m 반경 생활인구 분석을 완료했습니다.`,
+      basisResultIds: evidence.livingPopulation.basisResultIds,
+    });
+  }
+
+  const unavailableNow = livingSucceeded
+    ? PRESENTATION_UNAVAILABLE_ITEMS.filter((item) => item.id !== "living-population-demand")
+    : PRESENTATION_UNAVAILABLE_ITEMS.map((item) => item.id === "living-population-demand"
+      ? {
+          ...item,
+          stateLabel: evidence.livingPopulation.requestStatus === "loading"
+            ? "분석 중"
+            : evidence.livingPopulation.requestStatus === "error"
+              ? "현재 불러오기 실패"
+              : item.stateLabel,
+        }
+      : item);
+  const nextAnalysis = livingSucceeded
+    ? PRESENTATION_NEXT_ANALYSIS.filter((item) => item.id !== "living-population")
+    : PRESENTATION_NEXT_ANALYSIS;
 
   return {
     header: {
@@ -908,8 +1023,8 @@ function buildPresentation(
     ],
     summary: {
       confirmedFeatures,
-      unavailableNow: PRESENTATION_UNAVAILABLE_ITEMS,
-      nextAnalysis: PRESENTATION_NEXT_ANALYSIS,
+      unavailableNow,
+      nextAnalysis,
     },
     evidence,
     limitations,
@@ -956,6 +1071,18 @@ function validateInput(input: BuildP0BasicLocationViewModelInput): void {
       "Interpretation analysisRunId does not match the requested analysis run.",
     );
   }
+  if (
+    input.livingPopulation?.requestStatus === "success" &&
+    (
+      input.livingPopulation.analysis === null ||
+      input.livingPopulation.analysis.analysisRunId !== input.analysisRunId ||
+      input.livingPopulation.analysis.radiusMeters !== input.livingPopulation.radiusMeters
+    )
+  ) {
+    throw new P0BasicLocationViewModelValidationError(
+      "Living population source does not match the requested analysis run.",
+    );
+  }
 
   const resultIds = new Set<string>();
   for (const { result } of input.displayableResults) {
@@ -989,6 +1116,7 @@ export function buildP0BasicLocationViewModel(
   const targetEvidence: P0BasicLocationResultViewModel[] = [];
   const frameoneEvidence: P0BasicLocationResultViewModel[] = [];
   const kakaoObservedEvidence: P0BasicLocationResultViewModel[] = [];
+  const demandEvidence: P0BasicLocationResultViewModel[] = [];
   const otherEvidence: P0BasicLocationResultViewModel[] = [];
   const officialRelation: P0BasicLocationResultViewModel[] = [];
   const officialSales: P0BasicLocationResultViewModel[] = [];
@@ -1023,6 +1151,8 @@ export function buildP0BasicLocationViewModel(
       frameoneEvidence.push(viewModel);
     } else if (result.metricKey.startsWith("kakao.nearby.")) {
       kakaoObservedEvidence.push(viewModel);
+    } else if (result.analysisLayer === "DEMAND" || result.metricKey.startsWith("living_population.radius.")) {
+      demandEvidence.push(viewModel);
     } else {
       otherEvidence.push(viewModel);
     }
@@ -1048,6 +1178,7 @@ export function buildP0BasicLocationViewModel(
       target: targetEvidence,
       frameone: frameoneEvidence,
       kakaoObserved: kakaoObservedEvidence,
+      demand: demandEvidence,
       other: otherEvidence,
     },
     officialMarketReference: {
@@ -1096,6 +1227,7 @@ export function buildP0BasicLocationViewModel(
       analysisContext,
       input.displayableResults,
       input.interpretation,
+      input.livingPopulation,
     ),
   };
 
