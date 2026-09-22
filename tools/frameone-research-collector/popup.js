@@ -7,6 +7,9 @@ import {
   fromCollectorExport,
   withVerificationStatus,
 } from "./src/research-record.js";
+import { getChromeStorageLocal, loadCollectorState, saveCollectorState } from "./src/research-storage.js";
+
+const FRAMEONE_SERVER_BASE_URL = "http://localhost:3000";
 
 const fieldDefinitions = [
   ["address", "주소", "text"],
@@ -38,9 +41,54 @@ let current = null;
 let queueEntries = [];
 let activeRecordId = null;
 const duplicateDecisions = new Map();
+let pendingStorageWrite = Promise.resolve();
+let localPersistenceStatus = "CHECKING";
 const analyzeButton = document.querySelector("#analyze");
 const form = document.querySelector("#review-form");
 const message = document.querySelector("#message");
+
+async function persistQueue() {
+  const snapshot = structuredClone({
+    queueEntries,
+    activeRecordId,
+    duplicateDecisions: [...duplicateDecisions.entries()],
+  });
+  const operation = pendingStorageWrite.then(() => saveCollectorState(getChromeStorageLocal(), snapshot));
+  pendingStorageWrite = operation.then(() => undefined, () => undefined);
+  try {
+    await operation;
+    localPersistenceStatus = "SAVED";
+    renderQueue();
+  } catch (error) {
+    localPersistenceStatus = "FAILED";
+    setMessage(`로컬 조사함 저장 실패: ${error instanceof Error ? error.message : String(error)}`, true);
+    renderQueue();
+  }
+}
+
+async function restoreQueue() {
+  try {
+    const state = await loadCollectorState(getChromeStorageLocal());
+    localPersistenceStatus = "SAVED";
+    queueEntries = state.queueEntries;
+    activeRecordId = state.activeRecordId;
+    duplicateDecisions.clear();
+    for (const [key, decision] of state.duplicateDecisions) duplicateDecisions.set(key, decision);
+    recalculateDuplicateCandidates();
+    const active = queueEntries.find((entry) => entry.record.recordId === activeRecordId) ?? queueEntries.at(-1);
+    if (active) {
+      activeRecordId = active.record.recordId;
+      current = active.collection;
+      render();
+      renderQueue();
+      setMessage(`로컬 조사함 ${queueEntries.length}건을 복원했습니다.`);
+    }
+  } catch (error) {
+    localPersistenceStatus = "FAILED";
+    setMessage(`로컬 조사함 복원 실패: ${error instanceof Error ? error.message : String(error)}`, true);
+    renderQueue();
+  }
+}
 
 function setMessage(text, isError = false) {
   message.textContent = text;
@@ -113,6 +161,7 @@ function syncQueueRecord(verificationStatus) {
   }
   recalculateDuplicateCandidates();
   renderQueue();
+  void persistQueue();
 }
 
 function recalculateDuplicateCandidates() {
@@ -146,7 +195,7 @@ function renderQueue() {
   }
   section.hidden = false;
   document.querySelector("#queue-count").textContent = `${queueEntries.length}건`;
-  card.innerHTML = queueEntries.map(({ record }) => {
+  card.innerHTML = queueEntries.map(({ record, repository }) => {
     const { property, lease, source, quality } = record;
     const statusClass = quality.verificationStatus === VERIFICATION_STATUS.CONFIRMED
       ? "confirmed"
@@ -155,8 +204,12 @@ function renderQueue() {
       ? `<p class="queue-warning">${escapeHtml(quality.warnings.slice(0, 3).join(" · "))}</p>`
       : "";
     const duplicate = quality.duplicateStatus !== DUPLICATE_STATUS.NO_MATCH
-      ? `<div class="duplicate-panel"><strong>${escapeHtml(quality.duplicateStatus)}</strong><p>${escapeHtml(quality.duplicateCandidates[0]?.reasons.join(" · ") ?? "중복 조건 일치")} — 자동 병합하지 않습니다.</p><div class="duplicate-actions"><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-duplicate-action="same">같은 매물</button><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-duplicate-action="different">다른 매물</button></div></div>`
+      ? `<div class="duplicate-panel"><strong>${escapeHtml(quality.duplicateStatus)}</strong><p>${escapeHtml(quality.duplicateCandidates[0]?.reasons.join(" · ") ?? "중복 조건 일치")} — 자동 병합하지 않습니다.</p><div class="duplicate-actions"><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-duplicate-action="same" ${repository?.status === "SAVED" ? "disabled" : ""}>같은 매물</button><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-duplicate-action="different" ${repository?.status === "SAVED" ? "disabled" : ""}>다른 매물</button></div></div>`
       : "";
+    const isSaved = repository?.status === "SAVED";
+    const localStateLabel = localPersistenceStatus === "FAILED"
+      ? "로컬 조사함 저장 실패 · 현재 팝업 메모리만 사용 중"
+      : localPersistenceStatus === "SAVED" ? "로컬 조사함 저장됨" : "로컬 조사함 저장 확인 중";
     return `<div class="queue-card">
     <div class="queue-card-header">
       <div><h3>${escapeHtml(property.address || property.addressRaw || "주소 미확인")}</h3><p class="queue-meta">${property.floor ? `${escapeHtml(property.floor)}층` : "층 미확인"} · ${escapeHtml(source.sourceName)} · ${escapeHtml(source.collectedAt.slice(0, 10))}</p></div>
@@ -167,25 +220,29 @@ function renderQueue() {
       <div class="queue-value"><span>신선도</span><strong>${escapeHtml(freshnessLabels[quality.freshnessStatus])}</strong></div>
       <div class="queue-value"><span>보증금</span><strong>${escapeHtml(displayMoney(lease.depositAmount))}</strong></div>
       <div class="queue-value"><span>월세</span><strong>${escapeHtml(displayMoney(lease.rentAmount))}</strong></div>
-      <div class="queue-value"><span>관리비</span><strong>${escapeHtml(displayMoney(lease.managementFeeAmount))}</strong></div>
+      <div class="queue-value"><span>관리비</span><strong>${escapeHtml(displayMoney(lease.managementFeeAmount, lease.managementFeeStatus ?? SEMANTIC_STATUS.KNOWN))}</strong></div>
       <div class="queue-value"><span>권리금</span><strong>${escapeHtml(displayMoney(lease.premiumAmount, lease.premiumStatus))}</strong></div>
       <div class="queue-value"><span>중복 후보</span><strong>${escapeHtml(quality.duplicateStatus)}</strong></div>
       <div class="queue-value"><span>출처 유형</span><strong>${escapeHtml(source.sourceType)}</strong></div>
     </div>
     ${warnings}${duplicate}
-    <div class="queue-actions"><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-queue-action="confirm">확정</button><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-queue-action="edit">수정</button><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-queue-action="exclude">제외</button></div>
+    <p class="repository-state">${escapeHtml(localStateLabel)}${isSaved ? ` · FRAMEONE 저장 완료 · ${escapeHtml(repository.repositoryRecordId)}` : ""}</p>
+    <div class="queue-actions"><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-queue-action="confirm" ${isSaved ? "disabled" : ""}>확정</button><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-queue-action="edit" ${isSaved ? "disabled" : ""}>수정</button><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-queue-action="exclude" ${isSaved ? "disabled" : ""}>제외</button><button type="button" data-record-id="${escapeHtml(record.recordId)}" data-queue-action="save" ${quality.verificationStatus !== VERIFICATION_STATUS.CONFIRMED || isSaved ? "disabled" : ""}>FRAMEONE에 저장</button></div>
   </div>`;
   }).join("");
   card.querySelectorAll("[data-queue-action]").forEach((button) => button.addEventListener("click", handleQueueAction));
   card.querySelectorAll("[data-duplicate-action]").forEach((button) => button.addEventListener("click", handleDuplicateAction));
 }
 
-function handleQueueAction(event) {
+async function handleQueueAction(event) {
   const action = event.currentTarget.dataset.queueAction;
   const entry = queueEntries.find((item) => item.record.recordId === event.currentTarget.dataset.recordId);
   if (!entry) return;
   activeRecordId = entry.record.recordId;
-  if (action === "edit") {
+  if (action === "save") {
+    await saveToFrameone(entry);
+    return;
+  } else if (action === "edit") {
     entry.record = withVerificationStatus(entry.record, VERIFICATION_STATUS.REVIEW_REQUIRED, new Date().toISOString());
     current = entry.collection;
     render();
@@ -199,6 +256,34 @@ function handleQueueAction(event) {
       : "자료를 제외했습니다. 원본과 이력은 현재 JSON record에 남습니다.");
   }
   renderQueue();
+  await persistQueue();
+}
+
+async function saveToFrameone(entry) {
+  if (entry.record.quality.verificationStatus !== VERIFICATION_STATUS.CONFIRMED) {
+    setMessage("CONFIRMED 자료만 FRAMEONE에 저장할 수 있습니다.", true);
+    return;
+  }
+  setMessage("FRAMEONE 서버에 저장하는 중입니다.");
+  try {
+    const response = await fetch(`${FRAMEONE_SERVER_BASE_URL}/api/research-records`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry.record),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message ?? `HTTP ${response.status}`);
+    entry.repository = {
+      status: "SAVED",
+      repositoryRecordId: result.repositoryRecordId,
+      savedAt: new Date().toISOString(),
+    };
+    await persistQueue();
+    renderQueue();
+    setMessage(result.created ? "FRAMEONE 서버에 저장했습니다." : "이미 저장된 동일 record를 확인했습니다.");
+  } catch (error) {
+    setMessage(`FRAMEONE 저장 실패: ${error instanceof Error ? error.message : String(error)}`, true);
+  }
 }
 
 function handleDuplicateAction(event) {
@@ -220,6 +305,7 @@ function handleDuplicateAction(event) {
   recalculateDuplicateCandidates();
   setMessage("중복 후보 판단을 기록했습니다. 자동 병합은 수행하지 않았습니다.");
   renderQueue();
+  void persistQueue();
 }
 
 function render() {
@@ -303,7 +389,9 @@ function handleEdit(event) {
     field.value = amount;
     field.issues = value !== "" && amount === null ? ["금액은 0 이상의 숫자와 comma만 입력할 수 있습니다."] : [];
     if (key === "managementFee" || key === "premium") {
-      field.semanticStatus = amount === null ? SEMANTIC_STATUS.UNKNOWN : SEMANTIC_STATUS.KNOWN;
+      field.semanticStatus = amount === null
+        ? SEMANTIC_STATUS.UNKNOWN
+        : key === "managementFee" && amount === 0 ? SEMANTIC_STATUS.NONE : SEMANTIC_STATUS.KNOWN;
       const semanticSelect = document.querySelector(`[data-semantic-field="${key}"]`);
       if (semanticSelect) semanticSelect.value = field.semanticStatus;
     }
@@ -462,3 +550,4 @@ analyzeButton.addEventListener("click", analyzeCurrentPage);
 document.querySelector("#complete-review").addEventListener("click", completeReview);
 document.querySelector("#export-json").addEventListener("click", exportJson);
 document.querySelector("#export-research-json").addEventListener("click", exportResearchJson);
+void restoreQueue();

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import marketHierarchyJson from "@/data/seoul-market/v1.1-final/MARKET_HIERARCHY.json";
 import MarketsExplorer, { type MarketHierarchy } from "./MarketsExplorer";
 
@@ -10,5 +11,14 @@ export const metadata: Metadata = {
 const marketHierarchy = marketHierarchyJson as unknown as MarketHierarchy;
 
 export default function MarketsPage() {
-  return <MarketsExplorer hierarchy={marketHierarchy} />;
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <Link href="/markets/rental-research" className="btn-outline">
+          임대 조사자료 보기
+        </Link>
+      </div>
+      <MarketsExplorer hierarchy={marketHierarchy} />
+    </div>
+  );
 }

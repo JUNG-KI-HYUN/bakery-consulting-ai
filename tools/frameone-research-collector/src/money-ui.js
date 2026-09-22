@@ -18,6 +18,7 @@ export function formatMoneyInput(value) {
 export function formatKoreanMoney(value, semanticStatus = SEMANTIC_STATUS.KNOWN) {
   if (semanticStatus === SEMANTIC_STATUS.NEGOTIABLE) return "협의";
   if (semanticStatus === SEMANTIC_STATUS.NO_PREMIUM) return "0원 · 무권리";
+  if (semanticStatus === SEMANTIC_STATUS.NONE) return "0원 · 없음";
   if (value === null || value === undefined || !Number.isSafeInteger(value) || value < 0) return "";
   if (value >= 100_000_000) {
     const eok = Math.floor(value / 100_000_000);

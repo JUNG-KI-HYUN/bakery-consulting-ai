@@ -30,4 +30,5 @@ test("억/만원 보조 표시는 단순하고 결정적이다", () => {
 test("협의는 0원으로 표시하지 않고 무권리는 의미를 유지한다", () => {
   assert.equal(formatKoreanMoney(null, SEMANTIC_STATUS.NEGOTIABLE), "협의");
   assert.equal(formatKoreanMoney(0, SEMANTIC_STATUS.NO_PREMIUM), "0원 · 무권리");
+  assert.equal(formatKoreanMoney(0, SEMANTIC_STATUS.NONE), "0원 · 없음");
 });

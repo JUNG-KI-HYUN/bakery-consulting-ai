@@ -55,7 +55,8 @@ details > div { margin-top: 10px; }
 .queue-value strong { display: block; margin-top: 2px; font-size: 11px; line-height: 1.35; }
 .queue-warning { margin: 7px 0 0; border-left: 3px solid #c8892d; padding-left: 7px; color: #744b0c; font-size: 10px; line-height: 1.45; }
 .duplicate-panel { margin-top: 8px; border-radius: 7px; background: #fff0d6; padding: 8px; font-size: 10px; }
-.queue-actions, .duplicate-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.queue-actions, .duplicate-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 10px; }
 .duplicate-actions { grid-template-columns: 1fr 1fr; }
 .queue-actions button, .duplicate-actions button { padding: 7px 5px; font-size: 11px; }
+.repository-state { margin-top: 8px; color: #6c675e; font-size: 10px; font-weight: 700; }
 .notice { margin: 14px 0 0; color: #756f65; font-size: 10px; text-align: center; }

@@ -45,6 +45,31 @@ test("5-6. 관리비 금액과 협의를 구분한다", () => {
   assert.equal(negotiable.semanticStatus, SEMANTIC_STATUS.NEGOTIABLE);
 });
 
+test("관리비 명시적 0·없음, 미확인, 실제 금액의 의미를 분리한다", () => {
+  for (const text of ["관리비 0원", "0원", "관리비 없음", "없음"]) {
+    const parsed = parseKoreanMoney(text, { semantic: "management" });
+    assert.equal(parsed.amount, 0);
+    assert.equal(parsed.semanticStatus, SEMANTIC_STATUS.NONE);
+    assert.equal(parsed.status, FIELD_STATUS.AUTO_CONFIRMED);
+    assert.deepEqual(parsed.issues, []);
+  }
+
+  const missing = collect("주소: 서울특별시 강남구 sample로 1");
+  assert.equal(missing.fields.managementFee.value, null);
+  assert.equal(missing.fields.managementFee.semanticStatus, SEMANTIC_STATUS.UNKNOWN);
+  assert.equal(missing.fields.managementFee.status, FIELD_STATUS.MISSING);
+
+  const none = collect("월관리비\n없음");
+  assert.equal(none.fields.managementFee.value, 0);
+  assert.equal(none.fields.managementFee.semanticStatus, SEMANTIC_STATUS.NONE);
+  assert.equal(none.fields.managementFee.status, FIELD_STATUS.AUTO_CONFIRMED);
+
+  const amount = collect("월관리비\n10만원");
+  assert.equal(amount.fields.managementFee.value, 100_000);
+  assert.equal(amount.fields.managementFee.semanticStatus, SEMANTIC_STATUS.KNOWN);
+  assert.equal(amount.fields.managementFee.status, FIELD_STATUS.AUTO_CONFIRMED);
+});
+
 test("7-9. 권리금 금액·협의·무권리를 서로 다른 의미로 보존한다", () => {
   const known = parseKoreanMoney("권리금 3,000만원", { semantic: "premium" });
   const negotiable = parseKoreanMoney("권리금 협의", { semantic: "premium" });
@@ -296,6 +321,7 @@ test("세 번째 네이버 fixture는 보증금 교차검증으로 header 월세
   assert.equal(record.rentRaw, "100");
   assert.equal(record.rentAmount, 1_000_000);
   assert.equal(record.fieldStatus.rent, FIELD_STATUS.AUTO_CONFIRMED);
+  assert.equal(result.fields.rent.issues.some((issue) => /금액 단위/.test(issue)), false);
   assert.equal(record.managementFeeAmount, 100_000);
   assert.equal(record.fieldStatus.managementFee, FIELD_STATUS.AUTO_CONFIRMED);
   assert.equal(record.contractAreaM2, 101);

@@ -258,6 +258,7 @@ export function fromCollectorExport(collection, options = {}) {
       depositAmount: legacy.depositAmount,
       rentAmount: legacy.rentAmount,
       managementFeeAmount: legacy.managementFeeAmount,
+      managementFeeStatus: legacy.managementFeeStatus,
       premiumAmount: legacy.premiumAmount,
       premiumStatus: legacy.premiumStatus,
       vatStatus: legacy.vatStatus,

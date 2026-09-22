@@ -81,7 +81,10 @@ export function parseKoreanMoney(raw, options = {}) {
   if (semantic === "premium" && /무\s*권리|권리금\s*(?:없음|無)/.test(text)) {
     return { amount: 0, status: FIELD_STATUS.AUTO_CONFIRMED, semanticStatus: SEMANTIC_STATUS.NO_PREMIUM, issues: [] };
   }
-  if (semantic === "management" && /관리비\s*(?:없음|無)/.test(text)) {
+  if (semantic === "management" && /^(?:월?관리비\s*[:：]?\s*)?(?:없음|無)$/.test(text)) {
+    return { amount: 0, status: FIELD_STATUS.AUTO_CONFIRMED, semanticStatus: SEMANTIC_STATUS.NONE, issues: [] };
+  }
+  if (semantic === "management" && /^(?:월?관리비\s*[:：]?\s*)?0\s*(?:원|만(?:원)?|천(?:만)?원?)?$/.test(text)) {
     return { amount: 0, status: FIELD_STATUS.AUTO_CONFIRMED, semanticStatus: SEMANTIC_STATUS.NONE, issues: [] };
   }
   if (/-\s*\d/.test(text)) {
@@ -205,7 +208,7 @@ function matchLeaseMoneyPairs(text) {
 }
 
 function buildMoneyCandidate(match, semantic) {
-  if (!match) return candidate();
+  if (!match) return { ...candidate(), semanticStatus: SEMANTIC_STATUS.UNKNOWN };
   const parsed = parseKoreanMoney(match.raw, { semantic });
   return { ...candidate(match.raw, parsed.amount, parsed.status, match.evidenceText, parsed.issues), semanticStatus: parsed.semanticStatus };
 }

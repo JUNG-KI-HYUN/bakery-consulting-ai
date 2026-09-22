@@ -150,6 +150,18 @@ test("Collector export를 온라인 매물 Research Record로 변환하며 legac
   assert.deepEqual(record.history, []);
 });
 
+test("Research Record는 관리비 0원의 NONE 의미를 금액과 함께 보존한다", () => {
+  const collection = collectLeaseTerms({
+    text: "소재지 서울특별시 강남구 테헤란로 1\n월관리비\n0원",
+    sourceUrl: "https://example.test/listing/management-none",
+    pageTitle: "sample fixture",
+    collectedAt: "2026-09-20T00:00:00.000Z",
+  });
+  const record = fromCollectorExport(collection, { asOf: "2026-09-22T00:00:00.000Z" });
+  assert.equal(record.lease.managementFeeAmount, 0);
+  assert.equal(record.lease.managementFeeStatus, SEMANTIC_STATUS.NONE);
+});
+
 test("기존 세 네이버 fixture의 핵심 Collector 결과를 V1.2 adapter에서도 유지한다", () => {
   const firstText = fs.readFileSync(new URL("./fixtures/naver-pay-real-estate-visible-text.txt", import.meta.url), "utf8");
   const fixtures = [

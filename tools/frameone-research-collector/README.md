@@ -1,6 +1,6 @@
-# FRAMEONE Research Collector V1.2
+# FRAMEONE Research Collector V1.3.1
 
-공개 상가 매물 페이지에서 현재 보이는 텍스트만 읽어 임대조건 후보를 만들고, 사람이 Review Queue에서 검수한 뒤 JSON으로 내보내는 Chrome Manifest V3 확장프로그램입니다.
+공개 상가 매물 페이지에서 현재 보이는 텍스트만 읽어 임대조건 후보를 만들고, 로컬 조사함에 보존한 뒤 사람이 확정한 자료만 FRAMEONE 서버로 보내는 Chrome Manifest V3 확장프로그램입니다.
 
 ## Chrome에 로드
 
@@ -10,11 +10,18 @@
 4. 이 `tools/frameone-research-collector` 디렉터리를 선택합니다.
 5. 공개 상가 매물 페이지에서 확장프로그램을 열고 `현재 페이지 분석`을 누릅니다.
 
+코드를 갱신한 경우 `chrome://extensions`에서 이 확장프로그램의 새로고침 버튼을 눌러야 manifest의 `storage` 권한과 V1.3.1 스크립트가 적용됩니다.
+
 ## 안전 경계
 
 - 페이지 전체 HTML, 스크린샷, 쿠키, 비공개 API 응답은 저장하지 않습니다.
-- 자동추출 결과를 FRAMEONE DB로 보내지 않습니다.
-- Review Queue의 확정·수정·제외 상태는 팝업 메모리와 내보낸 V1.2 JSON에만 반영됩니다.
+- 자동추출 결과는 자동 업로드하지 않습니다.
+- Review Queue와 검수·중복·FRAMEONE 저장 상태는 `chrome.storage.local`의 로컬 조사함에 보존됩니다.
+- Storage API를 사용할 수 없으면 raw JavaScript 오류 대신 `STORAGE_API_UNAVAILABLE`과 로컬 조사함 저장 실패 상태를 표시합니다.
+- 로컬 조사함은 중앙 Repository가 아니며 Chrome 프로필에 종속됩니다.
+- `CONFIRMED` 자료에서 사용자가 `FRAMEONE에 저장`을 눌러야만 서버 API로 전송됩니다.
+- `COLLECTED`, `REVIEW_REQUIRED`, `EXCLUDED` 자료는 클라이언트와 서버 양쪽에서 전송을 차단합니다.
+- 현재 개발 서버 주소는 `http://localhost:3000`이며 확장 권한도 localhost로 제한합니다.
 - 향후 임대시장 분석에는 `CONFIRMED` record만 사용할 수 있도록 순수 gate를 제공합니다.
 - 네이버 자동수집 자료의 출처 유형은 `ONLINE_LISTING`이며 실제 계약가격으로 취급하지 않습니다.
 - 중복 엔진은 `NO_MATCH` / `POSSIBLE_DUPLICATE` / `LIKELY_DUPLICATE` 후보와 근거만 반환하고 자동 병합하지 않습니다.
@@ -23,6 +30,7 @@
 - 가격·조건 변경과 다중 출처 conflict는 이전 snapshot을 덮어쓰지 않는 history 입력용 결과로 반환합니다.
 - Raw 값, 정규화 후보, 근거 excerpt, 필드 상태를 분리합니다.
 - 단위 없는 금액은 만원 단위 후보로 환산하더라도 `REVIEW_REQUIRED`를 유지합니다.
+- 명시적인 관리비 `0원`·`없음`은 `NONE`, 누락은 `UNKNOWN`, 양수 금액은 `KNOWN`으로 구분합니다.
 - `협의`는 0원이 아니며, `무권리`와 구분됩니다.
 - `월세 A/B` 거래표시는 보증금/월세 순서로 읽고, 더 명시적인 `보증금 A / 월세 B` 근거를 우선합니다.
 - 중개보수 문맥의 VAT와 중개사무소 주소는 임대조건·매물 주소로 사용하지 않습니다.
@@ -38,4 +46,13 @@
 
 - `기존 JSON`은 V1.1.2 export contract를 그대로 사용합니다.
 - `V1.2 Research Record JSON`은 source, property, lease, optional, quality, evidence, history 구조를 별도로 내보냅니다.
-- 두 내보내기 모두 로컬 파일 다운로드만 수행하며 DB 저장은 하지 않습니다.
+- 두 JSON 내보내기 버튼은 로컬 파일 다운로드만 수행합니다. 서버 저장은 별도 `FRAMEONE에 저장` 동작으로만 실행됩니다.
+
+## 로컬 조사함과 FRAMEONE 저장
+
+1. 매물을 분석하고 필요한 필드를 검수합니다.
+2. Review Queue에서 `확정`을 누릅니다.
+3. `FRAMEONE에 저장`을 누릅니다.
+4. 성공한 record는 `FRAMEONE 저장 완료`와 서버 record ID를 표시합니다.
+
+서버는 같은 `recordId`와 같은 내용의 재전송을 새 record로 만들지 않습니다. 같은 `recordId`에 다른 내용이 오면 덮어쓰지 않고 conflict로 거부합니다.
