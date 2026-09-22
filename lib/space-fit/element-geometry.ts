@@ -86,10 +86,30 @@ export function roomElementToPlacement(element: RoomElement, room: SpaceFitLayou
 
 export function validateLayoutGeometry(layout: SpaceFitLayout): readonly GeometryWarning[] {
   const placements = layout.elements.map((element) => roomElementToPlacement(element, layout.room));
-  return validateElementPlacement(
-    { widthMm: layout.room.widthMm, depthMm: layout.room.depthMm },
-    placements,
-  );
+  const warnings: GeometryWarning[] = [
+    ...validateElementPlacement(
+      { widthMm: layout.room.widthMm, depthMm: layout.room.depthMm },
+      placements,
+    ),
+  ];
+
+  // Entrance: offset + width가 wall 길이를 넘으면 OUT_OF_BOUNDS (Risk 아님).
+  for (const element of layout.elements) {
+    if (element.type !== "ENTRANCE") continue;
+    const wallLengthMm =
+      element.wall === "TOP" || element.wall === "BOTTOM"
+        ? layout.room.widthMm
+        : layout.room.depthMm;
+    if (element.offsetMm + element.widthMm > wallLengthMm) {
+      warnings.push({
+        code: "OUT_OF_BOUNDS",
+        message: "Entrance offset+width exceeds wall length",
+        elementId: element.elementId,
+      });
+    }
+  }
+
+  return Object.freeze(warnings);
 }
 
 export function formatMeasurementDisplay(

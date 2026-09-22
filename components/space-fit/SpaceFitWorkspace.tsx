@@ -1,12 +1,32 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatMeasurementMmDisplay } from "@/lib/field/space-equipment";
 import { buildSpaceFitContextNotes } from "@/lib/space-fit/context-notes";
+import {
+  canPersistLayout,
+  elementWarningCodes,
+  patchElement,
+  removeElement,
+  replaceElement,
+  saveStatusLabel,
+  summarizeGeometryWarnings,
+  type SpaceFitSaveUiStatus,
+} from "@/lib/space-fit/editor-state";
 import { validateLayoutGeometry } from "@/lib/space-fit/element-geometry";
 import { snapToGridMm } from "@/lib/space-fit/geometry";
+import {
+  canRedo as historyCanRedo,
+  canUndo as historyCanUndo,
+  createHistory,
+  pushHistory,
+  redoHistory,
+  undoHistory,
+  withLayoutElements,
+  type SpaceFitHistoryState,
+} from "@/lib/space-fit/history";
 import {
   createEntranceElement,
   createFacilityPointElement,
@@ -27,8 +47,7 @@ import {
   GeometryWarningsPanel,
   SpaceFitSvgWorkspace,
 } from "@/components/space-fit/SpaceFitSvgWorkspace";
-
-type SaveState = "idle" | "saving" | "saved" | "conflict" | "error";
+import { SPACE_FIT_DEFAULT_ZOOM_INDEX } from "@/lib/space-fit/viewport";
 
 const ELEMENT_LABELS: Record<RoomElementType, string> = {
   ENTRANCE: "출입구",
@@ -50,11 +69,10 @@ function parseIntOrNull(raw: string): number | null {
 
 export function SpaceFitWorkspace({
   initialLayout,
-  initialWarnings,
   fieldContext,
 }: {
   initialLayout: SpaceFitLayout;
-  initialWarnings: readonly GeometryWarning[];
+  initialWarnings?: readonly GeometryWarning[];
   fieldContext: {
     surveySequence: number | null;
     measurementSet: MeasurementSet | null;
@@ -64,10 +82,28 @@ export function SpaceFitWorkspace({
 }) {
   const router = useRouter();
   const [layout, setLayout] = useState(initialLayout);
-  const [warnings, setWarnings] = useState(initialWarnings);
+  const [history, setHistory] = useState<SpaceFitHistoryState>(() =>
+    createHistory(initialLayout.elements),
+  );
+  const [dragPreview, setDragPreview] = useState<RoomElement | null>(null);
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null);
-  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [saveStatus, setSaveStatus] = useState<SpaceFitSaveUiStatus>("saved");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [viewportUi, setViewportUi] = useState({
+    zoomIndex: SPACE_FIT_DEFAULT_ZOOM_INDEX,
+    panXPx: 0,
+    panYPx: 0,
+  });
+
+  const displayLayout = useMemo(() => {
+    if (!dragPreview) return layout;
+    return replaceElement(layout, dragPreview);
+  }, [layout, dragPreview]);
+
+  const warnings = useMemo(
+    () => validateLayoutGeometry(displayLayout),
+    [displayLayout],
+  );
 
   const selected = useMemo(
     () => layout.elements.find((item) => item.elementId === selectedElementId) ?? null,
@@ -83,13 +119,50 @@ export function SpaceFitWorkspace({
     [fieldContext.productionSalesSpace, fieldContext.deliveryPath],
   );
 
+  const warningSummary = useMemo(() => summarizeGeometryWarnings(warnings), [warnings]);
   const measurement = fieldContext.measurementSet;
   const widthDisplay = formatMeasurementMmDisplay(measurement?.values.roomWidthMm);
   const depthDisplay = formatMeasurementMmDisplay(measurement?.values.roomDepthMm);
   const ceilingDisplay = formatMeasurementMmDisplay(measurement?.values.ceilingHeightMm);
+  const dirty = saveStatus === "dirty" || saveStatus === "save_failed" || saveStatus === "conflict";
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [dirty]);
+
+  function commitElements(nextElements: readonly RoomElement[], options?: { recordHistory?: boolean }) {
+    const nextLayout = withLayoutElements(layout, nextElements);
+    setLayout(nextLayout);
+    if (options?.recordHistory !== false) {
+      setHistory((prev) => pushHistory(prev, nextElements));
+    }
+    setSaveStatus("dirty");
+    setErrorMessage(null);
+  }
+
+  function applyDomainLayout(nextLayout: SpaceFitLayout, recordHistory: boolean) {
+    setLayout(nextLayout);
+    if (recordHistory) {
+      setHistory((prev) => pushHistory(prev, nextLayout.elements));
+    } else {
+      setHistory(createHistory(nextLayout.elements));
+    }
+  }
 
   const save = useCallback(async () => {
-    setSaveState("saving");
+    const currentWarnings = validateLayoutGeometry(layout);
+    if (!canPersistLayout(currentWarnings)) {
+      setSaveStatus("save_failed");
+      setErrorMessage("잘못된 요소가 있어 저장할 수 없습니다. 치수를 확인해 주세요.");
+      return;
+    }
+    setSaveStatus("saving");
     setErrorMessage(null);
     const response = await fetch(`/api/space-fit/${layout.layoutId}`, {
       method: "PATCH",
@@ -106,18 +179,19 @@ export function SpaceFitWorkspace({
       code?: string;
     };
     if (response.status === 409) {
-      setSaveState("conflict");
-      setErrorMessage(body.message ?? "VERSION_CONFLICT");
+      // 로컬 변경을 서버 값으로 조용히 덮어쓰지 않는다.
+      setSaveStatus("conflict");
+      setErrorMessage(saveStatusLabel("conflict"));
       return;
     }
     if (!response.ok || !body.layout) {
-      setSaveState("error");
-      setErrorMessage(body.message ?? "저장 실패");
+      setSaveStatus("save_failed");
+      setErrorMessage(body.message ?? "저장에 실패했습니다.");
       return;
     }
     setLayout(body.layout);
-    setWarnings(body.geometryWarnings ?? []);
-    setSaveState("saved");
+    setHistory(createHistory(body.layout.elements));
+    setSaveStatus("save_ok");
     router.refresh();
   }, [layout, router]);
 
@@ -125,8 +199,6 @@ export function SpaceFitWorkspace({
     let next: RoomElement;
     switch (type) {
       case "PILLAR":
-        // 가짜 기본 크기(400x400)를 Domain에 자동 저장하지 않음 — 직원이 mm를 입력해야 함.
-        // 추가 직후 선택 패널에서 크기 입력을 강제하기 위해 최소 유효 치수 100mm만 둔다.
         next = createPillarElement({
           xMm: snapToGridMm(0),
           yMm: snapToGridMm(0),
@@ -162,56 +234,64 @@ export function SpaceFitWorkspace({
         });
         break;
     }
-    setLayout((prev) => {
-      const updated = Object.freeze({
-        ...prev,
-        elements: Object.freeze([...prev.elements, next]),
-      });
-      setWarnings(validateLayoutGeometry(updated));
-      return updated;
-    });
+    commitElements([...layout.elements, next]);
     setSelectedElementId(next.elementId);
-    setSaveState("idle");
   }
 
   function updateSelected(patch: Partial<RoomElement>) {
     if (!selected) return;
-    setLayout((prev) => {
-      const elements = prev.elements.map((item) => {
-        if (item.elementId !== selected.elementId) return item;
-        return Object.freeze({ ...item, ...patch }) as RoomElement;
-      });
-      const updated = Object.freeze({ ...prev, elements: Object.freeze(elements) });
-      setWarnings(validateLayoutGeometry(updated));
-      return updated;
-    });
-    setSaveState("idle");
+    const nextLayout = patchElement(layout, selected.elementId, patch);
+    applyDomainLayout(nextLayout, true);
+    setSaveStatus("dirty");
+    setErrorMessage(null);
   }
 
   function deleteSelected() {
     if (!selected) return;
-    setLayout((prev) => {
-      const updated = Object.freeze({
-        ...prev,
-        elements: Object.freeze(
-          prev.elements.filter((item) => item.elementId !== selected.elementId),
-        ),
-      });
-      setWarnings(validateLayoutGeometry(updated));
-      return updated;
-    });
+    const nextLayout = removeElement(layout, selected.elementId);
+    applyDomainLayout(nextLayout, true);
     setSelectedElementId(null);
-    setSaveState("idle");
+    setSaveStatus("dirty");
+    setErrorMessage(null);
   }
 
-  const saveLabel =
-    saveState === "saving"
-      ? "저장 중…"
-      : saveState === "saved"
-        ? "저장됨"
-        : saveState === "conflict"
-          ? "버전 충돌"
-          : "저장";
+  function onElementMoved(element: RoomElement) {
+    setDragPreview(null);
+    const prev = layout.elements.find((item) => item.elementId === element.elementId);
+    if (
+      prev &&
+      "xMm" in prev &&
+      "xMm" in element &&
+      prev.xMm === element.xMm &&
+      prev.yMm === element.yMm
+    ) {
+      return;
+    }
+    const nextLayout = replaceElement(layout, element);
+    applyDomainLayout(nextLayout, true);
+    setSaveStatus("dirty");
+    setErrorMessage(null);
+  }
+
+  function undo() {
+    const next = undoHistory(history);
+    if (!next) return;
+    setHistory(next);
+    setLayout(withLayoutElements(layout, next.present));
+    setSaveStatus("dirty");
+  }
+
+  function redo() {
+    const next = redoHistory(history);
+    if (!next) return;
+    setHistory(next);
+    setLayout(withLayoutElements(layout, next.present));
+    setSaveStatus("dirty");
+  }
+
+  const selectedWarn = selected
+    ? elementWarningCodes(warnings, selected.elementId)
+    : [];
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#F6F8FB] text-[#0B1220]">
@@ -228,18 +308,33 @@ export function SpaceFitWorkspace({
                 : "확인되지 않음"}
             </h1>
             <p className="mt-0.5 truncate text-xs text-slate-400">
-              {layout.layoutId} · v{layout.layoutVersion} ·{" "}
-              {saveState === "saved" ? "저장됨" : saveState === "conflict" ? "충돌" : "편집 중"}
+              {saveStatusLabel(saveStatus === "save_ok" ? "saved" : saveStatus)}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => void save()}
-              disabled={saveState === "saving"}
-              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-500 bg-white px-3 text-sm font-semibold text-[#0B1220]"
+              disabled={!historyCanUndo(history)}
+              onClick={undo}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-500 bg-slate-800 px-3 text-sm font-semibold text-white disabled:opacity-40"
             >
-              {saveLabel}
+              실행 취소
+            </button>
+            <button
+              type="button"
+              disabled={!historyCanRedo(history)}
+              onClick={redo}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-500 bg-slate-800 px-3 text-sm font-semibold text-white disabled:opacity-40"
+            >
+              다시 실행
+            </button>
+            <button
+              type="button"
+              onClick={() => void save()}
+              disabled={saveStatus === "saving" || !canPersistLayout(warnings)}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-500 bg-white px-3 text-sm font-semibold text-[#0B1220] disabled:opacity-40"
+            >
+              {saveStatus === "saving" ? "저장 중…" : "저장"}
             </button>
             {layout.consultationId ? (
               <Link
@@ -254,7 +349,7 @@ export function SpaceFitWorkspace({
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <aside className="shrink-0 space-y-4 overflow-auto border-b border-slate-200 bg-white p-4 lg:w-80 lg:border-r lg:border-b-0">
+        <aside className="max-h-[40vh] shrink-0 space-y-4 overflow-auto border-b border-slate-200 bg-white p-4 lg:max-h-none lg:w-80 lg:border-r lg:border-b-0">
           <section>
             <h2 className="text-sm font-bold">공간 실측정보</h2>
             <dl className="mt-2 space-y-1 text-sm">
@@ -276,13 +371,6 @@ export function SpaceFitWorkspace({
                   {ceilingDisplay.kind === "known" ? ceilingDisplay.label : "확인되지 않음"}
                 </dd>
               </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-slate-600">Room snapshot</dt>
-                <dd className="font-semibold">
-                  {layout.room.widthMm.toLocaleString("ko-KR")} ×{" "}
-                  {layout.room.depthMm.toLocaleString("ko-KR")} mm
-                </dd>
-              </div>
             </dl>
             <p className="mt-2 text-xs text-slate-500">{contextNotes.manufacturingLabel}</p>
             <p className="text-xs text-slate-500">{contextNotes.deliveryLabel}</p>
@@ -302,7 +390,7 @@ export function SpaceFitWorkspace({
                 </button>
               ))}
             </div>
-            <p className="mt-2 text-xs text-slate-500">좌표는 100mm grid에 맞춰집니다.</p>
+            <p className="mt-2 text-xs text-slate-500">위치는 100mm grid. 출입구는 벽·오프셋으로만 편집.</p>
           </section>
 
           <section>
@@ -310,34 +398,50 @@ export function SpaceFitWorkspace({
             {!selected ? (
               <p className="mt-2 text-sm text-slate-600">요소를 선택하세요.</p>
             ) : (
-              <ElementEditor
-                element={selected}
-                onChange={updateSelected}
-                onDelete={deleteSelected}
-              />
+              <>
+                {selectedWarn.length > 0 ? (
+                  <p className="mt-2 text-xs font-semibold text-amber-800">
+                    ! Geometry: {selectedWarn.join(", ")}
+                  </p>
+                ) : null}
+                <ElementEditor
+                  element={selected}
+                  onChange={updateSelected}
+                  onDelete={deleteSelected}
+                />
+              </>
             )}
           </section>
         </aside>
 
-        <main className="min-h-0 flex-1 p-3">
+        <main className="min-h-0 min-w-0 flex-1 p-2 sm:p-3">
           <SpaceFitSvgWorkspace
-            layout={layout}
+            layout={displayLayout}
             selectedElementId={selectedElementId}
+            warnings={warnings}
             onSelectElement={setSelectedElementId}
+            onElementMoved={onElementMoved}
+            onDragPreview={setDragPreview}
+            viewportControls={viewportUi}
+            onViewportControlsChange={setViewportUi}
           />
         </main>
 
         <aside className="shrink-0 overflow-auto border-t border-slate-200 bg-white p-4 lg:w-72 lg:border-t-0 lg:border-l">
-          <h2 className="text-sm font-bold">Geometry warnings</h2>
+          <h2 className="text-sm font-bold">Geometry 요약</h2>
+          <ul className="mt-2 space-y-1 text-sm">
+            <li>영역이탈 {warningSummary.outOfBounds}</li>
+            <li>겹침 {warningSummary.overlap}</li>
+            <li>잘못된 요소 {warningSummary.invalid}</li>
+          </ul>
+          <p className="mt-2 text-xs text-slate-500">숫자는 Risk score가 아닙니다.</p>
+          <h2 className="mt-4 text-sm font-bold">Geometry warnings</h2>
           <div className="mt-2">
             <GeometryWarningsPanel warnings={warnings} />
           </div>
           {errorMessage ? (
             <p className="mt-3 text-sm font-semibold text-red-700">{errorMessage}</p>
           ) : null}
-          <p className="mt-3 text-xs text-slate-500">
-            Geometry 경고는 Risk·Verdict가 아닙니다. 저장 후 서버에서 다시 검증됩니다.
-          </p>
         </aside>
       </div>
     </div>
