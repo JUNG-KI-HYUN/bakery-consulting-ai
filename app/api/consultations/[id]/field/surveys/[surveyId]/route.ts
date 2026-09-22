@@ -4,7 +4,11 @@ import { parseFacilityObservations } from "@/lib/field/facility";
 import { getFieldSurveyService } from "@/lib/field/field-survey-service.server";
 import { isSiteSurveyId } from "@/lib/field/identifiers";
 import { parseMeasurementSet } from "@/lib/field/measurement";
-import { isPhase4InputStage } from "@/lib/field/stage-completion";
+import {
+  parseDeliveryPathObservation,
+  parseProductionSalesSpaceObservation,
+} from "@/lib/field/space-equipment";
+import { isFieldInputStage } from "@/lib/field/stage-completion";
 import { isSurveyStageId } from "@/lib/field/stages";
 import type { SurveyStageId } from "@/lib/field/stages";
 import type { SurveyStageState } from "@/lib/field/types";
@@ -72,6 +76,34 @@ export async function PATCH(
     facility = parsed;
   }
 
+  let productionSalesSpace: ReturnType<typeof parseProductionSalesSpaceObservation> extends infer T
+    ? Exclude<T, null> | undefined
+    : never;
+  if (body.productionSalesSpace !== undefined) {
+    const parsed = parseProductionSalesSpaceObservation(body.productionSalesSpace);
+    if (!parsed) {
+      return NextResponse.json(
+        { message: "productionSalesSpace invalid", code: "INVALID_DATA" },
+        { status: 400 },
+      );
+    }
+    productionSalesSpace = parsed;
+  }
+
+  let deliveryPath: ReturnType<typeof parseDeliveryPathObservation> extends infer T
+    ? Exclude<T, null> | undefined
+    : never;
+  if (body.deliveryPath !== undefined) {
+    const parsed = parseDeliveryPathObservation(body.deliveryPath);
+    if (!parsed) {
+      return NextResponse.json(
+        { message: "deliveryPath invalid", code: "INVALID_DATA" },
+        { status: 400 },
+      );
+    }
+    deliveryPath = parsed;
+  }
+
   let completeStageIds: SurveyStageId[] | undefined;
   if (body.completeStageIds !== undefined) {
     if (!Array.isArray(body.completeStageIds)) {
@@ -82,7 +114,7 @@ export async function PATCH(
     }
     completeStageIds = [];
     for (const item of body.completeStageIds) {
-      if (typeof item !== "string" || !isSurveyStageId(item) || !isPhase4InputStage(item)) {
+      if (typeof item !== "string" || !isSurveyStageId(item) || !isFieldInputStage(item)) {
         return NextResponse.json(
           { message: "completeStageIds invalid", code: "INVALID_DATA" },
           { status: 400 },
@@ -102,7 +134,7 @@ export async function PATCH(
     }
     touchStageIds = [];
     for (const item of body.touchStageIds) {
-      if (typeof item !== "string" || !isSurveyStageId(item) || !isPhase4InputStage(item)) {
+      if (typeof item !== "string" || !isSurveyStageId(item) || !isFieldInputStage(item)) {
         return NextResponse.json(
           { message: "touchStageIds invalid", code: "INVALID_DATA" },
           { status: 400 },
@@ -158,6 +190,8 @@ export async function PATCH(
     expectedDraftVersion: body.expectedDraftVersion,
     measurementSet,
     facility,
+    productionSalesSpace,
+    deliveryPath,
     stageStates: stageStates as never,
     completeStageIds,
     touchStageIds,
@@ -182,6 +216,8 @@ export async function PATCH(
     stageStates: updated.value.stageStates,
     measurementSet: updated.value.measurementSet ?? null,
     facility: updated.value.facility ?? null,
+    productionSalesSpace: updated.value.productionSalesSpace ?? null,
+    deliveryPath: updated.value.deliveryPath ?? null,
     updatedAt: updated.value.updatedAt,
   });
 }

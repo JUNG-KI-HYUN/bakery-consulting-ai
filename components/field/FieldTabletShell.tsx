@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { MeasurementFacilityForm } from "@/components/field/MeasurementFacilityForm";
+import { SpaceEquipmentForm } from "@/components/field/SpaceEquipmentForm";
 import type { FieldTabletView } from "@/lib/field/tablet-view";
 import type { TabletGroupId } from "@/lib/field/stages";
 
@@ -218,6 +219,13 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
               key={currentGroup.groupId}
               consultationId={view.consultationId}
               groupId={currentGroup.groupId}
+              survey={view.survey}
+              onDirtyChange={setFormDirty}
+            />
+          ) : currentGroup.groupId === "SPACE_EQUIPMENT" ? (
+            <SpaceEquipmentForm
+              key={currentGroup.groupId}
+              consultationId={view.consultationId}
               survey={view.survey}
               onDirtyChange={setFormDirty}
             />

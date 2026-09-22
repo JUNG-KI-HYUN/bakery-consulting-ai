@@ -2,7 +2,15 @@ import type { FacilityObservations } from "./facility";
 import { parseFacilityObservations } from "./facility";
 import type { MeasurementSet } from "./measurement";
 import { parseMeasurementSet } from "./measurement";
-import { canCompleteFieldStage, isPhase4InputStage } from "./stage-completion";
+import type {
+  DeliveryPathObservation,
+  ProductionSalesSpaceObservation,
+} from "./space-equipment";
+import {
+  parseDeliveryPathObservation,
+  parseProductionSalesSpaceObservation,
+} from "./space-equipment";
+import { canCompleteFieldStage, isFieldInputStage } from "./stage-completion";
 import type { SurveyStageId } from "./stages";
 import { SURVEY_STAGE_IDS, isSurveyStageId } from "./stages";
 import {
@@ -16,10 +24,10 @@ export interface FieldSurveyDraftPatchInput {
   readonly expectedDraftVersion: number;
   readonly measurementSet?: MeasurementSet;
   readonly facility?: FacilityObservations;
+  readonly productionSalesSpace?: ProductionSalesSpaceObservation;
+  readonly deliveryPath?: DeliveryPathObservation;
   readonly stageStates?: Partial<Record<SurveyStageId, SurveyStageState>>;
-  /** 저장만 / 저장하고 단계 완료 시 완료할 stage 목록 */
   readonly completeStageIds?: readonly SurveyStageId[];
-  /** 입력을 시작했음을 표시할 stage 목록 (IN_PROGRESS) */
   readonly touchStageIds?: readonly SurveyStageId[];
 }
 
@@ -71,7 +79,6 @@ export function applyFieldSurveyDraftPatch(
         message: "measurementSet.candidateStoreId mismatch",
       };
     }
-    // measurementId는 첫 생성 후 유지한다.
     if (current.measurementSet && parsed.measurementId !== current.measurementSet.measurementId) {
       return {
         ok: false,
@@ -89,6 +96,24 @@ export function applyFieldSurveyDraftPatch(
       return { ok: false, code: "INVALID_DATA", message: "facility is invalid" };
     }
     facility = parsed;
+  }
+
+  let productionSalesSpace = current.productionSalesSpace;
+  if (input.productionSalesSpace !== undefined) {
+    const parsed = parseProductionSalesSpaceObservation(input.productionSalesSpace);
+    if (!parsed) {
+      return { ok: false, code: "INVALID_DATA", message: "productionSalesSpace is invalid" };
+    }
+    productionSalesSpace = parsed;
+  }
+
+  let deliveryPath = current.deliveryPath;
+  if (input.deliveryPath !== undefined) {
+    const parsed = parseDeliveryPathObservation(input.deliveryPath);
+    if (!parsed) {
+      return { ok: false, code: "INVALID_DATA", message: "deliveryPath is invalid" };
+    }
+    deliveryPath = parsed;
   }
 
   const nextStages: Record<SurveyStageId, SurveyStageState> = { ...current.stageStates };
@@ -115,14 +140,19 @@ export function applyFieldSurveyDraftPatch(
 
   if (input.completeStageIds) {
     for (const stageId of input.completeStageIds) {
-      if (!isSurveyStageId(stageId) || !isPhase4InputStage(stageId)) {
+      if (!isSurveyStageId(stageId) || !isFieldInputStage(stageId)) {
         return {
           ok: false,
           code: "INVALID_DATA",
           message: "completeStageIds contains unsupported stage",
         };
       }
-      const check = canCompleteFieldStage(stageId, { measurementSet, facility });
+      const check = canCompleteFieldStage(stageId, {
+        measurementSet,
+        facility,
+        productionSalesSpace,
+        deliveryPath,
+      });
       if (!check.ok) {
         return {
           ok: false,
@@ -134,7 +164,6 @@ export function applyFieldSurveyDraftPatch(
     }
   }
 
-  // 정의된 모든 stage가 있어야 한다.
   for (const stageId of SURVEY_STAGE_IDS) {
     if (!nextStages[stageId]) {
       return { ok: false, code: "INVALID_DATA", message: "stageStates incomplete" };
@@ -144,13 +173,14 @@ export function applyFieldSurveyDraftPatch(
   const hasFieldContent =
     measurementSet !== undefined ||
     (facility !== undefined && Object.keys(facility).length > 0) ||
+    productionSalesSpace !== undefined ||
+    deliveryPath !== undefined ||
     Object.values(nextStages).some((state) => state !== "NOT_STARTED");
 
   let status: SiteSurveyStatus = current.status;
   if (status === "DRAFT" && hasFieldContent) {
     status = "IN_PROGRESS";
   }
-  // Phase 4에서는 READY_FOR_REVIEW / COMPLETED로 올리지 않는다.
 
   return {
     ok: true,
@@ -158,6 +188,8 @@ export function applyFieldSurveyDraftPatch(
       ...current,
       measurementSet,
       facility,
+      productionSalesSpace,
+      deliveryPath,
       stageStates: Object.freeze(nextStages) as SurveyStageStates,
       status,
       draftVersion: current.draftVersion + 1,

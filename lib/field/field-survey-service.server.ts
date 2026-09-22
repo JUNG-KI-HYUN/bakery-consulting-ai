@@ -21,6 +21,10 @@ import {
 import { applyFieldSurveyDraftPatch, type FieldSurveyDraftPatchInput } from "./survey-draft-patch";
 import type { FacilityObservations } from "./facility";
 import type { MeasurementSet } from "./measurement";
+import type {
+  DeliveryPathObservation,
+  ProductionSalesSpaceObservation,
+} from "./space-equipment";
 
 export const DEFAULT_FIELD_SURVEY_ROOT = path.join(process.cwd(), "data", "field-surveys");
 const FIELD_STAFF_SURVEYOR = "field-staff";
@@ -56,6 +60,8 @@ export interface FieldSurveyService extends SiteSurveyDraftStore {
     status?: SiteSurveyStatus;
     measurementSet?: MeasurementSet;
     facility?: FacilityObservations;
+    productionSalesSpace?: ProductionSalesSpaceObservation;
+    deliveryPath?: DeliveryPathObservation;
     completeStageIds?: FieldSurveyDraftPatchInput["completeStageIds"];
     touchStageIds?: FieldSurveyDraftPatchInput["touchStageIds"];
   }): Promise<FieldStorageResult<SiteSurvey>>;
@@ -310,6 +316,8 @@ export function createFieldSurveyService(options: FieldSurveyServiceOptions = {}
     status?: SiteSurveyStatus;
     measurementSet?: MeasurementSet;
     facility?: FacilityObservations;
+    productionSalesSpace?: ProductionSalesSpaceObservation;
+    deliveryPath?: DeliveryPathObservation;
     completeStageIds?: FieldSurveyDraftPatchInput["completeStageIds"];
     touchStageIds?: FieldSurveyDraftPatchInput["touchStageIds"];
   }): Promise<FieldStorageResult<SiteSurvey>> {
@@ -317,11 +325,13 @@ export function createFieldSurveyService(options: FieldSurveyServiceOptions = {}
     if (!loaded.ok) return loaded;
 
     // Phase 3.5 호환: status만 바꾸는 경우에도 draftVersion conflict 검사를 유지한다.
-    // Phase 4는 READY_FOR_REVIEW 자동 승격을 하지 않지만, 테스트·재방문용 COMPLETED 설정은 허용한다.
+    // Phase 4/4.5는 READY_FOR_REVIEW 자동 승격을 하지 않지만, 테스트·재방문용 COMPLETED 설정은 허용한다.
     if (
       input.status === undefined &&
       input.measurementSet === undefined &&
       input.facility === undefined &&
+      input.productionSalesSpace === undefined &&
+      input.deliveryPath === undefined &&
       input.stageStates === undefined &&
       input.completeStageIds === undefined &&
       input.touchStageIds === undefined
@@ -332,6 +342,8 @@ export function createFieldSurveyService(options: FieldSurveyServiceOptions = {}
     if (
       input.measurementSet !== undefined ||
       input.facility !== undefined ||
+      input.productionSalesSpace !== undefined ||
+      input.deliveryPath !== undefined ||
       input.completeStageIds !== undefined ||
       input.touchStageIds !== undefined ||
       input.stageStates !== undefined
@@ -342,6 +354,8 @@ export function createFieldSurveyService(options: FieldSurveyServiceOptions = {}
           expectedDraftVersion: input.expectedDraftVersion,
           measurementSet: input.measurementSet,
           facility: input.facility,
+          productionSalesSpace: input.productionSalesSpace,
+          deliveryPath: input.deliveryPath,
           stageStates: input.stageStates,
           completeStageIds: input.completeStageIds,
           touchStageIds: input.touchStageIds,
@@ -407,6 +421,8 @@ export function createFieldSurveyService(options: FieldSurveyServiceOptions = {}
         stageStates: survey.stageStates,
         measurementSet: survey.measurementSet,
         facility: survey.facility,
+        productionSalesSpace: survey.productionSalesSpace,
+        deliveryPath: survey.deliveryPath,
       });
       if (!updated.ok) throw new Error(updated.code);
       return toSiteSurveyDraftRef(updated.value);

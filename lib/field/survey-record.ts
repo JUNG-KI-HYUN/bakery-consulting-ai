@@ -1,6 +1,10 @@
 import { parseFacilityObservations } from "./facility";
 import { isCandidateStoreId, isSiteSurveyId } from "./identifiers";
 import { parseMeasurementSet } from "./measurement";
+import {
+  parseDeliveryPathObservation,
+  parseProductionSalesSpaceObservation,
+} from "./space-equipment";
 import { SURVEY_STAGE_IDS, isSurveyStageId } from "./stages";
 import { storageFail, type FieldStorageResult } from "./storage-result";
 import {
@@ -119,6 +123,24 @@ export function parseSiteSurvey(value: unknown): FieldStorageResult<SiteSurvey> 
     facility = parsed;
   }
 
+  let productionSalesSpace: SiteSurvey["productionSalesSpace"];
+  if (value.productionSalesSpace !== undefined) {
+    const parsed = parseProductionSalesSpaceObservation(value.productionSalesSpace);
+    if (!parsed) {
+      return storageFail("INVALID_DATA", "SiteSurvey.productionSalesSpace is invalid");
+    }
+    productionSalesSpace = parsed;
+  }
+
+  let deliveryPath: SiteSurvey["deliveryPath"];
+  if (value.deliveryPath !== undefined) {
+    const parsed = parseDeliveryPathObservation(value.deliveryPath);
+    if (!parsed) {
+      return storageFail("INVALID_DATA", "SiteSurvey.deliveryPath is invalid");
+    }
+    deliveryPath = parsed;
+  }
+
   return {
     ok: true,
     value: Object.freeze({
@@ -137,6 +159,8 @@ export function parseSiteSurvey(value: unknown): FieldStorageResult<SiteSurvey> 
       draftVersion: value.draftVersion,
       ...(measurementSet ? { measurementSet } : {}),
       ...(facility ? { facility } : {}),
+      ...(productionSalesSpace ? { productionSalesSpace } : {}),
+      ...(deliveryPath ? { deliveryPath } : {}),
     }),
   };
 }

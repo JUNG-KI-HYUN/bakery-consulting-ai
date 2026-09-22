@@ -37,6 +37,8 @@ export interface FieldTabletSurveySummary {
   readonly draftVersion: number | null;
   readonly measurementSet: SiteSurvey["measurementSet"] | null;
   readonly facility: SiteSurvey["facility"] | null;
+  readonly productionSalesSpace: SiteSurvey["productionSalesSpace"] | null;
+  readonly deliveryPath: SiteSurvey["deliveryPath"] | null;
   readonly stageStates: SiteSurvey["stageStates"];
   readonly surveyor: string | null;
   readonly candidateStoreId: string | null;
@@ -159,6 +161,8 @@ export function buildFieldTabletView(
       draftVersion: survey?.draftVersion ?? null,
       measurementSet: survey?.measurementSet ?? null,
       facility: survey?.facility ?? null,
+      productionSalesSpace: survey?.productionSalesSpace ?? null,
+      deliveryPath: survey?.deliveryPath ?? null,
       stageStates: survey?.stageStates ?? createInitialSurveyStageStates(),
       surveyor: survey?.surveyor ?? null,
       candidateStoreId: survey?.candidateStoreId ?? null,

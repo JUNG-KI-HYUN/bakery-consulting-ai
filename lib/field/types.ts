@@ -3,6 +3,10 @@ import { SURVEY_STAGE_IDS, type SurveyStageId } from "./stages";
 
 import type { FacilityObservations } from "./facility";
 import type { MeasurementSet } from "./measurement";
+import type {
+  DeliveryPathObservation,
+  ProductionSalesSpaceObservation,
+} from "./space-equipment";
 
 /**
  * FIELD 현장조사 회차(SiteSurvey) Domain.
@@ -14,7 +18,8 @@ import type { MeasurementSet } from "./measurement";
  * - `candidateStoreId`는 필수다. 레거시 호환은 `candidate-store-ref.ts`에서만 다룬다.
  * - 재조사는 기존 회차를 수정하지 않고 새 `surveySequence`로 추가한다.
  * - Phase 4부터 optional `measurementSet` / `facility`를 담을 수 있다.
- *   과거 Phase 3.5 Draft는 이 필드 없이도 읽을 수 있다.
+ * - Phase 4.5부터 optional `productionSalesSpace` / `deliveryPath`를 담을 수 있다.
+ *   과거 Draft는 이 필드 없이도 읽을 수 있다.
  */
 
 export const SITE_SURVEY_SCHEMA_VERSION = "site-survey-v1";
@@ -74,6 +79,10 @@ export interface SiteSurvey {
   readonly measurementSet?: MeasurementSet;
   /** 전기·급수·배수·배기·화장실 관찰. 없으면 미입력. */
   readonly facility?: FacilityObservations;
+  /** 제조·판매 공간 현장관찰. MeasurementSet을 복제하지 않는다. */
+  readonly productionSalesSpace?: ProductionSalesSpaceObservation;
+  /** 장비 반입경로 현장관찰. 치수는 MeasurementSet을 참조한다. */
+  readonly deliveryPath?: DeliveryPathObservation;
 }
 
 /** 정의된 조사단계 전부를 `NOT_STARTED`로 둔다. 누락 단계를 만들지 않는다. */

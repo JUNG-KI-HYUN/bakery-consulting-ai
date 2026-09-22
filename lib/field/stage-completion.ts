@@ -1,19 +1,27 @@
 import type { FacilityObservations } from "./facility";
 import type { MeasurementSet } from "./measurement";
 import { REQUIRED_MEASUREMENT_KEYS } from "./measurement";
+import type {
+  DeliveryPathObservation,
+  ProductionSalesSpaceObservation,
+} from "./space-equipment";
 import type { SurveyStageId } from "./stages";
 
 export type StageCompletionCheck =
   | { readonly ok: true }
   | { readonly ok: false; readonly missing: readonly string[] };
 
+export interface StageCompletionInput {
+  readonly measurementSet?: MeasurementSet;
+  readonly facility?: FacilityObservations;
+  readonly productionSalesSpace?: ProductionSalesSpaceObservation;
+  readonly deliveryPath?: DeliveryPathObservation;
+}
+
 /** 직원이 해당 단계를 수행했는지. Evidence VERIFIED와 무관하다. */
 export function canCompleteFieldStage(
   stageId: SurveyStageId,
-  input: {
-    measurementSet?: MeasurementSet;
-    facility?: FacilityObservations;
-  },
+  input: StageCompletionInput,
 ): StageCompletionCheck {
   switch (stageId) {
     case "measurement":
@@ -30,8 +38,12 @@ export function canCompleteFieldStage(
       return checkExhaust(input.facility);
     case "restroom":
       return checkRestroom(input.facility);
+    case "productionSalesSpace":
+      return checkProductionSalesSpace(input.productionSalesSpace);
+    case "deliveryPath":
+      return checkDeliveryPath(input.deliveryPath);
     default:
-      return { ok: false, missing: ["stage_not_implemented_in_phase_4"] };
+      return { ok: false, missing: ["stage_not_implemented"] };
   }
 }
 
@@ -64,8 +76,6 @@ function checkElectrical(facility: FacilityObservations | undefined): StageCompl
       missing: ["contractPowerKw", "phaseType", "panelFieldChecked", "expansionStatus"],
     };
   }
-  // contractPowerKw.value === null 은 명시적 UNKNOWN으로 인정한다.
-  // evidence가 없는 경우는 parse에서 거부되므로 여기선 존재만 확인.
   return { ok: true };
 }
 
@@ -111,6 +121,42 @@ function checkRestroom(facility: FacilityObservations | undefined): StageComplet
   return { ok: true };
 }
 
+function checkProductionSalesSpace(
+  observation: ProductionSalesSpaceObservation | undefined,
+): StageCompletionCheck {
+  if (!observation) {
+    return {
+      ok: false,
+      missing: [
+        "manufacturingSpace",
+        "salesSpace",
+        "customerFlow",
+        "staffFlow",
+        "packingPickupSpace",
+        "storageSpace",
+      ],
+    };
+  }
+  // NOT_ASSESSED 명시값은 완료 가능. 객체 자체가 없으면 공란.
+  return { ok: true };
+}
+
+function checkDeliveryPath(observation: DeliveryPathObservation | undefined): StageCompletionCheck {
+  if (!observation) {
+    return {
+      ok: false,
+      missing: [
+        "primaryDeliveryMethod",
+        "elevatorAccess",
+        "stairTurning",
+        "intermediateDoorCorridor",
+        "loadingAccess",
+      ],
+    };
+  }
+  return { ok: true };
+}
+
 /** Phase 4 입력 Stage 목록 */
 export const PHASE4_INPUT_STAGE_IDS = [
   "measurement",
@@ -122,8 +168,22 @@ export const PHASE4_INPUT_STAGE_IDS = [
   "restroom",
 ] as const;
 
+/** Phase 4.5 입력 Stage 목록 */
+export const PHASE45_INPUT_STAGE_IDS = ["productionSalesSpace", "deliveryPath"] as const;
+
+export const FIELD_INPUT_STAGE_IDS = [
+  ...PHASE4_INPUT_STAGE_IDS,
+  ...PHASE45_INPUT_STAGE_IDS,
+] as const;
+
 export type Phase4InputStageId = (typeof PHASE4_INPUT_STAGE_IDS)[number];
+export type Phase45InputStageId = (typeof PHASE45_INPUT_STAGE_IDS)[number];
+export type FieldInputStageId = (typeof FIELD_INPUT_STAGE_IDS)[number];
 
 export function isPhase4InputStage(stageId: string): stageId is Phase4InputStageId {
   return (PHASE4_INPUT_STAGE_IDS as readonly string[]).includes(stageId);
+}
+
+export function isFieldInputStage(stageId: string): stageId is FieldInputStageId {
+  return (FIELD_INPUT_STAGE_IDS as readonly string[]).includes(stageId);
 }
