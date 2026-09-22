@@ -1,0 +1,61 @@
+:root {
+  color-scheme: light;
+  font-family: Pretendard, "Noto Sans KR", system-ui, sans-serif;
+  color: #20241f;
+  background: #f4f1ea;
+}
+
+* { box-sizing: border-box; }
+body { width: 390px; min-height: 520px; margin: 0; }
+main { padding: 18px; }
+header { margin-bottom: 14px; }
+.eyebrow { margin: 0; color: #6d5e3e; font-size: 11px; font-weight: 800; letter-spacing: .18em; }
+h1 { margin: 2px 0 0; font-size: 22px; }
+.subtitle { margin: 3px 0 0; color: #666; font-size: 13px; }
+button { border: 1px solid #81765f; border-radius: 8px; background: #fff; padding: 9px 12px; font: inherit; font-weight: 700; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.primary { border-color: #4e3821; background: #4e3821; color: #fff; }
+#analyze { width: 100%; }
+.message { min-height: 18px; margin: 10px 0; color: #5b5b55; font-size: 12px; }
+.field { display: grid; grid-template-columns: 92px 1fr; gap: 6px 8px; margin-bottom: 10px; }
+.field label { align-self: center; font-size: 13px; font-weight: 700; }
+.field input, .field select { min-width: 0; width: 100%; border: 1px solid #ccc5b7; border-radius: 6px; background: #fff; padding: 8px; font: inherit; }
+.field .semantic { grid-column: 2; padding: 6px 8px; font-size: 12px; }
+.money-hint { grid-column: 2; color: #6d5e3e; font-size: 11px; }
+.field input:focus, .field select:focus { outline: 2px solid #c59751; outline-offset: 1px; }
+.status { grid-column: 2; font-size: 11px; }
+.status.auto, .status.human { color: #236239; }
+.status.review { color: #96600b; }
+.status.missing { color: #777; }
+details { margin: 13px 0; border-top: 1px solid #d7d0c4; padding-top: 10px; }
+summary { cursor: pointer; font-size: 13px; font-weight: 800; }
+details > div { margin-top: 10px; }
+.raw-item { margin-bottom: 10px; padding: 8px; border-radius: 6px; background: #ebe6dc; font-size: 11px; line-height: 1.45; }
+.raw-item strong { display: block; margin-bottom: 3px; }
+.raw-item p { margin: 2px 0; word-break: break-word; }
+.warnings { border-radius: 8px; background: #fff0d6; padding: 10px 12px; }
+.warnings h2 { margin: 0 0 5px; font-size: 13px; }
+.warnings ul { margin: 0; padding-left: 17px; font-size: 11px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.actions .full { grid-column: 1 / -1; }
+.review-queue { margin-top: 16px; border-top: 2px solid #4e3821; padding-top: 12px; }
+.queue-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.queue-heading h2 { margin: 2px 0 0; font-size: 17px; }
+.queue-count { border-radius: 999px; background: #e8dfcf; padding: 4px 8px; font-size: 11px; font-weight: 800; }
+.queue-card { margin-top: 10px; border: 1px solid #cfc5b4; border-radius: 10px; background: #fff; padding: 12px; }
+.queue-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.queue-card h3 { margin: 0; font-size: 14px; line-height: 1.4; }
+.queue-meta { margin: 3px 0 0; color: #6c675e; font-size: 10px; }
+.queue-status { flex: none; border-radius: 999px; padding: 4px 7px; background: #fff0d6; color: #80520b; font-size: 10px; font-weight: 800; }
+.queue-status.confirmed { background: #dff3e5; color: #236239; }
+.queue-status.excluded { background: #ece9e4; color: #656057; }
+.queue-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 10px 0; }
+.queue-value { border-radius: 6px; background: #f4f1ea; padding: 7px; }
+.queue-value span { display: block; color: #746d61; font-size: 9px; }
+.queue-value strong { display: block; margin-top: 2px; font-size: 11px; line-height: 1.35; }
+.queue-warning { margin: 7px 0 0; border-left: 3px solid #c8892d; padding-left: 7px; color: #744b0c; font-size: 10px; line-height: 1.45; }
+.duplicate-panel { margin-top: 8px; border-radius: 7px; background: #fff0d6; padding: 8px; font-size: 10px; }
+.queue-actions, .duplicate-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+.duplicate-actions { grid-template-columns: 1fr 1fr; }
+.queue-actions button, .duplicate-actions button { padding: 7px 5px; font-size: 11px; }
+.notice { margin: 14px 0 0; color: #756f65; font-size: 10px; text-align: center; }

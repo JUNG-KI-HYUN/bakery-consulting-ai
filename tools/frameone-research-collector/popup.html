@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FRAMEONE Research Collector</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">FRAMEONE</p>
+        <h1>Research Collector</h1>
+        <p class="subtitle">상가 임대조건 수집·검수 V1.2</p>
+      </header>
+
+      <button id="analyze" class="primary" type="button">현재 페이지 분석</button>
+      <p id="message" class="message" role="status">공개 매물 페이지에서 분석을 시작하세요.</p>
+
+      <form id="review-form" hidden>
+        <section id="fields" aria-label="임대조건 검수"></section>
+
+        <details id="optional-fields">
+          <summary>선택 정보</summary>
+          <div id="optional-list"></div>
+        </details>
+
+        <details id="raw-view">
+          <summary>원문 보기</summary>
+          <div id="raw-list"></div>
+        </details>
+
+        <section id="warnings" class="warnings" hidden>
+          <h2>확인 필요</h2>
+          <ul></ul>
+        </section>
+
+        <section id="review-queue" class="review-queue" hidden aria-label="조사자료 검수 대기열">
+          <div class="queue-heading">
+            <div>
+              <p class="eyebrow">REVIEW QUEUE</p>
+              <h2>조사자료 검수</h2>
+            </div>
+            <span id="queue-count" class="queue-count">1건</span>
+          </div>
+          <article id="queue-card"></article>
+        </section>
+
+        <div class="actions">
+          <button id="complete-review" type="button">필드 검수 완료</button>
+          <button id="export-json" type="button">기존 JSON</button>
+          <button id="export-research-json" class="primary full" type="button">V1.2 Research Record JSON</button>
+        </div>
+      </form>
+      <p class="notice">자동추출 결과는 FRAMEONE DB로 전송되지 않습니다.</p>
+    </main>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>
