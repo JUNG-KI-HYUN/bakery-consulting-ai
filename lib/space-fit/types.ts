@@ -1,5 +1,6 @@
 import { isCandidateStoreId, isMeasurementId, isSiteSurveyId } from "../field/identifiers";
 import { createElementId, createLayoutId, isElementId, isLayoutId } from "./identifiers";
+import type { EquipmentInstance } from "../equipment/types";
 
 export const SPACE_FIT_LAYOUT_SCHEMA_VERSION = "space-fit-layout-v1" as const;
 
@@ -83,6 +84,12 @@ export interface SpaceFitLayout {
   readonly layoutVersion: number;
   readonly room: SpaceFitRoom;
   readonly elements: readonly RoomElement[];
+  /**
+   * Phase 5C: Layout에 배치된 장비 Instance.
+   * Definition 전체를 복제하지 않고 equipmentDefinitionId만 참조.
+   * 생략 가능 — Phase 5A/5B Layout과 backward compatible.
+   */
+  readonly equipmentInstances?: readonly EquipmentInstance[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }

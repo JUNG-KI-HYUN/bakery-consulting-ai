@@ -1,4 +1,6 @@
 import { isCandidateStoreId, isMeasurementId, isSiteSurveyId } from "../field/identifiers";
+import { parseEquipmentInstance } from "../equipment/validation";
+import type { EquipmentInstance } from "../equipment/types";
 import { isElementId, isLayoutId } from "./identifiers";
 import {
   SPACE_FIT_LAYOUT_SCHEMA_VERSION,
@@ -172,6 +174,8 @@ export function parseSpaceFitLayout(value: unknown): SpaceFitLayout | null {
   if (typeof value.createdAt !== "string" || value.createdAt.trim() === "") return null;
   if (typeof value.updatedAt !== "string" || value.updatedAt.trim() === "") return null;
   if ("productionSalesSpace" in value || "deliveryPath" in value) return null;
+  // Definition 카탈로그를 Layout에 넣지 않는다
+  if ("equipmentDefinitions" in value || "equipmentDefinition" in value) return null;
 
   const room = parseRoom(value.room);
   if (!room) return null;
@@ -181,6 +185,19 @@ export function parseSpaceFitLayout(value: unknown): SpaceFitLayout | null {
     const parsed = parseRoomElement(item);
     if (!parsed) return null;
     elements.push(parsed);
+  }
+
+  let equipmentInstances: readonly EquipmentInstance[] | undefined;
+  if (value.equipmentInstances !== undefined) {
+    if (!Array.isArray(value.equipmentInstances)) return null;
+    const instances: EquipmentInstance[] = [];
+    for (const item of value.equipmentInstances) {
+      const parsed = parseEquipmentInstance(item);
+      if (!parsed) return null;
+      if (parsed.layoutId !== value.layoutId) return null;
+      instances.push(parsed);
+    }
+    equipmentInstances = Object.freeze(instances);
   }
 
   return Object.freeze({
@@ -195,6 +212,7 @@ export function parseSpaceFitLayout(value: unknown): SpaceFitLayout | null {
     layoutVersion: value.layoutVersion,
     room,
     elements: Object.freeze(elements),
+    ...(equipmentInstances ? { equipmentInstances } : {}),
     createdAt: value.createdAt,
     updatedAt: value.updatedAt,
   });
