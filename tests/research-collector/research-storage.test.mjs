@@ -74,7 +74,7 @@ test("Chrome storage API available/unavailable을 raw TypeError 없이 구분한
 test("실제 MV3 manifest가 storage 권한과 popup module을 유지한다", () => {
   const manifest = JSON.parse(fs.readFileSync(new URL("../../tools/frameone-research-collector/manifest.json", import.meta.url), "utf8"));
   assert.equal(manifest.manifest_version, 3);
-  assert.equal(manifest.version, "1.3.1");
+  assert.equal(manifest.version, "1.3.2");
   assert.ok(manifest.permissions.includes("storage"));
   assert.equal(manifest.action.default_popup, "popup.html");
   const popup = fs.readFileSync(new URL("../../tools/frameone-research-collector/popup.js", import.meta.url), "utf8");

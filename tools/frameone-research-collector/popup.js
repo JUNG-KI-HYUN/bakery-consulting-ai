@@ -196,7 +196,7 @@ function renderQueue() {
   section.hidden = false;
   document.querySelector("#queue-count").textContent = `${queueEntries.length}건`;
   card.innerHTML = queueEntries.map(({ record, repository }) => {
-    const { property, lease, source, quality } = record;
+    const { property, lease, source, quality, optional } = record;
     const statusClass = quality.verificationStatus === VERIFICATION_STATUS.CONFIRMED
       ? "confirmed"
       : quality.verificationStatus === VERIFICATION_STATUS.EXCLUDED ? "excluded" : "";
@@ -224,6 +224,11 @@ function renderQueue() {
       <div class="queue-value"><span>권리금</span><strong>${escapeHtml(displayMoney(lease.premiumAmount, lease.premiumStatus))}</strong></div>
       <div class="queue-value"><span>중복 후보</span><strong>${escapeHtml(quality.duplicateStatus)}</strong></div>
       <div class="queue-value"><span>출처 유형</span><strong>${escapeHtml(source.sourceType)}</strong></div>
+      ${optional.buildingName ? `<div class="queue-value"><span>건물명</span><strong>${escapeHtml(optional.buildingName)}</strong></div>` : ""}
+      ${optional.parkingAvailable != null ? `<div class="queue-value"><span>주차</span><strong>${optional.parkingAvailable ? "가능" : "불가능"}</strong></div>` : ""}
+      ${optional.buildingTotalParkingSpaces != null ? `<div class="queue-value"><span>건물 총주차</span><strong>${escapeHtml(Number(optional.buildingTotalParkingSpaces).toLocaleString("ko-KR"))}대</strong></div>` : ""}
+      ${optional.includedParkingSpaces != null ? `<div class="queue-value"><span>기본 제공</span><strong>무료 ${escapeHtml(Number(optional.includedParkingSpaces).toLocaleString("ko-KR"))}대</strong></div>` : ""}
+      ${optional.additionalParkingStatus === SEMANTIC_STATUS.NEGOTIABLE ? `<div class="queue-value"><span>추가 주차</span><strong>협의 가능</strong></div>` : ""}
     </div>
     ${warnings}${duplicate}
     <p class="repository-state">${escapeHtml(localStateLabel)}${isSaved ? ` · FRAMEONE 저장 완료 · ${escapeHtml(repository.repositoryRecordId)}` : ""}</p>

@@ -62,6 +62,17 @@ export function parseLeaseResearchRecord(value: unknown): LeaseResearchRecord {
   for (const field of ["parking", "moveIn", "existingBusinessType", "buildingName"] as const) {
     if (!isNullableString(optional[field])) throw new TypeError(`optional.${field} must be string or null.`);
   }
+  if (optional.parkingAvailable !== undefined && optional.parkingAvailable !== null && typeof optional.parkingAvailable !== "boolean") {
+    throw new TypeError("optional.parkingAvailable must be boolean or null.");
+  }
+  for (const field of ["buildingTotalParkingSpaces", "includedParkingSpaces"] as const) {
+    if (optional[field] !== undefined && !isNullableNonNegativeNumber(optional[field])) {
+      throw new TypeError(`optional.${field} must be a non-negative number or null.`);
+    }
+  }
+  if (optional.additionalParkingStatus !== undefined && !isNullableString(optional.additionalParkingStatus)) {
+    throw new TypeError("optional.additionalParkingStatus must be string or null.");
+  }
 
   const quality = requireObject(record.quality, "quality");
   if (!VERIFICATION_STATUSES.includes(quality.verificationStatus as never)) throw new TypeError("Unknown verificationStatus.");

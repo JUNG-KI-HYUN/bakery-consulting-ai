@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FRAMEONE Research Collector",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "상가 임대조건 후보를 로컬 조사함에 보존하고 확인된 자료만 FRAMEONE에 저장합니다.",
   "permissions": ["activeTab", "scripting", "storage"],
   "host_permissions": ["http://localhost:3000/*", "http://127.0.0.1:3000/*"],

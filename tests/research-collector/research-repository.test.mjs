@@ -56,7 +56,16 @@ function fixtureRecord(id, verificationStatus = "CONFIRMED") {
       premiumStatus: "NEGOTIABLE",
       vatStatus: "UNKNOWN",
     },
-    optional: { parking: null, moveIn: null, existingBusinessType: null, buildingName: null },
+    optional: {
+      parking: "주차가능여부 가능 | 총주차대수 3773대 | 무료 2대 | 추가 주차 협의 가능",
+      parkingAvailable: true,
+      buildingTotalParkingSpaces: 3_773,
+      includedParkingSpaces: 2,
+      additionalParkingStatus: "NEGOTIABLE",
+      moveIn: null,
+      existingBusinessType: null,
+      buildingName: "롯데월드타워",
+    },
     quality: {
       verificationStatus,
       freshnessStatus: "CURRENT_30D",
@@ -113,6 +122,8 @@ test("Research API는 CONFIRMED만 idempotent 저장하고 원문 Evidence와 �
     const records = await (await collection.GET()).json();
     assert.equal(records.length, 1);
     assert.equal(records[0].evidence.raw.rent, "450만원");
+    assert.equal(records[0].optional.buildingTotalParkingSpaces, 3_773);
+    assert.equal(records[0].optional.includedParkingSpaces, 2);
     assert.equal((await repository.listResearchRecords()).length, 1);
     assert.equal((await repository.getResearchRecord("confirmed-1")).recordId, "confirmed-1");
 

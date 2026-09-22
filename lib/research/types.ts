@@ -72,6 +72,10 @@ export interface LeaseResearchRecord {
   };
   optional: {
     parking: string | null;
+    parkingAvailable?: boolean | null;
+    buildingTotalParkingSpaces?: number | null;
+    includedParkingSpaces?: number | null;
+    additionalParkingStatus?: string | null;
     moveIn: string | null;
     existingBusinessType: string | null;
     buildingName: string | null;

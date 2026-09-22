@@ -180,3 +180,27 @@ test("기존 세 네이버 fixture의 핵심 Collector 결과를 V1.2 adapter에
     assert.equal(research.source.sourceType, SOURCE_TYPE.ONLINE_LISTING);
   }
 });
+
+test("V1.3.2 주차 의미와 건물명은 Research Record optional 및 Evidence에 보존된다", () => {
+  const fixture = JSON.parse(fs.readFileSync(new URL("./fixtures/naver-pay-real-estate-visible-text-4.json", import.meta.url), "utf8"));
+  const collection = collectLeaseTerms({
+    text: fixture.fullText,
+    scopeText: fixture.scopeText,
+    sourceUrl: fixture.sourceUrl,
+    pageTitle: fixture.pageTitle,
+    collectedAt: "2026-09-22T00:00:00.000Z",
+  });
+  const record = fromCollectorExport(collection, { asOf: "2026-09-22T00:00:00.000Z" });
+  assert.equal(record.optional.buildingName, "롯데월드타워");
+  assert.equal(record.optional.parkingAvailable, true);
+  assert.equal(record.optional.buildingTotalParkingSpaces, 3_773);
+  assert.equal(record.optional.includedParkingSpaces, 2);
+  assert.equal(record.optional.additionalParkingStatus, SEMANTIC_STATUS.NEGOTIABLE);
+  assert.match(record.evidence.raw.parking, /3773대/);
+  assert.deepEqual(record.evidence.normalized.parking, {
+    parkingAvailable: true,
+    buildingTotalParkingSpaces: 3_773,
+    includedParkingSpaces: 2,
+    additionalParkingStatus: SEMANTIC_STATUS.NEGOTIABLE,
+  });
+});

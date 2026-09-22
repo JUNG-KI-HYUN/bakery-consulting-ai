@@ -265,6 +265,10 @@ export function fromCollectorExport(collection, options = {}) {
     },
     optional: {
       parking: legacy.parkingRaw,
+      parkingAvailable: legacy.parkingAvailable,
+      buildingTotalParkingSpaces: legacy.buildingTotalParkingSpaces,
+      includedParkingSpaces: legacy.includedParkingSpaces,
+      additionalParkingStatus: legacy.additionalParkingStatus,
       moveIn: legacy.moveInRaw,
       existingBusinessType: legacy.existingBusinessType,
       buildingName: legacy.buildingName,
@@ -277,7 +281,15 @@ export function fromCollectorExport(collection, options = {}) {
     },
     evidence: {
       raw: Object.fromEntries(Object.entries(collection.fields).map(([key, field]) => [key, field.raw ?? null])),
-      normalized: Object.fromEntries(Object.entries(collection.fields).map(([key, field]) => [key, field.value ?? field.m2 ?? null])),
+      normalized: {
+        ...Object.fromEntries(Object.entries(collection.fields).map(([key, field]) => [key, field.value ?? field.m2 ?? null])),
+        parking: {
+          parkingAvailable: legacy.parkingAvailable,
+          buildingTotalParkingSpaces: legacy.buildingTotalParkingSpaces,
+          includedParkingSpaces: legacy.includedParkingSpaces,
+          additionalParkingStatus: legacy.additionalParkingStatus,
+        },
+      },
       fieldStatus: legacy.fieldStatus,
       excerpts: legacy.evidence,
     },

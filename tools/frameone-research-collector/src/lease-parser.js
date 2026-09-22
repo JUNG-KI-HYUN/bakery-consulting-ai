@@ -91,18 +91,24 @@ export function parseKoreanMoney(raw, options = {}) {
     return { amount: null, status: FIELD_STATUS.REVIEW_REQUIRED, semanticStatus: SEMANTIC_STATUS.UNKNOWN, issues: ["음수 금액은 허용되지 않습니다."] };
   }
 
-  const normalized = text
+  const labelStripped = text
     .replace(/(?:보증금|월세|월\s*임대료|임대료|월|관리비|권리금)/g, " ")
     .replace(/(?:부가세|vat).*$/i, " ")
+    .replace(/\s+/g, "")
+    .trim();
+  const plainWonMatch = labelStripped.match(/^(\d[\d,]*(?:\.\d+)?)원$/);
+  const normalized = labelStripped
     .replace(/원/g, "")
     .replace(/천만/g, "천")
-    .replace(/\s+/g, "")
     .trim();
 
   let amount = null;
   let explicitUnit = false;
   const eokMatch = normalized.match(/^(\d+(?:\.\d+)?)억(?:(\d[\d,]*(?:\.\d+)?)(천|만)?)?$/);
-  if (eokMatch) {
+  if (plainWonMatch) {
+    explicitUnit = true;
+    amount = parseDigits(plainWonMatch[1]);
+  } else if (eokMatch) {
     explicitUnit = true;
     amount = Number(eokMatch[1]) * 100_000_000;
     if (eokMatch[2]) {
@@ -314,6 +320,36 @@ function extractOptional(text, labelPattern) {
   return match ? candidate(match.raw, match.raw, FIELD_STATUS.REVIEW_REQUIRED, match.evidenceText, ["선택 필드는 원문을 직접 확인해야 합니다."]) : candidate();
 }
 
+const GENERIC_BUILDING_NAMES = new Set(["일반상가", "대형사무실", "가성비좋은사무실", "상가", "사무실"]);
+
+function safeBuildingName(value) {
+  const cleaned = cleanText(value).replace(/\s+/g, " ").trim();
+  const compact = cleaned.replace(/\s+/g, "");
+  if (!cleaned || cleaned.length > 50 || GENERIC_BUILDING_NAMES.has(compact)) return null;
+  if (!/(?:타워|빌딩|센터|플라자|스퀘어|몰|오피스텔)$/i.test(compact)) return null;
+  return cleaned;
+}
+
+function extractBuildingName(text, pageTitle) {
+  const labeled = findFirst(text, [/(?:건물명|빌딩명)[ \t]*[:：]?[ \t]*(?:\n[ \t]*)?([^\n]{2,50})/i]);
+  if (labeled) {
+    const value = safeBuildingName(labeled.raw);
+    if (value) return candidate(labeled.raw, value, FIELD_STATUS.AUTO_CONFIRMED, labeled.evidenceText);
+  }
+
+  const combined = `${cleanText(pageTitle)}\n${text}`;
+  const names = [...combined.matchAll(/[가-힣A-Za-z0-9·._-]{2,40}(?:타워|빌딩|센터|플라자|스퀘어|몰|오피스텔)/gi)]
+    .map((match) => safeBuildingName(match[0]))
+    .filter(Boolean);
+  const counts = new Map();
+  for (const name of names) counts.set(name, (counts.get(name) ?? 0) + 1);
+  const repeated = [...counts.entries()].filter(([, count]) => count >= 2).sort((left, right) => right[1] - left[1] || right[0].length - left[0].length);
+  if (!repeated.length) return candidate();
+  const value = repeated[0][0];
+  const index = text.indexOf(value);
+  return candidate(value, value, FIELD_STATUS.AUTO_CONFIRMED, index >= 0 ? excerptFor(text, index, value.length) : cleanText(pageTitle));
+}
+
 function extractLabeledValue(text, labelPattern, options = {}) {
   const pattern = new RegExp(`(?:${labelPattern})[ \\t]*[:：]?[ \\t]*(?:\\n[ \\t]*)?([^\\n]{1,100})`, "i");
   const match = pattern.exec(text);
@@ -369,39 +405,65 @@ function extractParking(text) {
   for (const match of text.matchAll(componentPattern)) add(`${match[1]} ${match[2]}`, match.index, match[0].length, true);
   const freePattern = /(?:^|\n)[^\n]{0,30}주차[^\n]{0,30}\d+\s*대[^\n]{0,30}(?=$|\n)/gim;
   for (const match of text.matchAll(freePattern)) add(match[0], match.index, match[0].length, false);
+  const includedPattern = /(?:^|\n)[ \t]*(무료\s*\d+\s*대)(?=$|\n)/gim;
+  for (const match of text.matchAll(includedPattern)) add(match[1], match.index, match[0].length, false);
+  const additionalPattern = /(?:^|\n)[ \t]*(추가\s*주차\s*(?:협의\s*가능|협의|가능))(?=$|\n)/gim;
+  for (const match of text.matchAll(additionalPattern)) add(match[1], match.index, match[0].length, false);
 
   if (!matches.length) return candidate();
   const raw = matches.map((match) => match.raw).join(" | ");
-  const totalCounts = [];
+  const buildingTotalCounts = [];
   const componentCounts = [];
+  const includedCounts = [];
   for (const match of matches) {
     const counts = [...match.raw.matchAll(/(\d+)\s*대/g)].map((count) => Number(count[1]));
     if (/(?:옥내|옥외)자주식/.test(match.raw)) componentCounts.push(...counts);
-    else totalCounts.push(...counts);
+    else if (/총주차대수|주차장\s*총|총주차\s*\//.test(match.raw)) buildingTotalCounts.push(...counts.slice(0, 1));
+    else if (/무료/.test(match.raw)) includedCounts.push(...counts);
   }
-  const uniqueTotalCounts = new Set(totalCounts);
+  const uniqueBuildingTotalCounts = new Set(buildingTotalCounts);
+  const uniqueIncludedCounts = new Set(includedCounts);
   const saysImpossible = /주차가능여부\s*(?:불가능|불가|N|X)/i.test(raw);
   const saysPossible = /주차가능여부\s*(?:가능|Y|O)/i.test(raw) && !saysImpossible;
-  const onlyCount = uniqueTotalCounts.size === 1 ? [...uniqueTotalCounts][0] : null;
+  const onlyBuildingTotal = uniqueBuildingTotalCounts.size === 1 ? [...uniqueBuildingTotalCounts][0] : null;
+  const onlyIncluded = uniqueIncludedCounts.size === 1 ? [...uniqueIncludedCounts][0] : null;
   const componentSum = componentCounts.length ? componentCounts.reduce((sum, count) => sum + count, 0) : null;
-  const conflicts = uniqueTotalCounts.size > 1
-    || (saysImpossible && onlyCount !== null && onlyCount > 0)
-    || (saysPossible && onlyCount === 0)
-    || (componentSum !== null && onlyCount !== null && componentSum !== onlyCount);
-  const allStructured = matches.every((match) => match.structured);
-  const consistentStructuredEvidence = allStructured && matches.length >= 2 && !conflicts && onlyCount !== null;
+  const conflicts = uniqueBuildingTotalCounts.size > 1
+    || uniqueIncludedCounts.size > 1
+    || (saysPossible && onlyBuildingTotal === 0)
+    || (componentSum !== null && onlyBuildingTotal !== null && componentSum !== onlyBuildingTotal);
+  const consistentStructuredEvidence = !conflicts
+    && (saysPossible || saysImpossible)
+    && onlyBuildingTotal !== null;
   const issues = conflicts
     ? ["주차 관련 수량 또는 가능 여부가 서로 충돌하므로 원문 확인이 필요합니다."]
     : consistentStructuredEvidence
       ? []
       : ["주차 정보는 원문을 직접 확인해야 합니다."];
-  return candidate(
+  return {
+    ...candidate(
     raw,
     raw,
     consistentStructuredEvidence ? FIELD_STATUS.AUTO_CONFIRMED : FIELD_STATUS.REVIEW_REQUIRED,
     matches.map((match) => match.evidenceText).join(" | ").slice(0, 600),
     issues,
-  );
+    ),
+    parkingAvailable: saysPossible ? true : saysImpossible ? false : null,
+    buildingTotalParkingSpaces: onlyBuildingTotal,
+    includedParkingSpaces: onlyIncluded,
+    additionalParkingStatus: /추가\s*주차\s*협의/.test(raw) ? SEMANTIC_STATUS.NEGOTIABLE : null,
+    structuredFieldStatus: {
+      parkingAvailable: saysPossible || saysImpossible ? FIELD_STATUS.AUTO_CONFIRMED : FIELD_STATUS.MISSING,
+      buildingTotalParkingSpaces: onlyBuildingTotal !== null && uniqueBuildingTotalCounts.size === 1 ? FIELD_STATUS.AUTO_CONFIRMED : uniqueBuildingTotalCounts.size > 1 ? FIELD_STATUS.REVIEW_REQUIRED : FIELD_STATUS.MISSING,
+      includedParkingSpaces: onlyIncluded !== null ? FIELD_STATUS.REVIEW_REQUIRED : FIELD_STATUS.MISSING,
+      additionalParkingStatus: /추가\s*주차\s*협의/.test(raw) ? FIELD_STATUS.REVIEW_REQUIRED : FIELD_STATUS.MISSING,
+    },
+  };
+}
+
+function findExplicitRentUnitMatch(text) {
+  const explicitAmount = "(?:\\d+(?:\\.\\d+)?억(?:\\s*\\d[\\d,]*(?:\\.\\d+)?\\s*(?:천\\s*만|천|만)?(?:원)?)?|\\d[\\d,]*(?:\\.\\d+)?\\s*(?:천\\s*만|천|만)(?:원)?)";
+  return findFirst(text, [new RegExp(`(?:^|\\n)[ \\t]*(?:월\\s*임대료|월세)[ \\t]*[:：]?[ \\t]*(${explicitAmount})[ \\t]*(?=$|\\n)`, "im")]);
 }
 
 function selectSourceAdapter(input, text) {
@@ -466,6 +528,7 @@ export function collectLeaseTerms(input) {
   const pair = matchLeaseMoneyPairs(text);
   const areas = extractAreas(text);
   const explicitDepositMatch = findMoney(text, "보증금");
+  const explicitRentUnitMatch = findExplicitRentUnitMatch(text);
   const depositMatch = pair?.priority === "EXPLICIT_LEASE_TERMS"
     ? pair.deposit
     : explicitDepositMatch ?? pair?.deposit ?? null;
@@ -502,6 +565,22 @@ export function collectLeaseTerms(input) {
       rent.issues = rent.issues.filter((issue) => !/금액 단위/.test(issue));
     }
   }
+  if (
+    sourceAdapter === SOURCE_ADAPTER.NAVER_PAY_REAL_ESTATE
+    && useCurrentListingScope
+    && pair?.priority === "TRANSACTION_SUMMARY"
+    && explicitRentUnitMatch
+    && /^\d[\d,]*(?:\.\d+)?$/.test(pair.rent.raw)
+  ) {
+    const explicitRent = parseKoreanMoney(explicitRentUnitMatch.raw);
+    if (explicitRent.status === FIELD_STATUS.AUTO_CONFIRMED && explicitRent.amount === rent.value) {
+      rent.status = FIELD_STATUS.AUTO_CONFIRMED;
+      rent.issues = rent.issues.filter((issue) => !/금액 단위/.test(issue));
+      rent.evidenceText = [rent.evidenceText, explicitRentUnitMatch.evidenceText].filter(Boolean).join(" | ").slice(0, 600);
+    } else if (explicitRent.amount !== rent.value) {
+      downgrade(rent, "헤더 월세와 상세 월임대료가 일치하지 않습니다.");
+    }
+  }
 
   const collection = {
     schemaVersion: "frameone.research-collector.lease.v1.1.2",
@@ -523,7 +602,7 @@ export function collectLeaseTerms(input) {
       managementFee,
       premium: extractPremium(text),
       vat: extractVat(text),
-      buildingName: extractOptional(text, "건물명|빌딩명"),
+      buildingName: extractBuildingName(text, input.pageTitle),
       existingBusinessType: extractOptional(text, "현업종|현재업종|업종"),
       parking: extractParking(text),
       moveIn: extractMoveIn(text),
@@ -571,6 +650,16 @@ export function toExportRecord(collection) {
     buildingName: f.buildingName.value,
     existingBusinessType: f.existingBusinessType.value,
     parkingRaw: f.parking.raw,
+    parkingAvailable: f.parking.parkingAvailable ?? null,
+    buildingTotalParkingSpaces: f.parking.buildingTotalParkingSpaces ?? null,
+    includedParkingSpaces: f.parking.includedParkingSpaces ?? null,
+    additionalParkingStatus: f.parking.additionalParkingStatus ?? null,
+    parkingFieldStatus: f.parking.structuredFieldStatus ?? {
+      parkingAvailable: FIELD_STATUS.MISSING,
+      buildingTotalParkingSpaces: FIELD_STATUS.MISSING,
+      includedParkingSpaces: FIELD_STATUS.MISSING,
+      additionalParkingStatus: FIELD_STATUS.MISSING,
+    },
     moveInRaw: f.moveIn.raw,
     fieldStatus: status,
     evidence,

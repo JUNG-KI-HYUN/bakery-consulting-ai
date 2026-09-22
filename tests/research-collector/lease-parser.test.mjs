@@ -358,3 +358,81 @@ test("월세 A/B 승격은 네이버 현재 scope와 일치하는 명시적 보�
   });
   assert.equal(naverMismatch.fields.rent.status, FIELD_STATUS.REVIEW_REQUIRED);
 });
+
+test("네 번째 네이버 fixture는 명시적 월임대료와 주차 의미·건물명을 안전하게 구조화한다", () => {
+  const fixture = JSON.parse(fs.readFileSync(new URL("./fixtures/naver-pay-real-estate-visible-text-4.json", import.meta.url), "utf8"));
+  const result = collectLeaseTerms({
+    text: fixture.fullText,
+    scopeText: fixture.scopeText,
+    sourceUrl: fixture.sourceUrl,
+    pageTitle: fixture.pageTitle,
+    collectedAt: "2026-09-22T00:00:00.000Z",
+  });
+  const record = toExportRecord(result);
+
+  assert.equal(record.depositAmount, 242_970_000);
+  assert.equal(record.fieldStatus.deposit, FIELD_STATUS.AUTO_CONFIRMED);
+  assert.equal(record.rentRaw, "2,429");
+  assert.equal(record.rentAmount, 24_290_000);
+  assert.equal(record.fieldStatus.rent, FIELD_STATUS.AUTO_CONFIRMED);
+  assert.equal(result.fields.rent.issues.some((issue) => /금액 단위/.test(issue)), false);
+  assert.match(result.fields.rent.evidenceText, /월임대료 2,429 만원/);
+  assert.equal(record.managementFeeAmount, 8_422_960);
+  assert.equal(record.fieldStatus.managementFee, FIELD_STATUS.AUTO_CONFIRMED);
+  assert.equal(record.contractAreaM2, 535.47);
+  assert.equal(record.exclusiveAreaM2, 237.29);
+  assert.equal(record.floor, "12");
+  assert.equal(record.buildingName, "롯데월드타워");
+  assert.equal(record.fieldStatus.buildingName, FIELD_STATUS.AUTO_CONFIRMED);
+  assert.equal(record.parkingAvailable, true);
+  assert.equal(record.buildingTotalParkingSpaces, 3_773);
+  assert.equal(record.includedParkingSpaces, 2);
+  assert.equal(record.additionalParkingStatus, SEMANTIC_STATUS.NEGOTIABLE);
+  assert.equal(record.fieldStatus.parking, FIELD_STATUS.AUTO_CONFIRMED);
+  assert.equal(result.fields.parking.issues.some((issue) => /충돌/.test(issue)), false);
+  assert.equal(record.moveInRaw, "즉시입주");
+  assert.equal(record.vatStatus, SEMANTIC_STATUS.UNKNOWN);
+  assert.equal(record.fieldStatus.vat, FIELD_STATUS.MISSING);
+  assert.equal(record.premiumStatus, SEMANTIC_STATUS.UNKNOWN);
+  assert.equal(record.fieldStatus.premium, FIELD_STATUS.MISSING);
+  assert.equal(record.addressRaw, "서울시 송파구 신천동");
+  assert.equal(record.fieldStatus.address, FIELD_STATUS.REVIEW_REQUIRED);
+});
+
+test("명시적 월임대료 cross-check는 네이버 current listing의 동일 금액에만 적용한다", () => {
+  const base = [
+    "롯데월드타워",
+    "월세 2억 4,297/2,429",
+    "매물번호",
+    "123",
+    "소재지",
+    "서울시 송파구 신천동",
+    "계약/전용면적",
+    "535.47㎡ / 237.29㎡",
+    "입주가능일",
+    "즉시입주",
+  ];
+  const mismatchText = [...base, "월임대료 2,500 만원"].join("\n");
+  const mismatch = collectLeaseTerms({ text: mismatchText, scopeText: mismatchText, sourceUrl: "https://fin.land.naver.com/articles/123", pageTitle: "롯데월드타워" });
+  assert.equal(mismatch.fields.rent.status, FIELD_STATUS.REVIEW_REQUIRED);
+  assert.match(mismatch.fields.rent.issues.join(" "), /일치하지 않습니다/);
+
+  const generic = collectLeaseTerms({ text: [...base, "월임대료 2,429 만원"].join("\n"), sourceUrl: "https://example.test/articles/123", pageTitle: "롯데월드타워" });
+  assert.equal(generic.fields.rent.status, FIELD_STATUS.REVIEW_REQUIRED);
+});
+
+test("일반 표현이나 한 번만 나타난 제목 전체를 건물명으로 저장하지 않는다", () => {
+  for (const pageTitle of ["일반상가", "대형사무실", "가성비 좋은 사무실", "잠실 대형사무실 월세"]) {
+    const result = collectLeaseTerms({ text: `${pageTitle}\n월세 1,000/100`, pageTitle, sourceUrl: "https://example.test" });
+    assert.equal(result.fields.buildingName.status, FIELD_STATUS.MISSING);
+    assert.equal(result.fields.buildingName.value, null);
+  }
+});
+
+test("Review Queue는 확인된 건물명과 분리된 주차 의미를 표시한다", () => {
+  const popup = fs.readFileSync(new URL("../../tools/frameone-research-collector/popup.js", import.meta.url), "utf8");
+  assert.match(popup, /건물명/);
+  assert.match(popup, /건물 총주차/);
+  assert.match(popup, /기본 제공/);
+  assert.match(popup, /추가 주차/);
+});
