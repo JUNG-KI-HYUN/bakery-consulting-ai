@@ -99,7 +99,7 @@ export default async function RentalResearchPage() {
           <h2 className="mt-1 text-2xl font-bold text-[#0B1220]">임대 조사자료와 시장 참고</h2>
           <p className="mt-2 text-sm text-slate-600">FRAMEONE 서버에 명시적으로 저장한 조사자료만 표시합니다.</p>
         </div>
-        <Link href="/markets" className="btn-outline">상권분석으로 돌아가기</Link>
+        <div className="flex gap-2"><Link href="/markets/economic-feasibility" className="btn-outline">사업성 분석</Link><Link href="/markets" className="btn-outline">상권분석으로 돌아가기</Link></div>
       </header>
 
       <section className="panel-card p-5 md:p-6">

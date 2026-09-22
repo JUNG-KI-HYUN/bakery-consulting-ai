@@ -14,6 +14,9 @@ export default function MarketsPage() {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
+        <Link href="/markets/economic-feasibility" className="btn-outline">
+          사업성 분석
+        </Link>
         <Link href="/markets/rental-research" className="btn-outline">
           임대 조사자료 보기
         </Link>
