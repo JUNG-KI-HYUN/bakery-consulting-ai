@@ -56,6 +56,7 @@ import {
 } from "@/lib/space-fit/types";
 import type { GeometryWarning } from "@/lib/space-fit/geometry";
 import type { MeasurementSet } from "@/lib/field/measurement";
+import type { FacilityObservations } from "@/lib/field/facility";
 import type {
   DeliveryPathObservation,
   ProductionSalesSpaceObservation,
@@ -64,7 +65,9 @@ import {
   GeometryWarningsPanel,
   SpaceFitSvgWorkspace,
 } from "@/components/space-fit/SpaceFitSvgWorkspace";
+import { TechnicalCheckPanel } from "@/components/space-fit/TechnicalCheckPanel";
 import { SPACE_FIT_DEFAULT_ZOOM_INDEX } from "@/lib/space-fit/viewport";
+import { buildTechnicalCheckReport } from "@/lib/technical-check/build-report";
 
 const ELEMENT_LABELS: Record<RoomElementType, string> = {
   ENTRANCE: "출입구",
@@ -105,6 +108,7 @@ export function SpaceFitWorkspace({
     measurementSet: MeasurementSet | null;
     productionSalesSpace: ProductionSalesSpaceObservation | null;
     deliveryPath: DeliveryPathObservation | null;
+    facility?: FacilityObservations | null;
   };
 }) {
   const router = useRouter();
@@ -125,6 +129,7 @@ export function SpaceFitWorkspace({
   const [categoryFilter, setCategoryFilter] = useState<EquipmentCategory | "ALL">("ALL");
   const [saveStatus, setSaveStatus] = useState<SpaceFitSaveUiStatus>("saved");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [rightPanel, setRightPanel] = useState<"geometry" | "technical">("geometry");
   const [viewportUi, setViewportUi] = useState({
     zoomIndex: SPACE_FIT_DEFAULT_ZOOM_INDEX,
     panXPx: 0,
@@ -181,6 +186,24 @@ export function SpaceFitWorkspace({
   );
 
   const warningSummary = useMemo(() => summarizeGeometryWarnings(warnings), [warnings]);
+  const technicalReport = useMemo(
+    () =>
+      buildTechnicalCheckReport({
+        layout,
+        definitions: definitionMap,
+        facility: fieldContext.facility,
+        measurement: fieldContext.measurementSet,
+        deliveryPath: fieldContext.deliveryPath,
+        generatedAt: "client-derived",
+      }),
+    [
+      layout,
+      definitionMap,
+      fieldContext.facility,
+      fieldContext.measurementSet,
+      fieldContext.deliveryPath,
+    ],
+  );
   const measurement = fieldContext.measurementSet;
   const widthDisplay = formatMeasurementMmDisplay(measurement?.values.roomWidthMm);
   const depthDisplay = formatMeasurementMmDisplay(measurement?.values.roomDepthMm);
@@ -760,18 +783,48 @@ export function SpaceFitWorkspace({
           />
         </main>
 
-        <aside className="shrink-0 overflow-auto border-t border-slate-200 bg-white p-4 lg:w-72 lg:border-t-0 lg:border-l">
-          <h2 className="text-sm font-bold">Geometry 요약</h2>
-          <ul className="mt-2 space-y-1 text-sm">
-            <li>영역이탈 {warningSummary.outOfBounds}</li>
-            <li>겹침 {warningSummary.overlap}</li>
-            <li>잘못된 요소 {warningSummary.invalid}</li>
-          </ul>
-          <p className="mt-2 text-xs text-slate-500">숫자는 Risk score가 아닙니다.</p>
-          <h2 className="mt-4 text-sm font-bold">Geometry warnings</h2>
-          <div className="mt-2">
-            <GeometryWarningsPanel warnings={warnings} />
+        <aside className="shrink-0 overflow-auto border-t border-slate-200 bg-white p-4 lg:w-80 lg:border-t-0 lg:border-l">
+          <div className="mb-3 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setRightPanel("geometry")}
+              className={`min-h-11 flex-1 rounded-lg border px-2 text-xs font-semibold ${
+                rightPanel === "geometry"
+                  ? "border-[#0B1220] bg-[#0B1220] text-white"
+                  : "border-slate-300 bg-white"
+              }`}
+            >
+              공간 Geometry
+            </button>
+            <button
+              type="button"
+              onClick={() => setRightPanel("technical")}
+              className={`min-h-11 flex-1 rounded-lg border px-2 text-xs font-semibold ${
+                rightPanel === "technical"
+                  ? "border-[#0B1220] bg-[#0B1220] text-white"
+                  : "border-slate-300 bg-white"
+              }`}
+            >
+              기술조건 검토
+            </button>
           </div>
+          {rightPanel === "geometry" ? (
+            <>
+              <h2 className="text-sm font-bold">Geometry 요약</h2>
+              <ul className="mt-2 space-y-1 text-sm">
+                <li>영역이탈 {warningSummary.outOfBounds}</li>
+                <li>겹침 {warningSummary.overlap}</li>
+                <li>잘못된 요소 {warningSummary.invalid}</li>
+              </ul>
+              <p className="mt-2 text-xs text-slate-500">숫자는 Risk score가 아닙니다.</p>
+              <h2 className="mt-4 text-sm font-bold">Geometry warnings</h2>
+              <div className="mt-2">
+                <GeometryWarningsPanel warnings={warnings} />
+              </div>
+            </>
+          ) : (
+            <TechnicalCheckPanel report={technicalReport} />
+          )}
           {errorMessage ? (
             <p className="mt-3 text-sm font-semibold text-red-700">{errorMessage}</p>
           ) : null}

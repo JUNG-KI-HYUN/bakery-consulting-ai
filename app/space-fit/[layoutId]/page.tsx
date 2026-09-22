@@ -26,6 +26,7 @@ export default async function SpaceFitLayoutPage({
     measurementSet: survey.ok ? (survey.value.measurementSet ?? null) : null,
     productionSalesSpace: survey.ok ? (survey.value.productionSalesSpace ?? null) : null,
     deliveryPath: survey.ok ? (survey.value.deliveryPath ?? null) : null,
+    facility: survey.ok ? (survey.value.facility ?? null) : null,
   };
 
   const equipmentService = getEquipmentDefinitionService();

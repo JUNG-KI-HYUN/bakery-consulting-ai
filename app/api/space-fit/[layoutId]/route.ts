@@ -50,6 +50,7 @@ export async function GET(
   let measurementSet = null;
   let productionSalesSpace = null;
   let deliveryPath = null;
+  let facility = null;
   let surveySequence: number | null = null;
   const field = getFieldSurveyService();
   const survey = await field.getSurvey(loaded.value.surveyId);
@@ -58,6 +59,7 @@ export async function GET(
     measurementSet = survey.value.measurementSet ?? null;
     productionSalesSpace = survey.value.productionSalesSpace ?? null;
     deliveryPath = survey.value.deliveryPath ?? null;
+    facility = survey.value.facility ?? null;
   }
 
   const equipmentDefinitions = await loadDefinitionsForLayout(
@@ -73,6 +75,7 @@ export async function GET(
       measurementSet,
       productionSalesSpace,
       deliveryPath,
+      facility,
     },
   });
 }
