@@ -56,6 +56,7 @@ next-env.d.ts
 
 # FIELD runtime drafts. Customer survey JSON must not enter git.
 /data/field-surveys/
+/data/space-fit-layouts/
 
 # Seoul living population publication runtime artifacts
 data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-LIVING/current.json

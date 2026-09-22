@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { MeasurementFacilityForm } from "@/components/field/MeasurementFacilityForm";
 import { SpaceEquipmentForm } from "@/components/field/SpaceEquipmentForm";
+import { SpaceFitEntryButton } from "@/components/field/SpaceFitEntryButton";
 import type { FieldTabletView } from "@/lib/field/tablet-view";
 import type { TabletGroupId } from "@/lib/field/stages";
 
@@ -238,6 +239,15 @@ export function FieldTabletShell({ view }: { view: FieldTabletView }) {
               </p>
             </div>
           ) : null}
+
+          <SpaceFitEntryButton
+            consultationId={view.consultationId}
+            surveyId={view.survey.surveyId}
+            hasKnownRoomDimensions={
+              view.survey.measurementSet?.values.roomWidthMm?.status === "KNOWN" &&
+              view.survey.measurementSet?.values.roomDepthMm?.status === "KNOWN"
+            }
+          />
 
           <ul className="mt-4 space-y-2 text-xs text-slate-600">
             {view.notices.map((notice) => (
