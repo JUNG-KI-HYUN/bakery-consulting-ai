@@ -7,16 +7,18 @@ import {
   resolveUnderFieldRoot,
 } from "../field/field-survey-service.server";
 import { isSiteSurveyId } from "../field/identifiers";
+import type { MeasurementSet } from "../field/measurement";
 import {
   storageFail,
   storageOk,
   type FieldStorageFailure,
   type FieldStorageResult,
 } from "../field/storage-result";
+import type { EquipmentInstance } from "../equipment/types";
+import { parseEquipmentInstance } from "../equipment/validation";
 import { createLayoutFromMeasurement } from "./create-from-measurement";
 import { isLayoutId } from "./identifiers";
 import { parseRoomElement, parseSpaceFitLayout } from "./layout-record";
-import type { MeasurementSet } from "../field/measurement";
 import type { RoomElement, SpaceFitLayout } from "./types";
 
 export const DEFAULT_SPACE_FIT_LAYOUT_ROOT = path.join(process.cwd(), "data", "space-fit-layouts");
@@ -41,6 +43,7 @@ export interface SpaceFitLayoutService {
     layoutId: string;
     expectedLayoutVersion: number;
     elements: readonly RoomElement[];
+    equipmentInstances?: readonly EquipmentInstance[];
   }): Promise<FieldStorageResult<SpaceFitLayout>>;
 }
 
@@ -209,6 +212,7 @@ export function createSpaceFitLayoutService(
     layoutId: string;
     expectedLayoutVersion: number;
     elements: readonly RoomElement[];
+    equipmentInstances?: readonly EquipmentInstance[];
   }): Promise<FieldStorageResult<SpaceFitLayout>> {
     if (
       typeof input.expectedLayoutVersion !== "number" ||
@@ -226,7 +230,6 @@ export function createSpaceFitLayoutService(
       );
     }
 
-    // 요소 재파싱으로 invalid geometry 저장 거부 (가짜 pillar default 등 방지)
     const elements: RoomElement[] = [];
     for (const item of input.elements) {
       const parsed = parseRoomElement(item);
@@ -236,21 +239,46 @@ export function createSpaceFitLayoutService(
       elements.push(parsed);
     }
 
-    const next: SpaceFitLayout = Object.freeze({
-      ...loaded.value,
-      elements: Object.freeze(elements),
-      layoutVersion: loaded.value.layoutVersion + 1,
-      updatedAt: now(),
-    });
+    let equipmentInstances = loaded.value.equipmentInstances;
+    if (input.equipmentInstances !== undefined) {
+      const parsedInstances: EquipmentInstance[] = [];
+      for (const item of input.equipmentInstances) {
+        const parsed = parseEquipmentInstance(item);
+        if (!parsed) {
+          return storageFail("INVALID_DATA", "equipmentInstances contain invalid data");
+        }
+        if (parsed.layoutId !== loaded.value.layoutId) {
+          return storageFail("INVALID_DATA", "equipmentInstance.layoutId mismatch");
+        }
+        parsedInstances.push(parsed);
+      }
+      equipmentInstances = Object.freeze(parsedInstances);
+    }
 
-    const file = resolveLayoutFilePath(rootDir, next.layoutId);
+    const nextClean: SpaceFitLayout =
+      input.equipmentInstances !== undefined
+        ? Object.freeze({
+            ...loaded.value,
+            elements: Object.freeze(elements),
+            equipmentInstances: Object.freeze(equipmentInstances ?? []),
+            layoutVersion: loaded.value.layoutVersion + 1,
+            updatedAt: now(),
+          })
+        : Object.freeze({
+            ...loaded.value,
+            elements: Object.freeze(elements),
+            layoutVersion: loaded.value.layoutVersion + 1,
+            updatedAt: now(),
+          });
+
+    const file = resolveLayoutFilePath(rootDir, nextClean.layoutId);
     if (!file.ok) return file;
     try {
-      await writeJsonBestEffort(file.value, next);
+      await writeJsonBestEffort(file.value, nextClean);
     } catch (error) {
       return ioFail(error);
     }
-    return storageOk(next);
+    return storageOk(nextClean);
   }
 
   return {

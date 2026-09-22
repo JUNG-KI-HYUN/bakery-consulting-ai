@@ -1,5 +1,7 @@
 import type { MeasurementSet } from "../field/measurement";
+import type { EquipmentDefinition } from "../equipment/types";
 import type { RoomElement, SpaceFitLayout } from "./types";
+import { validateEquipmentGeometry } from "./equipment-geometry";
 import {
   type GeometryWarning,
   type PlacementElement,
@@ -84,7 +86,12 @@ export function roomElementToPlacement(element: RoomElement, room: SpaceFitLayou
   }
 }
 
-export function validateLayoutGeometry(layout: SpaceFitLayout): readonly GeometryWarning[] {
+export function validateLayoutGeometry(
+  layout: SpaceFitLayout,
+  definitions:
+    | ReadonlyMap<string, EquipmentDefinition>
+    | ReadonlyArray<EquipmentDefinition> = [],
+): readonly GeometryWarning[] {
   const placements = layout.elements.map((element) => roomElementToPlacement(element, layout.room));
   const warnings: GeometryWarning[] = [
     ...validateElementPlacement(
@@ -108,6 +115,8 @@ export function validateLayoutGeometry(layout: SpaceFitLayout): readonly Geometr
       });
     }
   }
+
+  warnings.push(...validateEquipmentGeometry(layout, definitions));
 
   return Object.freeze(warnings);
 }

@@ -288,7 +288,7 @@ test("16. Undo move", () => {
   const moved = { ...pillar, xMm: 1000, yMm: 2000 };
   history = pushHistory(history, [moved]);
   const undone = undoHistory(history);
-  assert.equal(undone.present[0].xMm, 0);
+  assert.equal(undone.present.elements[0].xMm, 0);
 });
 
 test("17. Redo move", () => {
@@ -297,7 +297,7 @@ test("17. Redo move", () => {
   history = pushHistory(history, [{ ...pillar, xMm: 1000, yMm: 0 }]);
   history = undoHistory(history);
   history = redoHistory(history);
-  assert.equal(history.present[0].xMm, 1000);
+  assert.equal(history.present.elements[0].xMm, 1000);
 });
 
 test("18. Undo add", () => {
@@ -305,7 +305,7 @@ test("18. Undo add", () => {
   let history = createHistory([]);
   history = pushHistory(history, [pillar]);
   history = undoHistory(history);
-  assert.equal(history.present.length, 0);
+  assert.equal(history.present.elements.length, 0);
 });
 
 test("19. Undo delete", () => {
@@ -313,7 +313,7 @@ test("19. Undo delete", () => {
   let history = createHistory([pillar]);
   history = pushHistory(history, []);
   history = undoHistory(history);
-  assert.equal(history.present.length, 1);
+  assert.equal(history.present.elements.length, 1);
 });
 
 test("20. zoom/pan이 history에 들어가지 않음", () => {

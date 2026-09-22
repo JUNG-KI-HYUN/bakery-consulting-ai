@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getConsultationById } from "@/lib/diagnosis/diagnosis-service";
+import { getEquipmentDefinitionService } from "@/lib/equipment/definition-service.server";
+import { parseEquipmentInstance } from "@/lib/equipment/validation";
+import type { EquipmentDefinition, EquipmentInstance } from "@/lib/equipment/types";
 import { getFieldSurveyService } from "@/lib/field/field-survey-service.server";
 import { isLayoutId } from "@/lib/space-fit/identifiers";
 import { parseRoomElement } from "@/lib/space-fit/layout-record";
@@ -9,6 +12,22 @@ import type { RoomElement } from "@/lib/space-fit/types";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function loadDefinitionsForLayout(
+  instances: readonly EquipmentInstance[] | undefined,
+): Promise<EquipmentDefinition[]> {
+  if (!instances || instances.length === 0) return [];
+  const service = getEquipmentDefinitionService();
+  const definitions: EquipmentDefinition[] = [];
+  const seen = new Set<string>();
+  for (const instance of instances) {
+    if (seen.has(instance.equipmentDefinitionId)) continue;
+    seen.add(instance.equipmentDefinitionId);
+    const loaded = await service.getDefinition(instance.equipmentDefinitionId);
+    if (loaded.ok) definitions.push(loaded.value);
+  }
+  return definitions;
 }
 
 export async function GET(
@@ -28,7 +47,6 @@ export async function GET(
     return NextResponse.json({ message: loaded.message, code: loaded.code }, { status });
   }
 
-  // Field context (read-only) — Layout JSON에 복제하지 않음
   let measurementSet = null;
   let productionSalesSpace = null;
   let deliveryPath = null;
@@ -42,9 +60,14 @@ export async function GET(
     deliveryPath = survey.value.deliveryPath ?? null;
   }
 
+  const equipmentDefinitions = await loadDefinitionsForLayout(
+    loaded.value.equipmentInstances,
+  );
+
   return NextResponse.json({
     layout: loaded.value,
-    geometryWarnings: validateLayoutGeometry(loaded.value),
+    geometryWarnings: validateLayoutGeometry(loaded.value, equipmentDefinitions),
+    equipmentDefinitions,
     fieldContext: {
       surveySequence,
       measurementSet,
@@ -98,11 +121,33 @@ export async function PATCH(
     elements.push(parsed);
   }
 
+  let equipmentInstances: EquipmentInstance[] | undefined;
+  if (body.equipmentInstances !== undefined) {
+    if (!Array.isArray(body.equipmentInstances)) {
+      return NextResponse.json(
+        { message: "equipmentInstances invalid", code: "INVALID_DATA" },
+        { status: 400 },
+      );
+    }
+    equipmentInstances = [];
+    for (const item of body.equipmentInstances) {
+      const parsed = parseEquipmentInstance(item);
+      if (!parsed) {
+        return NextResponse.json(
+          { message: "equipmentInstances contain invalid data", code: "INVALID_DATA" },
+          { status: 400 },
+        );
+      }
+      equipmentInstances.push(parsed);
+    }
+  }
+
   const spaceFit = getSpaceFitLayoutService();
   const updated = await spaceFit.updateLayout({
     layoutId,
     expectedLayoutVersion: body.expectedLayoutVersion,
     elements,
+    equipmentInstances,
   });
   if (!updated.ok) {
     const status =
@@ -116,7 +161,6 @@ export async function PATCH(
     return NextResponse.json({ message: updated.message, code: updated.code }, { status });
   }
 
-  // consultation ownership soft-check when present
   if (updated.value.consultationId) {
     const record = await getConsultationById(updated.value.consultationId);
     if (!record) {
@@ -124,8 +168,13 @@ export async function PATCH(
     }
   }
 
+  const equipmentDefinitions = await loadDefinitionsForLayout(
+    updated.value.equipmentInstances,
+  );
+
   return NextResponse.json({
     layout: updated.value,
-    geometryWarnings: validateLayoutGeometry(updated.value),
+    geometryWarnings: validateLayoutGeometry(updated.value, equipmentDefinitions),
+    equipmentDefinitions,
   });
 }

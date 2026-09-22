@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import type { EquipmentDefinition, EquipmentInstance } from "@/lib/equipment/types";
+import { equipmentDataStatusLabel, equipmentFootprintRect } from "@/lib/equipment/placement";
+import { snapToGridMm } from "@/lib/space-fit/geometry";
 import { mmToSvg, pointMmToSvg, type ViewTransform } from "@/lib/space-fit/coords";
 import { entranceToRect } from "@/lib/space-fit/element-geometry";
 import { elementWarningCodes } from "@/lib/space-fit/editor-state";
@@ -53,6 +56,12 @@ type ActiveGesture =
       grab: { offsetXMm: number; offsetYMm: number };
     }
   | {
+      kind: "equipment-drag";
+      equipmentInstanceId: string;
+      pointerId: number;
+      grab: { offsetXMm: number; offsetYMm: number };
+    }
+  | {
       kind: "pan";
       pointerId: number;
       lastClientX: number;
@@ -61,22 +70,34 @@ type ActiveGesture =
 
 export function SpaceFitSvgWorkspace({
   layout,
+  definitions,
   selectedElementId,
+  selectedEquipmentInstanceId,
   warnings,
+  placementActive,
   onSelectElement,
+  onSelectEquipment,
   onElementMoved,
   onDragPreview,
+  onEquipmentMoved,
+  onEquipmentDragPreview,
+  onPlaceAt,
   viewportControls,
   onViewportControlsChange,
 }: {
   layout: SpaceFitLayout;
+  definitions: ReadonlyMap<string, EquipmentDefinition>;
   selectedElementId: string | null;
+  selectedEquipmentInstanceId: string | null;
   warnings: readonly GeometryWarning[];
+  placementActive: boolean;
   onSelectElement: (elementId: string | null) => void;
-  /** Domain 갱신 (pointerup). API 저장하지 않음. */
+  onSelectEquipment: (equipmentInstanceId: string | null) => void;
   onElementMoved: (element: RoomElement) => void;
-  /** Drag 중 preview — history/save에 넣지 않음. */
   onDragPreview: (element: RoomElement | null) => void;
+  onEquipmentMoved: (instance: EquipmentInstance) => void;
+  onEquipmentDragPreview: (instance: EquipmentInstance | null) => void;
+  onPlaceAt: (xMm: number, yMm: number) => void;
   viewportControls: Omit<
     SpaceFitViewportControls,
     "fit" | "viewportWidthPx" | "viewportHeightPx"
@@ -109,7 +130,7 @@ export function SpaceFitSvgWorkspace({
   }, []);
 
   const controls = useMemo(() => {
-    const base = createFitViewportControls({
+    return createFitViewportControls({
       roomWidthMm: layout.room.widthMm,
       roomDepthMm: layout.room.depthMm,
       viewportWidthPx: size.width,
@@ -118,7 +139,6 @@ export function SpaceFitSvgWorkspace({
       panXPx: viewportControls.panXPx,
       panYPx: viewportControls.panYPx,
     });
-    return base;
   }, [
     layout.room.widthMm,
     layout.room.depthMm,
@@ -172,11 +192,12 @@ export function SpaceFitSvgWorkspace({
   }
 
   function handlePointerDownOnElement(
-    event: React.PointerEvent,
+    event: ReactPointerEvent,
     element: RoomElement,
   ) {
     event.stopPropagation();
     event.preventDefault();
+    onSelectEquipment(null);
     onSelectElement(element.elementId);
     if (!isFreelyDraggableType(element.type)) return;
     const pointerMm = pointerToMm(event.clientX, event.clientY);
@@ -193,14 +214,47 @@ export function SpaceFitSvgWorkspace({
     onDragPreview(element);
   }
 
-  function handleBackgroundPointerDown(event: React.PointerEvent) {
+  function handlePointerDownOnEquipment(
+    event: ReactPointerEvent,
+    instance: EquipmentInstance,
+  ) {
+    event.stopPropagation();
+    event.preventDefault();
+    onSelectElement(null);
+    onSelectEquipment(instance.equipmentInstanceId);
+    const pointerMm = pointerToMm(event.clientX, event.clientY);
+    if (!pointerMm) return;
+    const grab = {
+      offsetXMm: pointerMm.xMm - instance.xMm,
+      offsetYMm: pointerMm.yMm - instance.yMm,
+    };
+    svgRef.current?.setPointerCapture?.(event.pointerId);
+    setGesture({
+      kind: "equipment-drag",
+      equipmentInstanceId: instance.equipmentInstanceId,
+      pointerId: event.pointerId,
+      grab,
+    });
+    onEquipmentDragPreview(instance);
+  }
+
+  function handleBackgroundPointerDown(event: ReactPointerEvent) {
     const target = event.target as Element;
     const isPanSurface =
       target.getAttribute("data-pan-surface") === "true" ||
       target === event.currentTarget;
     if (!isPanSurface) return;
     event.preventDefault();
+
+    if (placementActive) {
+      const pointerMm = pointerToMm(event.clientX, event.clientY);
+      if (!pointerMm) return;
+      onPlaceAt(snapToGridMm(Math.max(0, pointerMm.xMm)), snapToGridMm(Math.max(0, pointerMm.yMm)));
+      return;
+    }
+
     onSelectElement(null);
+    onSelectEquipment(null);
     svgRef.current?.setPointerCapture?.(event.pointerId);
     setGesture({
       kind: "pan",
@@ -210,7 +264,7 @@ export function SpaceFitSvgWorkspace({
     });
   }
 
-  function handlePointerMove(event: React.PointerEvent) {
+  function handlePointerMove(event: ReactPointerEvent) {
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     if (gesture.kind === "pan") {
       const dx = event.clientX - gesture.lastClientX;
@@ -228,27 +282,40 @@ export function SpaceFitSvgWorkspace({
       });
       return;
     }
-    const source =
-      layout.elements.find((item) => item.elementId === gesture.elementId) ?? null;
-    if (!source) return;
     const pointerMm = pointerToMm(event.clientX, event.clientY);
     if (!pointerMm) return;
-    // grab offset는 원본(비-preview) 요소 기준이어야 하므로 layout이 이미 preview면
-    // gesture 시작 시 고정된 grab을 사용한다.
-    const base =
-      // find non-preview: parent passes displayLayout; grab already accounts for start
-      source;
-    const moved = moveElementByPointerMm(base, pointerMm, gesture.grab);
-    if (moved) onDragPreview(moved);
+    if (gesture.kind === "drag") {
+      const source =
+        layout.elements.find((item) => item.elementId === gesture.elementId) ?? null;
+      if (!source) return;
+      const moved = moveElementByPointerMm(source, pointerMm, gesture.grab);
+      if (moved) onDragPreview(moved);
+      return;
+    }
+    const source =
+      layout.equipmentInstances?.find(
+        (item) => item.equipmentInstanceId === gesture.equipmentInstanceId,
+      ) ?? null;
+    if (!source) return;
+    const xMm = snapToGridMm(Math.max(0, pointerMm.xMm - gesture.grab.offsetXMm));
+    const yMm = snapToGridMm(Math.max(0, pointerMm.yMm - gesture.grab.offsetYMm));
+    onEquipmentDragPreview(Object.freeze({ ...source, xMm, yMm }));
   }
 
-  function handlePointerUp(event: React.PointerEvent) {
+  function handlePointerUp(event: ReactPointerEvent) {
     if (!gesture || gesture.pointerId !== event.pointerId) return;
     if (gesture.kind === "drag") {
       const current =
         layout.elements.find((item) => item.elementId === gesture.elementId) ?? null;
       if (current) onElementMoved(current);
       onDragPreview(null);
+    } else if (gesture.kind === "equipment-drag") {
+      const current =
+        layout.equipmentInstances?.find(
+          (item) => item.equipmentInstanceId === gesture.equipmentInstanceId,
+        ) ?? null;
+      if (current) onEquipmentMoved(current);
+      onEquipmentDragPreview(null);
     }
     setGesture(null);
   }
@@ -270,7 +337,7 @@ export function SpaceFitSvgWorkspace({
             })
           }
         >
-          −
+          -
         </button>
         <span className="min-w-14 text-center text-sm font-semibold">{zoomPercent}%</span>
         <button
@@ -301,7 +368,11 @@ export function SpaceFitSvgWorkspace({
         >
           전체 보기
         </button>
-        <span className="text-xs text-slate-500">빈 공간 드래그 = 이동 · 요소 = 배치</span>
+        <span className="text-xs text-slate-500">
+          {placementActive
+            ? "배치 모드: 평면 클릭"
+            : "빈 공간 드래그 = 이동 · 요소/장비 = 선택"}
+        </span>
       </div>
       <div ref={containerRef} className="min-h-0 flex-1 bg-[#EEF2F6] touch-none">
         <svg
@@ -425,6 +496,96 @@ export function SpaceFitSvgWorkspace({
                   strokeWidth={selected ? 3 : 1}
                   onPointerDown={(event) => handlePointerDownOnElement(event, element)}
                 />
+                {warnLabel ? (
+                  <text
+                    x={topLeft.xPx + w / 2}
+                    y={topLeft.yPx - 4}
+                    textAnchor="middle"
+                    className="fill-amber-800"
+                    style={{ fontSize: 10, fontWeight: 700 }}
+                    pointerEvents="none"
+                  >
+                    ! {warnLabel}
+                  </text>
+                ) : null}
+              </g>
+            );
+          })}
+          {(layout.equipmentInstances ?? []).map((instance) => {
+            const definition = definitions.get(instance.equipmentDefinitionId);
+            const selected = instance.equipmentInstanceId === selectedEquipmentInstanceId;
+            const codes = elementWarningCodes(warnings, instance.equipmentInstanceId);
+            const warnLabel =
+              codes.length > 0 ? codes.map((code) => code.replace(/_/g, " ")).join(" · ") : null;
+            if (!definition) {
+              const p = pointMmToSvg({ xMm: instance.xMm, yMm: instance.yMm }, transform);
+              return (
+                <g key={instance.equipmentInstanceId}>
+                  <text
+                    x={p.xPx}
+                    y={p.yPx}
+                    style={{ fontSize: 11, fontWeight: 700 }}
+                    className="fill-amber-900"
+                    onPointerDown={(event) => handlePointerDownOnEquipment(event, instance)}
+                  >
+                    장비정보를 찾을 수 없음
+                  </text>
+                </g>
+              );
+            }
+            const rect = equipmentFootprintRect(definition, instance);
+            if (!rect) {
+              const p = pointMmToSvg({ xMm: instance.xMm, yMm: instance.yMm }, transform);
+              return (
+                <g key={instance.equipmentInstanceId}>
+                  <text
+                    x={p.xPx}
+                    y={p.yPx}
+                    style={{ fontSize: 11, fontWeight: 700 }}
+                    className="fill-amber-900"
+                    onPointerDown={(event) => handlePointerDownOnEquipment(event, instance)}
+                  >
+                    footprint 불가
+                  </text>
+                </g>
+              );
+            }
+            const topLeft = pointMmToSvg({ xMm: rect.xMm, yMm: rect.yMm }, transform);
+            const w = mmToSvg(rect.widthMm, transform.scale);
+            const h = mmToSvg(rect.heightMm, transform.scale);
+            const sample = definition.dataStatus === "SAMPLE";
+            return (
+              <g key={instance.equipmentInstanceId}>
+                <rect
+                  x={topLeft.xPx}
+                  y={topLeft.yPx}
+                  width={w}
+                  height={h}
+                  fill="#1d4ed8"
+                  fillOpacity={0.28}
+                  stroke={selected ? "#0B1220" : codes.length ? "#b45309" : "#1e3a8a"}
+                  strokeWidth={selected ? 3 : 1.5}
+                  strokeDasharray={sample ? "6 4" : undefined}
+                  onPointerDown={(event) => handlePointerDownOnEquipment(event, instance)}
+                />
+                <text
+                  x={topLeft.xPx + 4}
+                  y={topLeft.yPx + 14}
+                  style={{ fontSize: 11, fontWeight: 700 }}
+                  className="fill-slate-900"
+                  pointerEvents="none"
+                >
+                  {definition.name}
+                </text>
+                <text
+                  x={topLeft.xPx + 4}
+                  y={topLeft.yPx + 28}
+                  style={{ fontSize: 10, fontWeight: 600 }}
+                  className="fill-amber-900"
+                  pointerEvents="none"
+                >
+                  {equipmentDataStatusLabel(definition.dataStatus)} · {instance.rotationDeg}°
+                </text>
                 {warnLabel ? (
                   <text
                     x={topLeft.xPx + w / 2}
