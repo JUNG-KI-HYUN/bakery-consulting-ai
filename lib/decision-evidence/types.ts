@@ -20,7 +20,8 @@ export type DecisionEvidenceSourceDomain =
   | "TECHNICAL_CHECK"
   | "SPACE_FIT"
   | "EQUIPMENT"
-  | "LEASE";
+  | "LEASE"
+  | "ECONOMIC";
 
 export type DecisionEvidenceCategory =
   | "MEASUREMENT"
@@ -34,7 +35,11 @@ export type DecisionEvidenceCategory =
   | "GEOMETRY"
   | "EQUIPMENT_DATA"
   /** Lease Research / Rental Market Analysis — 세분화(RENT/MANAGEMENT_FEE)는 이번 Phase에서 하지 않음 */
-  | "LEASE";
+  | "LEASE"
+  /** Economic Feasibility — projection / ceiling / stress */
+  | "ECONOMIC"
+  /** Economic BEP 산식 결과 */
+  | "BEP";
 
 export const DECISION_EVIDENCE_CATEGORIES: readonly DecisionEvidenceCategory[] = Object.freeze([
   "MEASUREMENT",
@@ -48,6 +53,8 @@ export const DECISION_EVIDENCE_CATEGORIES: readonly DecisionEvidenceCategory[] =
   "GEOMETRY",
   "EQUIPMENT_DATA",
   "LEASE",
+  "ECONOMIC",
+  "BEP",
 ]);
 
 /** 최종 HARD_FAIL / BLOCK / REJECT가 아니다. */
