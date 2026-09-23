@@ -66,8 +66,10 @@ import {
   SpaceFitSvgWorkspace,
 } from "@/components/space-fit/SpaceFitSvgWorkspace";
 import { TechnicalCheckPanel } from "@/components/space-fit/TechnicalCheckPanel";
+import { DecisionEvidencePanel } from "@/components/space-fit/DecisionEvidencePanel";
 import { SPACE_FIT_DEFAULT_ZOOM_INDEX } from "@/lib/space-fit/viewport";
 import { buildTechnicalCheckReport } from "@/lib/technical-check/build-report";
+import { buildDecisionEvidenceBundle } from "@/lib/decision-evidence/build-bundle";
 
 const ELEMENT_LABELS: Record<RoomElementType, string> = {
   ENTRANCE: "출입구",
@@ -129,7 +131,9 @@ export function SpaceFitWorkspace({
   const [categoryFilter, setCategoryFilter] = useState<EquipmentCategory | "ALL">("ALL");
   const [saveStatus, setSaveStatus] = useState<SpaceFitSaveUiStatus>("saved");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [rightPanel, setRightPanel] = useState<"geometry" | "technical">("geometry");
+  const [rightPanel, setRightPanel] = useState<"geometry" | "technical" | "decision">(
+    "geometry",
+  );
   const [viewportUi, setViewportUi] = useState({
     zoomIndex: SPACE_FIT_DEFAULT_ZOOM_INDEX,
     panXPx: 0,
@@ -202,6 +206,30 @@ export function SpaceFitWorkspace({
       fieldContext.facility,
       fieldContext.measurementSet,
       fieldContext.deliveryPath,
+    ],
+  );
+  const decisionBundle = useMemo(
+    () =>
+      buildDecisionEvidenceBundle({
+        layout,
+        definitions: definitionMap,
+        geometryWarnings: warnings,
+        facility: fieldContext.facility,
+        measurement: fieldContext.measurementSet,
+        productionSalesSpace: fieldContext.productionSalesSpace,
+        deliveryPath: fieldContext.deliveryPath,
+        technicalReport,
+        generatedAt: "client-derived",
+      }),
+    [
+      layout,
+      definitionMap,
+      warnings,
+      fieldContext.facility,
+      fieldContext.measurementSet,
+      fieldContext.productionSalesSpace,
+      fieldContext.deliveryPath,
+      technicalReport,
     ],
   );
   const measurement = fieldContext.measurementSet;
@@ -784,7 +812,7 @@ export function SpaceFitWorkspace({
         </main>
 
         <aside className="shrink-0 overflow-auto border-t border-slate-200 bg-white p-4 lg:w-80 lg:border-t-0 lg:border-l">
-          <div className="mb-3 flex gap-2">
+          <div className="mb-3 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setRightPanel("geometry")}
@@ -807,6 +835,17 @@ export function SpaceFitWorkspace({
             >
               기술조건 검토
             </button>
+            <button
+              type="button"
+              onClick={() => setRightPanel("decision")}
+              className={`min-h-11 flex-1 rounded-lg border px-2 text-xs font-semibold ${
+                rightPanel === "decision"
+                  ? "border-[#0B1220] bg-[#0B1220] text-white"
+                  : "border-slate-300 bg-white"
+              }`}
+            >
+              판단 근거 정리
+            </button>
           </div>
           {rightPanel === "geometry" ? (
             <>
@@ -822,8 +861,10 @@ export function SpaceFitWorkspace({
                 <GeometryWarningsPanel warnings={warnings} />
               </div>
             </>
-          ) : (
+          ) : rightPanel === "technical" ? (
             <TechnicalCheckPanel report={technicalReport} />
+          ) : (
+            <DecisionEvidencePanel bundle={decisionBundle} />
           )}
           {errorMessage ? (
             <p className="mt-3 text-sm font-semibold text-red-700">{errorMessage}</p>
