@@ -1,0 +1,200 @@
+import type { FacilityObservations } from "./facility";
+import { parseFacilityObservations } from "./facility";
+import type { MeasurementSet } from "./measurement";
+import { parseMeasurementSet } from "./measurement";
+import type {
+  DeliveryPathObservation,
+  ProductionSalesSpaceObservation,
+} from "./space-equipment";
+import {
+  parseDeliveryPathObservation,
+  parseProductionSalesSpaceObservation,
+} from "./space-equipment";
+import { canCompleteFieldStage, isFieldInputStage } from "./stage-completion";
+import type { SurveyStageId } from "./stages";
+import { SURVEY_STAGE_IDS, isSurveyStageId } from "./stages";
+import {
+  type SiteSurvey,
+  type SiteSurveyStatus,
+  type SurveyStageState,
+  type SurveyStageStates,
+} from "./types";
+
+export interface FieldSurveyDraftPatchInput {
+  readonly expectedDraftVersion: number;
+  readonly measurementSet?: MeasurementSet;
+  readonly facility?: FacilityObservations;
+  readonly productionSalesSpace?: ProductionSalesSpaceObservation;
+  readonly deliveryPath?: DeliveryPathObservation;
+  readonly stageStates?: Partial<Record<SurveyStageId, SurveyStageState>>;
+  readonly completeStageIds?: readonly SurveyStageId[];
+  readonly touchStageIds?: readonly SurveyStageId[];
+}
+
+export type ApplyDraftPatchResult =
+  | { readonly ok: true; readonly survey: SiteSurvey }
+  | { readonly ok: false; readonly code: "VERSION_CONFLICT" | "INVALID_DATA"; readonly message: string };
+
+const ALLOWED_STAGE_STATES: readonly SurveyStageState[] = [
+  "NOT_STARTED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "SKIPPED",
+];
+
+function isSurveyStageState(value: unknown): value is SurveyStageState {
+  return typeof value === "string" && ALLOWED_STAGE_STATES.some((item) => item === value);
+}
+
+/**
+ * Draft PATCH를 현재 Survey에 적용한다. filesystem은 건드리지 않는다.
+ * 첫 실제 입력 저장 시 DRAFT → IN_PROGRESS. READY_FOR_REVIEW/COMPLETED로 올리지 않는다.
+ */
+export function applyFieldSurveyDraftPatch(
+  current: SiteSurvey,
+  input: FieldSurveyDraftPatchInput,
+  nowIso: string,
+): ApplyDraftPatchResult {
+  if (current.draftVersion !== input.expectedDraftVersion) {
+    return {
+      ok: false,
+      code: "VERSION_CONFLICT",
+      message: "SiteSurvey draftVersion does not match the stored draft",
+    };
+  }
+
+  let measurementSet = current.measurementSet;
+  if (input.measurementSet !== undefined) {
+    const parsed = parseMeasurementSet(input.measurementSet);
+    if (!parsed) {
+      return { ok: false, code: "INVALID_DATA", message: "measurementSet is invalid" };
+    }
+    if (parsed.surveyId !== current.surveyId) {
+      return { ok: false, code: "INVALID_DATA", message: "measurementSet.surveyId mismatch" };
+    }
+    if (parsed.candidateStoreId !== current.candidateStoreId) {
+      return {
+        ok: false,
+        code: "INVALID_DATA",
+        message: "measurementSet.candidateStoreId mismatch",
+      };
+    }
+    if (current.measurementSet && parsed.measurementId !== current.measurementSet.measurementId) {
+      return {
+        ok: false,
+        code: "INVALID_DATA",
+        message: "measurementSet.measurementId must remain stable",
+      };
+    }
+    measurementSet = parsed;
+  }
+
+  let facility = current.facility;
+  if (input.facility !== undefined) {
+    const parsed = parseFacilityObservations(input.facility);
+    if (!parsed) {
+      return { ok: false, code: "INVALID_DATA", message: "facility is invalid" };
+    }
+    facility = parsed;
+  }
+
+  let productionSalesSpace = current.productionSalesSpace;
+  if (input.productionSalesSpace !== undefined) {
+    const parsed = parseProductionSalesSpaceObservation(input.productionSalesSpace);
+    if (!parsed) {
+      return { ok: false, code: "INVALID_DATA", message: "productionSalesSpace is invalid" };
+    }
+    productionSalesSpace = parsed;
+  }
+
+  let deliveryPath = current.deliveryPath;
+  if (input.deliveryPath !== undefined) {
+    const parsed = parseDeliveryPathObservation(input.deliveryPath);
+    if (!parsed) {
+      return { ok: false, code: "INVALID_DATA", message: "deliveryPath is invalid" };
+    }
+    deliveryPath = parsed;
+  }
+
+  const nextStages: Record<SurveyStageId, SurveyStageState> = { ...current.stageStates };
+
+  if (input.stageStates) {
+    for (const [stageId, state] of Object.entries(input.stageStates)) {
+      if (!isSurveyStageId(stageId) || !isSurveyStageState(state)) {
+        return { ok: false, code: "INVALID_DATA", message: "stageStates contains invalid entries" };
+      }
+      nextStages[stageId] = state;
+    }
+  }
+
+  if (input.touchStageIds) {
+    for (const stageId of input.touchStageIds) {
+      if (!isSurveyStageId(stageId)) {
+        return { ok: false, code: "INVALID_DATA", message: "touchStageIds contains invalid stage" };
+      }
+      if (nextStages[stageId] === "NOT_STARTED") {
+        nextStages[stageId] = "IN_PROGRESS";
+      }
+    }
+  }
+
+  if (input.completeStageIds) {
+    for (const stageId of input.completeStageIds) {
+      if (!isSurveyStageId(stageId) || !isFieldInputStage(stageId)) {
+        return {
+          ok: false,
+          code: "INVALID_DATA",
+          message: "completeStageIds contains unsupported stage",
+        };
+      }
+      const check = canCompleteFieldStage(stageId, {
+        measurementSet,
+        facility,
+        productionSalesSpace,
+        deliveryPath,
+      });
+      if (!check.ok) {
+        return {
+          ok: false,
+          code: "INVALID_DATA",
+          message: `Cannot complete ${stageId}: missing ${check.missing.join(", ")}`,
+        };
+      }
+      nextStages[stageId] = "COMPLETED";
+    }
+  }
+
+  for (const stageId of SURVEY_STAGE_IDS) {
+    if (!nextStages[stageId]) {
+      return { ok: false, code: "INVALID_DATA", message: "stageStates incomplete" };
+    }
+  }
+
+  const hasFieldContent =
+    measurementSet !== undefined ||
+    (facility !== undefined && Object.keys(facility).length > 0) ||
+    productionSalesSpace !== undefined ||
+    deliveryPath !== undefined ||
+    Object.values(nextStages).some((state) => state !== "NOT_STARTED");
+
+  let status: SiteSurveyStatus = current.status;
+  if (status === "DRAFT" && hasFieldContent) {
+    status = "IN_PROGRESS";
+  }
+
+  return {
+    ok: true,
+    survey: Object.freeze({
+      ...current,
+      measurementSet,
+      facility,
+      productionSalesSpace,
+      deliveryPath,
+      stageStates: Object.freeze(nextStages) as SurveyStageStates,
+      status,
+      draftVersion: current.draftVersion + 1,
+      updatedAt: nowIso,
+      ...(status === "IN_PROGRESS" && !current.startedAt ? { startedAt: nowIso } : {}),
+    }),
+  };
+}

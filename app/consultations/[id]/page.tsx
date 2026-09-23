@@ -52,6 +52,9 @@ export default async function ConsultationDetailPage({
           <Link href={`/reports/${id}`} className="btn-primary">
             고객용 리포트 보기
           </Link>
+          <Link href={`/consultations/${id}/field`} className="btn-outline">
+            FIELD 현장조사
+          </Link>
         </div>
       </section>
       <DataConfidencePanel coverage={coverage} />

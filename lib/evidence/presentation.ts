@@ -1,4 +1,10 @@
-import type { Evidence, EvidenceSourceType, EvidenceValue, VerificationStatus } from "./types";
+import type {
+  ConfirmationRequirement,
+  Evidence,
+  EvidenceSourceType,
+  EvidenceValue,
+  VerificationStatus,
+} from "./types";
 
 const verificationLabels: Record<VerificationStatus, string> = {
   VERIFIED: "확인됨",
@@ -20,8 +26,26 @@ const sourceLabels: Record<EvidenceSourceType, string> = {
   CUSTOMER_INPUT: "고객 입력",
 };
 
+/** 확인주체 라벨. 확인 필요를 "문제없음"으로 읽히게 표현하지 않는다. */
+const confirmationRequirementLabels: Record<ConfirmationRequirement, string> = {
+  NONE: "추가 확인 불필요",
+  FIELD_CHECK_REQUIRED: "현장 확인 필요",
+  OWNER_CONFIRMATION_REQUIRED: "임대인 확인 필요",
+  AGENT_CONFIRMATION_REQUIRED: "중개사 확인 필요",
+  EXPERT_CONFIRMATION_REQUIRED: "전문가 확인 필요",
+  AUTHORITY_CONFIRMATION_REQUIRED: "관할기관 확인 필요",
+  DOCUMENT_REQUIRED: "자료 확보 필요",
+  NO_SOURCE_AVAILABLE: "확인 가능한 자료 없음",
+};
+
 export function getVerificationLabel(status: VerificationStatus): string {
   return verificationLabels[status];
+}
+
+export function getConfirmationRequirementLabel(
+  requirement: ConfirmationRequirement,
+): string {
+  return confirmationRequirementLabels[requirement];
 }
 
 export function getEvidenceSourceLabel(source: EvidenceSourceType): string {
