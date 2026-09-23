@@ -7,6 +7,7 @@ import type {
   DecisionEvidenceCategory,
   DecisionEvidenceImportance,
   DecisionEvidenceItem,
+  DecisionEvidenceNature,
   DecisionEvidenceSourceDomain,
   DecisionEvidenceSourceRef,
 } from "./types";
@@ -31,6 +32,7 @@ export function createDecisionEvidenceItem(input: {
   description: string;
   sourceRef?: DecisionEvidenceSourceRef;
   importance?: DecisionEvidenceImportance;
+  nature?: DecisionEvidenceNature;
   fieldEvidence?: FieldEvidenceMeta;
   equipmentDataStatus?: EquipmentDataStatus;
 }): DecisionEvidenceItem {
@@ -50,6 +52,7 @@ export function createDecisionEvidenceItem(input: {
     sourceRef,
     bucket: input.bucket,
     importance: input.importance ?? "SUPPORTING",
+    ...(input.nature ? { nature: input.nature } : {}),
     ...(input.fieldEvidence
       ? {
           verificationStatus: input.fieldEvidence.verificationStatus,

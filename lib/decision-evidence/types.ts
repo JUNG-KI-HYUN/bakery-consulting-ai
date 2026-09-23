@@ -19,7 +19,8 @@ export type DecisionEvidenceSourceDomain =
   | "FIELD"
   | "TECHNICAL_CHECK"
   | "SPACE_FIT"
-  | "EQUIPMENT";
+  | "EQUIPMENT"
+  | "LEASE";
 
 export type DecisionEvidenceCategory =
   | "MEASUREMENT"
@@ -31,7 +32,9 @@ export type DecisionEvidenceCategory =
   | "SPACE"
   | "DELIVERY"
   | "GEOMETRY"
-  | "EQUIPMENT_DATA";
+  | "EQUIPMENT_DATA"
+  /** Lease Research / Rental Market Analysis — 세분화(RENT/MANAGEMENT_FEE)는 이번 Phase에서 하지 않음 */
+  | "LEASE";
 
 export const DECISION_EVIDENCE_CATEGORIES: readonly DecisionEvidenceCategory[] = Object.freeze([
   "MEASUREMENT",
@@ -44,6 +47,7 @@ export const DECISION_EVIDENCE_CATEGORIES: readonly DecisionEvidenceCategory[] =
   "DELIVERY",
   "GEOMETRY",
   "EQUIPMENT_DATA",
+  "LEASE",
 ]);
 
 /** 최종 HARD_FAIL / BLOCK / REJECT가 아니다. */
@@ -55,6 +59,18 @@ export type DecisionEvidenceBucket =
   | "GEOMETRY_ISSUE";
 
 export type DecisionEvidenceImportance = "CORE" | "SUPPORTING";
+
+/**
+ * Evidence 의미 성격. bucket과 독립.
+ * OBSERVED_FACT bucket 안에서도 직접 관찰 vs 참고 집계를 구분한다.
+ * optional — 기존 consumer/FIELD item은 nature 없이 동작한다.
+ */
+export type DecisionEvidenceNature =
+  | "OBSERVATION"
+  | "REFERENCE_SUMMARY"
+  | "DERIVED_CALCULATION"
+  | "ESTIMATE"
+  | "INTEGRATION_STATE";
 
 export interface DecisionEvidenceSourceRef {
   readonly stageId?: string;
@@ -78,6 +94,8 @@ export interface DecisionEvidenceItem {
   readonly sourceRef: DecisionEvidenceSourceRef;
   readonly bucket: DecisionEvidenceBucket;
   readonly importance: DecisionEvidenceImportance;
+  /** optional — 미지정 시 기존 item과 호환 */
+  readonly nature?: DecisionEvidenceNature;
   readonly verificationStatus?: VerificationStatus;
   readonly sourceType?: EvidenceSourceType;
   readonly confirmationRequirement?: ConfirmationRequirement;
