@@ -7,6 +7,7 @@ import type {
   DecisionEvidenceCategory,
   DecisionEvidenceImportance,
   DecisionEvidenceItem,
+  DecisionEvidenceLocationReference,
   DecisionEvidenceNature,
   DecisionEvidenceSourceDomain,
   DecisionEvidenceSourceRef,
@@ -35,6 +36,7 @@ export function createDecisionEvidenceItem(input: {
   nature?: DecisionEvidenceNature;
   fieldEvidence?: FieldEvidenceMeta;
   equipmentDataStatus?: EquipmentDataStatus;
+  locationReference?: DecisionEvidenceLocationReference;
 }): DecisionEvidenceItem {
   const sourceRef = Object.freeze({ ...(input.sourceRef ?? {}) });
   assertNoPiiInSourceRef(sourceRef);
@@ -62,6 +64,17 @@ export function createDecisionEvidenceItem(input: {
       : {}),
     ...(input.equipmentDataStatus
       ? { equipmentDataStatus: input.equipmentDataStatus }
+      : {}),
+    ...(input.locationReference
+      ? {
+          locationReference: Object.freeze({
+            ...input.locationReference,
+            fieldCheckKeys: Object.freeze([...input.locationReference.fieldCheckKeys]),
+            value: Array.isArray(input.locationReference.value)
+              ? Object.freeze([...input.locationReference.value])
+              : input.locationReference.value,
+          }),
+        }
       : {}),
   });
 }

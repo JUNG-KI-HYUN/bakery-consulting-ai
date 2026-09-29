@@ -12,6 +12,15 @@ import type {
   EvidenceSourceType,
   VerificationStatus,
 } from "../evidence/types";
+import type {
+  BasicLocationAnalysisLayer,
+  BasicLocationConfidence,
+  BasicLocationMissingReason,
+  BasicLocationResultStatus,
+  BasicLocationResultValue,
+  BasicLocationSource,
+  BasicLocationValueType,
+} from "../market-data/basic-location/results";
 
 export const DECISION_EVIDENCE_SCHEMA_VERSION = "decision-evidence-v1" as const;
 
@@ -21,7 +30,8 @@ export type DecisionEvidenceSourceDomain =
   | "SPACE_FIT"
   | "EQUIPMENT"
   | "LEASE"
-  | "ECONOMIC";
+  | "ECONOMIC"
+  | "LOCATION";
 
 export type DecisionEvidenceCategory =
   | "MEASUREMENT"
@@ -39,7 +49,13 @@ export type DecisionEvidenceCategory =
   /** Economic Feasibility — projection / ceiling / stress */
   | "ECONOMIC"
   /** Economic BEP 산식 결과 */
-  | "BEP";
+  | "BEP"
+  /** Basic Location — 분석 대상·공식상권 관계·주변 검색 등. 세부 구분은 locationReference에 보존 */
+  | "LOCATION"
+  /** Basic Location DEMAND / FLOW / STAY layer */
+  | "DEMAND"
+  /** Basic Location COMPETITION layer + Competition Structure 관측 */
+  | "COMPETITION";
 
 export const DECISION_EVIDENCE_CATEGORIES: readonly DecisionEvidenceCategory[] = Object.freeze([
   "MEASUREMENT",
@@ -55,6 +71,9 @@ export const DECISION_EVIDENCE_CATEGORIES: readonly DecisionEvidenceCategory[] =
   "LEASE",
   "ECONOMIC",
   "BEP",
+  "LOCATION",
+  "DEMAND",
+  "COMPETITION",
 ]);
 
 /** 최종 HARD_FAIL / BLOCK / REJECT가 아니다. */
@@ -92,6 +111,28 @@ export interface DecisionEvidenceSourceRef {
   readonly opaqueKey?: string;
 }
 
+/**
+ * BasicLocationResult provenance 최소값. 전체 Result를 복제하지 않는다.
+ * FIELD VerificationStatus로 변환하지 않는다. value는 원본 그대로(null 유지).
+ */
+export interface DecisionEvidenceLocationReference {
+  readonly analysisRunId: string;
+  readonly resultId: string;
+  readonly analysisLayer: BasicLocationAnalysisLayer;
+  readonly metricKey: string;
+  readonly status: BasicLocationResultStatus;
+  readonly valueType: BasicLocationValueType;
+  readonly confidence: BasicLocationConfidence;
+  readonly value: BasicLocationResultValue;
+  readonly unit: string | null;
+  readonly primarySourceId: string | null;
+  readonly primarySourceType: BasicLocationSource["sourceType"] | null;
+  readonly referenceDate: string | null;
+  readonly referencePeriod: string | null;
+  readonly missingReason: BasicLocationMissingReason | null;
+  readonly fieldCheckKeys: readonly string[];
+}
+
 export interface DecisionEvidenceItem {
   readonly id: string;
   readonly category: DecisionEvidenceCategory;
@@ -107,6 +148,8 @@ export interface DecisionEvidenceItem {
   readonly sourceType?: EvidenceSourceType;
   readonly confirmationRequirement?: ConfirmationRequirement;
   readonly equipmentDataStatus?: EquipmentDataStatus;
+  /** optional — LOCATION item만 사용 */
+  readonly locationReference?: DecisionEvidenceLocationReference;
 }
 
 export interface DecisionEvidenceSummaryCounts {
