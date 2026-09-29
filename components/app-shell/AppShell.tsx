@@ -55,6 +55,8 @@ const statusPresentation: Record<
 };
 
 function currentWorkspace(pathname: string) {
+  if (pathname === "/cases/new") return "새 Case";
+  if (pathname.startsWith("/cases/")) return "Case";
   if (pathname.startsWith("/markets/competition-structure")) return "경쟁환경";
   if (pathname.startsWith("/markets/rental-research")) return "임대시장";
   if (pathname.startsWith("/markets/economic-feasibility")) return "사업성·손익";
