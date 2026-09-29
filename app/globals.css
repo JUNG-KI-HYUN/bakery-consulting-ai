@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --primary-navy: #0b1220;
-  --deep-navy: #111827;
+  --primary-navy: #1d1d1b;
+  --deep-navy: #292927;
   --slate: #334155;
-  --background: #f6f8fb;
+  --background: #f5f4f0;
   --card-white: #ffffff;
   --warm-cream: #fff7ed;
-  --amber-accent: #f59e0b;
+  --amber-accent: #a58547;
   --risk-red: #ef4444;
   --safe-green: #10b981;
   --info-blue: #2563eb;
@@ -22,6 +22,20 @@ body {
   background: var(--background);
   color: var(--primary-navy);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid #a58547;
+  outline-offset: 2px;
 }
 
 .input {
@@ -55,10 +69,14 @@ body {
 }
 
 .panel-card {
-  border-radius: 1rem;
+  border-radius: 0.75rem;
   border: 1px solid #e2e8f0;
   background: #fff;
   box-shadow: 0 1px 3px rgba(11, 18, 32, 0.06);
+}
+
+.app-workspace > * {
+  min-width: 0;
 }
 
 .btn-primary {

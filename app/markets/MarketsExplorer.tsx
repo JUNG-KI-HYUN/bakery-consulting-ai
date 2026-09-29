@@ -636,7 +636,7 @@ export default function MarketsExplorer({
   }, [analysisContext, hierarchy, kakaoNearbySource]);
 
   return (
-    <div className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1600px] -translate-x-1/2 overflow-x-clip">
+    <div className="w-full min-w-0 overflow-x-clip">
       <div className="mb-4 space-y-4">
         <AnalysisWorkflow active={workflowStep} target={activeTarget} />
         <AnalysisTargetHeader
