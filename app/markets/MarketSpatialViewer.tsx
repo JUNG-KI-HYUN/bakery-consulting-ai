@@ -19,6 +19,7 @@ import {
   type MarketAnalysisRequestStatus as BakeryDataRequestStatus,
 } from "@/lib/market-data/market-analysis-context";
 import {
+  activeAnalysisTargetFromRunSnapshot,
   createAnalysisRunSnapshot,
   type AnalysisRunSnapshot,
 } from "@/lib/market-data/basic-location/run";
@@ -33,6 +34,10 @@ import {
   officialMarketRelationDescription,
   type OfficialMarketSpatialResult,
 } from "@/lib/market-data/official-market-spatial-relation";
+import {
+  activeAnalysisTargetHref,
+  type ActiveAnalysisTarget,
+} from "@/lib/market-data/competition-location";
 import type {
   MarketDataMetric,
   MarketDataObservation,
@@ -582,6 +587,7 @@ function InspectorField({ label, value }: { label: string; value: string }) {
 }
 
 export default function MarketSpatialViewer({
+  initialTarget = null,
   selectedMarket,
   selectedSubmarket,
   activeTab,
@@ -593,7 +599,9 @@ export default function MarketSpatialViewer({
   analysisConditionsRequest,
   onOpenAnalysisSummary,
   pointSelectionEnabled = true,
+  onActiveTargetChange,
 }: {
+  initialTarget?: ActiveAnalysisTarget | null;
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
   activeTab: MarketsWorkspaceTab;
@@ -605,6 +613,7 @@ export default function MarketSpatialViewer({
   analysisConditionsRequest?: number;
   onOpenAnalysisSummary?: () => void;
   pointSelectionEnabled?: boolean;
+  onActiveTargetChange?: (target: ActiveAnalysisTarget) => void;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -655,6 +664,7 @@ export default function MarketSpatialViewer({
     SelectedReferenceFeature[]
   >([]);
   const [selectedReferenceIndex, setSelectedReferenceIndex] = useState(0);
+  const [manualOfficialSelectedAt, setManualOfficialSelectedAt] = useState<string | null>(null);
   const [crosswalk, setCrosswalk] = useState<MarketCrosswalkResponse | null>(null);
   const [crosswalkLoading, setCrosswalkLoading] = useState(false);
   const [crosswalkError, setCrosswalkError] = useState<string | null>(null);
@@ -738,6 +748,12 @@ export default function MarketSpatialViewer({
   useEffect(() => () => livingPopulationControllerRef.current?.abort(), []);
 
   const handleAnalysisExecuted = useCallback((analysis: ExecutedMarketAnalysis) => {
+    // A manual official-market choice belongs to the previous analysis point.
+    // Never carry it across a newly executed location/radius analysis.
+    setSelectedReferences([]);
+    setSelectedReferenceIndex(0);
+    setManualOfficialSelectedAt(null);
+    setHitTestDurationMs(null);
     setExecutedSpatialAnalysis(analysis);
 
     if (!selectedMarket) {
@@ -1401,7 +1417,7 @@ export default function MarketSpatialViewer({
     : null;
   const isOfficialMarketReference =
     selectedReference?.layerId === "seoul-official-markets";
-  const selectedOfficialMarketCode =
+  const manuallySelectedOfficialMarketCode =
     isOfficialMarketReference &&
     selectedReferenceId &&
     /^\d+$/.test(selectedReferenceId)
@@ -1440,10 +1456,52 @@ export default function MarketSpatialViewer({
       };
     });
   }, [officialLayerError, runSnapshot?.analysisRunId, spatialRelations]);
-  const selectedSpatialRelation = spatialRelations?.results.find((result) => result.marketCode === selectedOfficialMarketCode);
-  const selectedOfficialMarketName = selectedOfficialMarketCode && selectedReference
-    ? referenceNameForFeature("seoul-official-markets", selectedReference.feature)
-    : null;
+  const relatedOfficialChoices = useMemo(
+    () => spatialRelations
+      ? [...spatialRelations.insideMarkets, ...spatialRelations.radiusOverlapMarkets]
+      : [],
+    [spatialRelations],
+  );
+  const selectedOfficialMarketCode = relatedOfficialChoices.some(
+    (result) => result.marketCode === manuallySelectedOfficialMarketCode,
+  )
+    ? manuallySelectedOfficialMarketCode
+    : relatedOfficialChoices.length === 1
+      ? relatedOfficialChoices[0].marketCode
+      : null;
+  const selectedSpatialRelation = relatedOfficialChoices.find(
+    (result) => result.marketCode === selectedOfficialMarketCode,
+  ) ?? null;
+  const selectedOfficialMarketName = selectedSpatialRelation?.marketName ?? null;
+  const activeAnalysisTarget: ActiveAnalysisTarget | null = runSnapshot
+    ? activeAnalysisTargetFromRunSnapshot(
+        runSnapshot,
+        selectedSpatialRelation && selectedOfficialMarketCode && selectedOfficialMarketName
+          ? {
+              marketCode: selectedOfficialMarketCode,
+              marketName: selectedOfficialMarketName,
+              spatialRelation: selectedSpatialRelation.relation === "INSIDE"
+                ? "INSIDE"
+                : "RADIUS_OVERLAP",
+              selectionMethod: relatedOfficialChoices.length === 1
+                ? "AUTO_SINGLE_CANDIDATE"
+                : "MANUAL",
+              selectedAt: relatedOfficialChoices.length === 1
+                ? runSnapshot.createdAt
+                : manualOfficialSelectedAt ?? runSnapshot.createdAt,
+            }
+          : null,
+      )
+    : initialTarget;
+  const competitionEnvironmentHref = activeAnalysisTargetHref(
+    "/markets/competition-structure",
+    activeAnalysisTarget,
+  );
+  useEffect(() => {
+    if (runSnapshot && activeAnalysisTarget) {
+      onActiveTargetChange?.(activeAnalysisTarget);
+    }
+  }, [activeAnalysisTarget, onActiveTargetChange, runSnapshot]);
   const selectedMarketName = selectedMarket?.marketName ?? null;
   const selectedSubmarketId = selectedSubmarket?.submarketId ?? null;
   const selectedSubmarketName = selectedSubmarket?.submarketName ?? null;
@@ -1461,8 +1519,8 @@ export default function MarketSpatialViewer({
       analysisRunId: officialRelationCompletion.analysisRunId,
       completedAt: officialRelationCompletion.completedAt,
       results: spatialRelations?.results ?? null,
-      manuallySelected: selectedOfficialMarketCode !== null && selectedOfficialMarketName !== null
-        ? { marketCode: selectedOfficialMarketCode, marketName: selectedOfficialMarketName } : null,
+      manuallySelected: manuallySelectedOfficialMarketCode !== null && selectedOfficialMarketName !== null
+        ? { marketCode: manuallySelectedOfficialMarketCode, marketName: selectedOfficialMarketName } : null,
     },
     publicData: {
       requestStatus: bakeryDataStatus,
@@ -1475,7 +1533,7 @@ export default function MarketSpatialViewer({
     livingPopulation,
   }), [executedSpatialAnalysis, runSnapshot, selectedMarketId, selectedMarketName, selectedSubmarketId, selectedSubmarketName, kakaoNearby,
     officialMarketLayer, officialLayerError, officialLayerLoading, spatialRelations,
-    officialRelationCompletion, selectedOfficialMarketCode, selectedOfficialMarketName,
+    officialRelationCompletion, manuallySelectedOfficialMarketCode, selectedOfficialMarketName,
     bakeryDataStatus, bakeryDataMarketCode, bakeryData, bakeryDataError,
     bakeryDataRunId, bakeryDataCompletedAt, livingPopulation]);
 
@@ -1489,14 +1547,12 @@ export default function MarketSpatialViewer({
   }, [kakaoNearby, onKakaoNearbySourceChange]);
 
   const kakaoOfficialMarketPolygons = useMemo(() => {
-    if (!officialMarketLayer || !crosswalk) {
+    if (!officialMarketLayer) {
       return [];
     }
 
     const candidateIds = new Set(
-      crosswalk.officialMarketCandidates.map(
-        (candidate) => candidate.referenceId,
-      ),
+      relatedOfficialChoices.map((candidate) => candidate.marketCode),
     );
     if (candidateIds.size === 0) {
       return [];
@@ -1519,7 +1575,7 @@ export default function MarketSpatialViewer({
       });
     });
     return polygons;
-  }, [crosswalk, officialMarketLayer]);
+  }, [officialMarketLayer, relatedOfficialChoices]);
 
   const handleKakaoOfficialMarketSelect = useCallback(
     (featureIndex: number) => {
@@ -1537,6 +1593,7 @@ export default function MarketSpatialViewer({
       ]);
       setSelectedReferenceIndex(0);
       setHitTestDurationMs(null);
+      setManualOfficialSelectedAt(new Date().toISOString());
     },
     [officialMarketLayer],
   );
@@ -1931,6 +1988,8 @@ export default function MarketSpatialViewer({
               onNearbySearchChange={handleKakaoNearbyChange}
               onOpenAnalysisSummary={onOpenAnalysisSummary}
               pointSelectionEnabled={pointSelectionEnabled}
+              initialSelection={initialTarget}
+              downstreamCompetitionHref={activeAnalysisTarget ? competitionEnvironmentHref : null}
               view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
             />
             {activeTab === "briefing" ? (
@@ -2094,7 +2153,7 @@ export default function MarketSpatialViewer({
               )}
             </div>
 
-            {selectedReferences.length === 0 ? (
+            {selectedReferences.length === 0 && relatedOfficialChoices.length !== 1 ? (
               <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center">
                 <p className="text-sm font-bold text-slate-700">
                   참고할 공식상권을 직접 선택하세요.
@@ -2103,7 +2162,7 @@ export default function MarketSpatialViewer({
                   지도 Polygon 또는 위 공간관계 목록에서 선택하면 제과점 통계를 조회할 수 있습니다. 자동 선택하지 않습니다.
                 </p>
               </div>
-            ) : (
+            ) : selectedReferences.length > 0 ? (
               <>
                 {activeTab !== "briefing" && selectedReferences.length > 1 ? (
                   <div className="mt-4">
@@ -2621,6 +2680,11 @@ export default function MarketSpatialViewer({
                   </div>
                 ) : null}
               </>
+            ) : (
+              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+                <p className="text-sm font-bold text-emerald-900">{selectedOfficialMarketName} 자동 선택</p>
+                <p className="mt-1 text-xs leading-5 text-emerald-800">현재 위치와 반경에서 선택 가능한 공식통계 참고상권이 한 곳이라 자동 연결했습니다.</p>
+              </div>
             )}
 
             {activeTab === "public-data" && selectedMarket && crosswalk ? (

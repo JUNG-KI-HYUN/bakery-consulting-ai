@@ -25,7 +25,11 @@ export type NearbyCategoryId = "bakery" | "confectionery" | "cafe";
 
 export interface NearbyPlace {
   id: string;
+  kakaoPlaceId?: string | null;
   name: string;
+  phone?: string | null;
+  roadAddress?: string | null;
+  addressName?: string | null;
   categoryId: NearbyCategoryId;
   categoryLabel: string;
   address: string;
@@ -37,6 +41,7 @@ export interface NearbyPlace {
 }
 
 export interface NearbyCategoryResult {
+  label?: string;
   totalCount: number;
   places: NearbyPlace[];
   error?: string;
@@ -46,6 +51,18 @@ export interface NearbyPlacesResponse {
   categories?: Array<NearbyCategoryResult & { id: NearbyCategoryId }>;
   uniquePlaceCount?: number;
   uniquePlaces?: NearbyPlace[];
+  competitionObservations?: Array<{
+    kakaoPlaceId: string | null;
+    name: string;
+    phone: string | null;
+    roadAddress: string | null;
+    addressName: string | null;
+    latitude: number;
+    longitude: number;
+    distanceM: number;
+    sourceCategoryId: NearbyCategoryId;
+    sourceCategoryLabel: string;
+  }>;
   message?: string;
 }
 

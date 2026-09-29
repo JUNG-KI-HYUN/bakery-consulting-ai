@@ -7,6 +7,10 @@ import type {
   KakaoNearbySearchState,
   MarketAnalysisContext,
 } from "@/lib/market-data/market-analysis-context";
+import type { ActiveAnalysisTarget } from "@/lib/market-data/competition-location";
+import { activeAnalysisTargetSearchParams } from "@/lib/market-data/competition-location";
+import { analysisResultStatus } from "@/lib/market-data/basic-location/run";
+import { AnalysisTargetHeader, AnalysisWorkflow, type WorkflowStep } from "./AnalysisWorkflow";
 import { buildMarketSummaryPresentation } from "@/lib/market-data/market-analysis-presentation";
 import {
   adaptAnalysisTargetResults,
@@ -288,11 +292,23 @@ function MarketAreaAnalysisSummary({
 
 export default function MarketsExplorer({
   hierarchy,
+  initialTarget = null,
+  initialTab = "briefing",
+  workflowStep = "target",
 }: {
   hierarchy: MarketHierarchy;
+  initialTarget?: ActiveAnalysisTarget | null;
+  initialTab?: MarketsWorkspaceTab;
+  workflowStep?: WorkflowStep;
 }) {
   const initialDistrict = hierarchy.districts[0];
-  const initialMarket = initialDistrict?.markets[0];
+  const initialContextMarket = hierarchy.districts
+    .flatMap((district) => district.markets)
+    .find((market) => market.marketId === initialTarget?.explorationSnapshot.marketId);
+  const initialMarket = initialContextMarket ?? initialDistrict?.markets[0];
+  const initialSubmarket = initialMarket?.submarkets.find(
+    (submarket) => submarket.submarketId === initialTarget?.explorationSnapshot.submarketId,
+  );
   const [query, setQuery] = useState("");
   const [openDistrictIds, setOpenDistrictIds] = useState<Set<string>>(
     () => new Set(initialDistrict ? [initialDistrict.districtId] : []),
@@ -301,10 +317,11 @@ export default function MarketsExplorer({
     initialMarket?.marketId ?? "",
   );
   const [selectedSubmarketId, setSelectedSubmarketId] = useState<string | null>(
-    null,
+    initialSubmarket?.submarketId ?? null,
   );
   const [activeTab, setActiveTab] =
-    useState<MarketsWorkspaceTab>("briefing");
+    useState<MarketsWorkspaceTab>(initialTab);
+  const [activeTarget, setActiveTarget] = useState<ActiveAnalysisTarget | null>(initialTarget);
   const [analysisContext, setAnalysisContext] = useState<MarketAnalysisContext | null>(null);
   const [kakaoNearbySource, setKakaoNearbySource] = useState<KakaoNearbySearchState>({
     status: "idle",
@@ -326,6 +343,26 @@ export default function MarketsExplorer({
     setKakaoNearbySource((current) =>
       JSON.stringify(current) === JSON.stringify(nextState) ? current : nextState,
     );
+  }, []);
+  const handleActiveTargetChange = useCallback((nextTarget: ActiveAnalysisTarget) => {
+    setActiveTarget((current) => JSON.stringify(current) === JSON.stringify(nextTarget) ? current : nextTarget);
+    if (
+      typeof window === "undefined" ||
+      !window.location?.href ||
+      typeof window.history?.replaceState !== "function"
+    ) return;
+    const url = new URL(window.location.href);
+    [
+      "lat", "lng", "radius", "label", "address", "analysisRunId", "source",
+      "createdAt", "updatedAt", "frameoneMarketId", "frameoneMarketName",
+      "frameoneSubmarketId", "frameoneSubmarketName", "frameoneNodeId",
+      "frameoneNodeName", "officialMarketCode", "officialMarketName",
+      "officialRelation", "officialSelectionMethod", "officialSelectedAt",
+    ].forEach((key) => url.searchParams.delete(key));
+    activeAnalysisTargetSearchParams(nextTarget).forEach((value, key) => {
+      url.searchParams.set(key, value);
+    });
+    window.history.replaceState(window.history.state, "", url);
   }, []);
 
   const allMarkets = useMemo(
@@ -600,6 +637,14 @@ export default function MarketsExplorer({
 
   return (
     <div className="relative left-1/2 w-[calc(100vw-2rem)] max-w-[1600px] -translate-x-1/2 overflow-x-clip">
+      <div className="mb-4 space-y-4">
+        <AnalysisWorkflow active={workflowStep} target={activeTarget} />
+        <AnalysisTargetHeader
+          target={activeTarget}
+          status={analysisResultStatus(activeTarget?.analysisRunId, analysisContext?.analysisRunId)}
+          officialReferencePeriod={analysisContext?.publicData.selectedOfficialMarketData?.referencePeriod ?? null}
+        />
+      </div>
       <nav
         aria-label="상권분석 업무 메뉴"
         className="mb-4 flex gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 lg:hidden"
@@ -826,6 +871,7 @@ export default function MarketsExplorer({
 
       <div className={activeTab === "market-map" || (activeTab === "public-data" && !analysisContext?.target) ? "hidden" : ""}>
       <MarketSpatialViewer
+        initialTarget={activeTarget}
         selectedMarket={selectedMarketSpatialSummary}
         selectedSubmarket={selectedSubmarketSpatialSummary}
         activeTab={activeTab}
@@ -837,6 +883,7 @@ export default function MarketsExplorer({
         analysisSummary={null}
         pointSelectionEnabled={analysisMode === "point-detail"}
         marketSelector={null}
+        onActiveTargetChange={handleActiveTargetChange}
       />
       </div>
 

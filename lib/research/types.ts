@@ -144,3 +144,13 @@ export interface RentalMarketResult {
   }>;
   limitations: string[];
 }
+
+export interface RentalScopeConfirmation {
+  confirmationId: string;
+  analysisRunId: string;
+  officialMarketCode: string | null;
+  method: "MANUAL_ADDRESS_REVIEW" | "VERIFIED_SPATIAL_FILTER";
+  selectedRecordIds: string[];
+  basis: string;
+  confirmedAt: string;
+}

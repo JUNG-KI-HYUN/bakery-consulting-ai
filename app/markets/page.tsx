@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import marketHierarchyJson from "@/data/seoul-market/v1.1-final/MARKET_HIERARCHY.json";
+import { parseActiveAnalysisTarget } from "@/lib/market-data/competition-location";
+import { revalidateActiveTargetOfficialReference } from "@/lib/market-data/official-market-reference.server";
 import MarketsExplorer, { type MarketHierarchy } from "./MarketsExplorer";
 
 export const metadata: Metadata = {
@@ -10,18 +11,34 @@ export const metadata: Metadata = {
 
 const marketHierarchy = marketHierarchyJson as unknown as MarketHierarchy;
 
-export default function MarketsPage() {
+export default async function MarketsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const query = await searchParams;
+  const activeTarget = await revalidateActiveTargetOfficialReference(
+    parseActiveAnalysisTarget(query),
+  );
+  const requestedView = Array.isArray(query.view) ? query.view[0] : query.view;
+  const workflowStep = requestedView === "location"
+    ? "location"
+    : requestedView === "evidence"
+      ? "evidence"
+      : "target";
+  const initialTab = requestedView === "location"
+    ? "market-map"
+    : requestedView === "evidence"
+      ? "public-data"
+      : "briefing";
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Link href="/markets/economic-feasibility" className="btn-outline">
-          사업성 분석
-        </Link>
-        <Link href="/markets/rental-research" className="btn-outline">
-          임대 조사자료 보기
-        </Link>
-      </div>
-      <MarketsExplorer hierarchy={marketHierarchy} />
+      <MarketsExplorer
+        hierarchy={marketHierarchy}
+        initialTarget={activeTarget}
+        initialTab={initialTab}
+        workflowStep={workflowStep}
+      />
     </div>
   );
 }

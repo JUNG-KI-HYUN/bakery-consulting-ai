@@ -498,7 +498,7 @@ test("STEP 2 CASE H/I/J/K/L: actual map handlers share executed spatial calculat
   } finally { view.dispose(); }
 });
 
-test("STEP 2 viewer: all official geometries independent of crosswalk; manual OUTSIDE warning and neutral state", async () => {
+test("STEP 2 viewer: relation candidates are independent of crosswalk and OUTSIDE is not selectable", async () => {
   installMapFixture();
   const source = JSON.parse(fs.readFileSync(path.join(root, "data/seoul-market/v1.1-final/09_GEO/OFFICIAL_SEOUL_MARKETS.geojson"), "utf8"));
   const requests = [];
@@ -525,12 +525,11 @@ test("STEP 2 viewer: all official geometries independent of crosswalk; manual OU
     assert.ok(!html().includes("참고자료 선택"));
     assert.equal(map().props.selectedOfficialMarketCode, null); // no auto-selection
     map().props.onSelectOfficialMarket(0); await view.flush();
-    assert.equal(map().props.selectedOfficialMarketCode, source.features[0].properties.official_area_code);
-    assert.ok(html().includes("별도 참고자료로만 확인하세요."));
-    assert.ok(html().includes("분석지점 실제매출이나 분석반경 자체의 통계가 아닙니다."));
+    assert.equal(map().props.selectedOfficialMarketCode, null);
+    assert.ok(html().includes("반경 겹침 상권 선택은 분석지점이 해당 공식상권 안에 있다는 의미가 아닙니다."));
     assert.ok(!requests.some((url) => url.includes("bakery-data")));
     view.props = { ...view.props, activeTab: "public-data" }; view.dirty = true; await view.flush();
-    assert.ok(html().includes("별도 참고자료로만 확인하세요."));
+    assert.equal(map().props.selectedOfficialMarketCode, null);
   } finally { view.dispose(); }
 });
 
@@ -646,8 +645,10 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
     assert.deepEqual(context().officialMarkets.relatedMarkets, related);
 
     mapProps().onSelectOfficialMarket(0); await flush();
-    assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "OUTSIDE");
+    assert.equal(context().officialMarkets.manuallySelected, null);
     assert.deepEqual(context().officialMarkets.relatedMarkets, related);
+    mapProps().onSelectOfficialMarket(garakIndex); await flush();
+    assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "INSIDE");
     const loadButton = () => viewer.button("제과점 데이터 확인");
     for (const dataStatus of ["available", "partial", "missing"]) {
       loadButton().props.onClick(); await flush();
@@ -657,14 +658,14 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
       assert.equal(context().publicData.status, dataStatus);
       assert.notEqual(context().sourceCompletion.officialStatsCompletedAt, null);
       assert.deepEqual(context().publicData.selectedOfficialMarketData, payload);
-      assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "OUTSIDE");
+      assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "INSIDE");
       if (dataStatus === "available") {
         const completedContext = context();
         const nearbyCount = nearbyRequests.length, publicCount = publicRequests.length;
         for (const activeTab of ["competition", "public-data", "market-map", "briefing"]) {
           viewer.props = { ...viewer.props, activeTab }; viewer.dirty = true; await flush();
           assert.equal(context(), completedContext);
-          assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "OUTSIDE");
+          assert.equal(context().officialMarkets.manuallySelected.spatialRelation.relation, "INSIDE");
           assert.equal(context().publicData.selectedOfficialMarketData, completedContext.publicData.selectedOfficialMarketData);
         }
         assert.equal(nearbyRequests.length, nearbyCount); assert.equal(publicRequests.length, publicCount);
@@ -678,12 +679,14 @@ test("STEP 3: real map/viewer state produces one context across target edits, re
 
     loadButton().props.onClick(); await flush();
     const stalePublic = publicRequests.at(-1), firstNewContext = contexts.length;
-    mapProps().onSelectOfficialMarket(garakIndex); await flush();
+    const alternateCode = related.find((item) => item.marketCode !== "3120231").marketCode;
+    const alternateIndex = source.features.findIndex((feature) => feature.properties.official_area_code === alternateCode);
+    mapProps().onSelectOfficialMarket(alternateIndex); await flush();
     assert.equal(stalePublic.signal.aborted, true);
     assert.ok(contexts.slice(firstNewContext).every((item) => item.publicData.requestStatus === "idle" && item.publicData.selectedOfficialMarketData === null));
     stalePublic.resolve(Response.json(publicPayload(stalePublic, "available"))); await flush();
     assert.equal(context().publicData.requestStatus, "idle"); assert.equal(context().publicData.selectedOfficialMarketData, null);
-    assert.equal(context().officialMarkets.manuallySelected.marketCode, "3120231");
+    assert.equal(context().officialMarkets.manuallySelected.marketCode, alternateCode);
     assert.deepEqual(context().officialMarkets.relatedMarkets, related);
 
     loadButton().props.onClick(); await flush();

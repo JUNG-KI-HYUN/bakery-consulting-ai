@@ -1,4 +1,5 @@
 import type { Evidence } from "../evidence/types";
+import type { ActiveAnalysisTarget } from "../market-data/basic-location/run";
 
 export type {
   Evidence,
@@ -160,6 +161,12 @@ export interface ConsultationRecord {
   schemaVersion?: string;
   /** 누락은 근거가 기록되지 않았다는 뜻이며, 기존 입력을 확인됨으로 간주하지 않는다. */
   evidence?: Evidence[];
+  /** 상권분석에서 후보점포로 넘긴 당시 snapshot. 기존 항목을 수정하지 않고 append한다. */
+  analysisTargetLinks?: Array<{
+    linkId: string;
+    linkedAt: string;
+    sourceSnapshot: ActiveAnalysisTarget;
+  }>;
   consultation: ConsultationInput;
   candidateStore: CandidateStoreInput;
   facilityCheck: FacilityCheckInput;

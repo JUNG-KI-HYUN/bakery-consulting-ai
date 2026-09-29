@@ -157,6 +157,21 @@ function toNearbyPlace(
   };
 }
 
+function toCompetitionObservation(place: NearbyPlaceCandidate) {
+  return {
+    kakaoPlaceId: place.kakaoPlaceId,
+    name: place.name,
+    phone: place.phone,
+    roadAddress: place.roadAddress,
+    addressName: place.addressName,
+    latitude: place.latitude,
+    longitude: place.longitude,
+    distanceM: place.distanceM,
+    sourceCategoryId: place.sourceCategoryId,
+    sourceCategoryLabel: place.sourceCategoryLabel,
+  };
+}
+
 function kakaoSearchUrl(
   category: (typeof NEARBY_CATEGORIES)[number],
   longitude: number,
@@ -271,9 +286,19 @@ export async function GET(request: Request) {
     ...category,
     places: category.places.map(toNearbyPlace),
   }));
+  const competitionObservations = searchResults.flatMap((category) =>
+    category.places.map(toCompetitionObservation),
+  );
 
   return Response.json(
-    { center, radiusM, categories, uniquePlaceCount: uniquePlaces.length, uniquePlaces },
+    {
+      center,
+      radiusM,
+      categories,
+      uniquePlaceCount: uniquePlaces.length,
+      uniquePlaces,
+      competitionObservations,
+    },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

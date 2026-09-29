@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { BreakEvenForm } from "@/components/diagnosis/BreakEvenForm";
 import { BrandMarketingForm } from "@/components/diagnosis/BrandMarketingForm";
 import { CandidateStoreForm } from "@/components/diagnosis/CandidateStoreForm";
@@ -13,7 +13,8 @@ import { StepIndicator } from "@/components/ui/StepIndicator";
 import { sampleConsultation } from "@/lib/diagnosis/sample-data";
 import { calculateBreakEven } from "@/lib/diagnosis/calculateBreakEven";
 import { calculateStartupCost } from "@/lib/diagnosis/calculateStartupCost";
-import { DiagnosisResult, StartupCostInput } from "@/lib/diagnosis/types";
+import { DiagnosisResult, type ConsultationRecord, StartupCostInput } from "@/lib/diagnosis/types";
+import { parseActiveAnalysisTarget } from "@/lib/market-data/competition-location";
 
 const emptyStartupCost: StartupCostInput = {
   interiorCost: 0,
@@ -26,16 +27,51 @@ const emptyStartupCost: StartupCostInput = {
 };
 
 export default function NewConsultationPage() {
-  const [record, setRecord] = useState({
+  const generatedConsultationId = useId().replace(/[^a-zA-Z0-9-]/g, "");
+  const [record, setRecord] = useState<ConsultationRecord>({
     ...sampleConsultation,
     consultation: {
       ...sampleConsultation.consultation,
-      id: `consult-${Date.now()}`,
+      id: `consult-${generatedConsultationId}`,
       title: "새 상담",
       sampleData: true,
     },
   });
   const [result, setResult] = useState<DiagnosisResult | null>(null);
+  const [analysisLinkAdded, setAnalysisLinkAdded] = useState(false);
+
+  useEffect(() => {
+    const query = Object.fromEntries(new URLSearchParams(window.location.search));
+    const target = parseActiveAnalysisTarget(query);
+    if (!target) return;
+    const linkId = `market-analysis:${target.analysisRunId}`;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      setRecord((current) => {
+        if (current.analysisTargetLinks?.some((link) => link.linkId === linkId)) {
+          return current;
+        }
+        return {
+          ...current,
+          candidateStore: {
+            ...current.candidateStore,
+            address: target.address ?? current.candidateStore.address,
+          },
+          analysisTargetLinks: [
+            ...(current.analysisTargetLinks ?? []),
+            {
+              linkId,
+              linkedAt: new Date().toISOString(),
+              sourceSnapshot: target,
+            },
+          ],
+        };
+      });
+      setAnalysisLinkAdded(true);
+    });
+    return () => { active = false; };
+  }, []);
 
   const breakEvenResult = useMemo(
     () => calculateBreakEven(record.breakEven),
@@ -93,6 +129,12 @@ export default function NewConsultationPage() {
           <StepIndicator current={result ? 5 : 1} />
         </div>
       </section>
+
+      {analysisLinkAdded ? (
+        <p className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs font-semibold text-blue-900">
+          현재 상권분석 snapshot을 후보점포 원본 근거로 연결했습니다. 이후 주소를 수정해도 연결 당시 snapshot은 덮어쓰지 않습니다.
+        </p>
+      ) : null}
 
       <ConsultationForm
         value={record.consultation}

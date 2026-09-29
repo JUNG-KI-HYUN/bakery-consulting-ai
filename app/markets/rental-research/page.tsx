@@ -1,7 +1,14 @@
-import Link from "next/link";
+import {
+  parseActiveAnalysisTarget,
+} from "@/lib/market-data/competition-location";
+import { revalidateActiveTargetOfficialReference } from "@/lib/market-data/official-market-reference.server";
 import { analyzeRentalMarket, freshnessAt } from "@/lib/research/rental-market-analysis";
 import { listResearchRecords } from "@/lib/research/research-repository";
 import type { LeaseResearchRecord, NumericSummary, ResearchSourceType } from "@/lib/research/types";
+import {
+  ActiveAnalysisTargetCard,
+  AnalysisWorkflow,
+} from "../AnalysisWorkflow";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +92,14 @@ function RecordCard({ record, referenceDate }: { record: LeaseResearchRecord; re
   );
 }
 
-export default async function RentalResearchPage() {
+export default async function RentalResearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const activeTarget = await revalidateActiveTargetOfficialReference(
+    parseActiveAnalysisTarget(await searchParams),
+  );
   const records = await listResearchRecords();
   const referenceDate = referenceDateInKorea();
   const result = analyzeRentalMarket(records, { referenceDate });
@@ -93,14 +107,20 @@ export default async function RentalResearchPage() {
 
   return (
     <div className="space-y-6">
+      <AnalysisWorkflow active="rental" target={activeTarget} statuses={{ rental: records.length ? "NEEDS_CONFIRMATION" : "NOT_RUN" }} />
+      <ActiveAnalysisTargetCard target={activeTarget} status="NOT_RUN" />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#2563EB]">Rental Research</p>
-          <h2 className="mt-1 text-2xl font-bold text-[#0B1220]">임대 조사자료와 시장 참고</h2>
+          <p className="text-xs font-bold tracking-[0.16em] text-[#2563EB]">임대시장</p>
+          <h2 className="mt-1 text-2xl font-bold text-[#0B1220]">임대시장 조사자료와 참고</h2>
           <p className="mt-2 text-sm text-slate-600">FRAMEONE 서버에 명시적으로 저장한 조사자료만 표시합니다.</p>
         </div>
-        <div className="flex gap-2"><Link href="/markets/economic-feasibility" className="btn-outline">사업성 분석</Link><Link href="/markets" className="btn-outline">상권분석으로 돌아가기</Link></div>
       </header>
+
+      <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">
+        <p className="font-bold">{records.length ? "확인 필요" : "비교자료 없음"}</p>
+        <p className="mt-1">현재 분석대상은 작업 범위를 이어 보기 위한 컨텍스트입니다. 저장된 임대 조사자료에 위치·공식상권 연결 근거가 없으므로 이 대상을 기준으로 표본을 자동 필터링하거나 연결하지 않습니다. 원본 조사자료는 분석대상이 바뀌어도 보존됩니다.</p>
+      </section>
 
       <section className="panel-card p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
