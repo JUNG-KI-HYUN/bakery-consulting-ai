@@ -322,3 +322,68 @@ test("12. forbids judgment phrases such as 적정 월세 / 위험 / 추천", () 
     assert.equal(evidence.expertReviewItems.length, 0);
   }
 });
+
+function nullSummaryResult() {
+  return baseResult({
+    deposit: { sampleCount: 0, median: null, min: null, max: null },
+    managementFee: { sampleCount: 0, median: null, min: null, max: null },
+    rentPerExclusivePyeong: { sampleCount: 1, median: 200_000, min: null, max: null },
+  });
+}
+
+test("13. null NumericSummary values never appear as the text 'null' in descriptions", () => {
+  const result = nullSummaryResult();
+  const evidence = buildLeaseDecisionEvidence({
+    rentalMarketResult: result,
+    leaseBinding: matchingBinding(result),
+  });
+  for (const fieldKey of ["deposit", "managementFee", "rentPerExclusivePyeong"]) {
+    const fact = evidence.observedFacts.find((item) => item.sourceRef.fieldKey === fieldKey);
+    assert.ok(fact, fieldKey);
+    assert.equal(fact.nature, "REFERENCE_SUMMARY");
+    assert.equal(fact.description.includes("null"), false, fieldKey);
+    assert.doesNotMatch(fact.description, /median=0\b|min=0\b|max=0\b/);
+  }
+  const deposit = evidence.observedFacts.find((item) => item.sourceRef.fieldKey === "deposit");
+  assert.match(deposit.description, /median=확인 필요/);
+  const pyeong = evidence.observedFacts.find((item) => item.sourceRef.fieldKey === "rentPerExclusivePyeong");
+  assert.match(pyeong.description, /median=200000, min=확인 필요, max=확인 필요/);
+  assert.equal(allText(evidence).includes("null"), false);
+});
+
+test("14. reference NumericSummaries keep typed null and exact numbers", () => {
+  const result = nullSummaryResult();
+  const evidence = buildLeaseDecisionEvidence({
+    rentalMarketResult: result,
+    leaseBinding: matchingBinding(result),
+  });
+  assert.deepEqual(evidence.referenceNumericSummaries.deposit, { sampleCount: 0, median: null, min: null, max: null });
+  assert.equal(evidence.referenceNumericSummaries.managementFee.median, null);
+  assert.equal(evidence.referenceNumericSummaries.rentPerExclusivePyeong.median, 200_000);
+  assert.equal(evidence.referenceNumericSummaries.rentPerExclusivePyeong.min, null);
+  assert.deepEqual(evidence.referenceNumericSummaries.rent, result.rent);
+  assert.notEqual(evidence.referenceNumericSummaries.deposit, result.deposit);
+
+  const serialized = JSON.stringify(evidence);
+  assert.doesNotThrow(() => JSON.parse(serialized));
+  assert.match(serialized, /"median":null/);
+  assert.equal(serialized.includes('"null"'), false);
+
+  const absent = buildLeaseDecisionEvidence({ rentalMarketResult: null, leaseBinding: null });
+  assert.equal(absent.referenceNumericSummaries, null);
+});
+
+test("15. null fix keeps REFERENCE_SUMMARY and creates no risk, score, or verdict", () => {
+  const result = nullSummaryResult();
+  const before = JSON.stringify(result);
+  const evidence = buildLeaseDecisionEvidence({
+    rentalMarketResult: result,
+    leaseBinding: matchingBinding(result),
+  });
+  assert.equal(JSON.stringify(result), before);
+  assert.ok(evidence.observedFacts.every((item) => item.nature === "REFERENCE_SUMMARY"));
+  assert.equal(evidence.observedConstraints, undefined);
+  assert.equal(evidence.expertReviewItems.length, 0);
+  assert.equal(decisionEvidenceCreatesNoVerdictScoreRisk(evidence), true);
+  assert.doesNotMatch(allText(evidence), FORBIDDEN_PHRASE_PATTERN);
+});

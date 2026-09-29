@@ -17,6 +17,13 @@ import type { DecisionEvidenceItem, DecisionEvidenceNature } from "./types";
 const SOURCE_DOMAIN = "LEASE" as const;
 const CATEGORY = "LEASE" as const;
 
+export type LeaseReferenceNumericSummaries = {
+  readonly deposit: Readonly<NumericSummary>;
+  readonly rent: Readonly<NumericSummary>;
+  readonly managementFee: Readonly<NumericSummary>;
+  readonly rentPerExclusivePyeong: Readonly<NumericSummary>;
+};
+
 export type LeaseDecisionEvidenceResult = {
   readonly observedFacts: readonly DecisionEvidenceItem[];
   readonly missingInformation: readonly DecisionEvidenceItem[];
@@ -26,6 +33,8 @@ export type LeaseDecisionEvidenceResult = {
    * 참고 한계·주의·확인 필요 문구를 EXPERT_REVIEW로 자동 분류하지 않는다.
    */
   readonly referenceLimitations: readonly string[];
+  /** NumericSummary 원값. median/min/max null은 null로 유지한다(0·"null" 변환 금지). */
+  readonly referenceNumericSummaries: LeaseReferenceNumericSummaries | null;
   readonly createsVerdict: false;
   readonly createsScore: false;
   readonly createsRisk: false;
@@ -58,9 +67,18 @@ function leaseItem(input: {
   });
 }
 
-function formatOptionalNumber(value: number | null): string {
-  if (value === null) return "null";
+function formatDisplayNumber(value: number | null): string {
+  if (value === null) return "확인 필요";
   return String(value);
+}
+
+function copyNumericSummary(summary: NumericSummary): Readonly<NumericSummary> {
+  return Object.freeze({
+    sampleCount: summary.sampleCount,
+    median: summary.median,
+    min: summary.min,
+    max: summary.max,
+  });
 }
 
 function summarizeNumeric(
@@ -75,9 +93,9 @@ function summarizeNumeric(
     title: `확인된 비교표본 ${label}`,
     description:
       `${label} NumericSummary — sampleCount=${summary.sampleCount}, ` +
-      `median=${formatOptionalNumber(summary.median)}, ` +
-      `min=${formatOptionalNumber(summary.min)}, ` +
-      `max=${formatOptionalNumber(summary.max)}. ` +
+      `median=${formatDisplayNumber(summary.median)}, ` +
+      `min=${formatDisplayNumber(summary.min)}, ` +
+      `max=${formatDisplayNumber(summary.max)}. ` +
       `FRAMEONE 확인 표본 기준 참고값이며 모집단 시장가격이 아닙니다.`,
     fieldKey,
     opaqueKey: `rental.${fieldKey}`,
@@ -154,6 +172,7 @@ export function buildLeaseDecisionEvidence(input: {
       missingInformation: Object.freeze(missingInformation),
       expertReviewItems: Object.freeze(expertReviewItems),
       referenceLimitations: Object.freeze([] as string[]),
+      referenceNumericSummaries: null,
       createsVerdict: false as const,
       createsScore: false as const,
       createsRisk: false as const,
@@ -207,7 +226,7 @@ export function buildLeaseDecisionEvidence(input: {
         key: "sample-count-zero",
         title: "비교 임대료 표본 없음",
         description:
-          "RentalMarketResult.sampleCount=0 입니다. null 결과와 구분되며, 비교표본 참고값을 제시할 수 없습니다.",
+          "RentalMarketResult.sampleCount=0 입니다. 분석 결과 미연결과 구분되며, 비교표본 참고값을 제시할 수 없습니다.",
         importance: "CORE",
         opaqueKey: "sampleCount",
         fieldKey: "sampleCount",
@@ -305,12 +324,19 @@ export function buildLeaseDecisionEvidence(input: {
 
   // limitations는 참고 metadata로만 보존한다. EXPERT_REVIEW로 자동 분류하지 않는다.
   const referenceLimitations = Object.freeze([...result.limitations]);
+  const referenceNumericSummaries = Object.freeze({
+    deposit: copyNumericSummary(result.deposit),
+    rent: copyNumericSummary(result.rent),
+    managementFee: copyNumericSummary(result.managementFee),
+    rentPerExclusivePyeong: copyNumericSummary(result.rentPerExclusivePyeong),
+  });
 
   return Object.freeze({
     observedFacts: Object.freeze(observedFacts),
     missingInformation: Object.freeze(missingInformation),
     expertReviewItems: Object.freeze(expertReviewItems),
     referenceLimitations,
+    referenceNumericSummaries,
     createsVerdict: false as const,
     createsScore: false as const,
     createsRisk: false as const,
