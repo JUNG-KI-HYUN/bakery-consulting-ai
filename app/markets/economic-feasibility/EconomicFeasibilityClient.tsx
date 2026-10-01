@@ -17,6 +17,7 @@ import {
   type EconomicResultBinding,
 } from "@/lib/economic-feasibility/workspace-binding";
 import { AnalysisTargetHeader } from "../AnalysisWorkflow";
+import { persistAnalysisRunSection } from "@/lib/analysis-runs/analysis-run-client";
 
 const ECONOMIC_WORKSPACE_SESSION_KEY = "frameone:economic-workspace:v1";
 
@@ -140,16 +141,20 @@ export default function EconomicFeasibilityClient({
   rentalMarketResult,
   officialMarketData,
   officialStatus,
+  initialEconomicResult,
+  initialRentalConfirmation,
 }: {
   activeTarget: ActiveAnalysisTarget | null;
   rentalMarketResult: RentalMarketResult;
   officialMarketData: BakeryOfficialMarketData | null;
   officialStatus: string;
+  initialEconomicResult: BoundEconomicResult | null;
+  initialRentalConfirmation: RentalScopeConfirmation | null;
 }) {
   const [plan, setPlan] = useState(initialPlan);
   const [assumptionRevision, setAssumptionRevision] = useState(0);
-  const [rentalConfirmation, setRentalConfirmation] = useState<RentalScopeConfirmation | null>(null);
-  const [rentalScopeBasis, setRentalScopeBasis] = useState("");
+  const [rentalConfirmation, setRentalConfirmation] = useState<RentalScopeConfirmation | null>(initialRentalConfirmation);
+  const [rentalScopeBasis, setRentalScopeBasis] = useState(initialRentalConfirmation?.basis ?? "");
   const [hydrated, setHydrated] = useState(false);
   const benchmarkIdentity = useMemo(
     () => officialBenchmarkIdentity(officialMarketData),
@@ -215,6 +220,7 @@ export default function EconomicFeasibilityClient({
   }, [activeTarget, benchmarkIdentity, officialMarketData, rentalMarketResult]);
 
   const [calculation, setCalculation] = useState<BoundEconomicResult | null>(() => {
+    if (initialEconomicResult) return initialEconomicResult;
     if (!activeTarget) return null;
     const generatedAt = new Date().toISOString();
     return {
@@ -234,6 +240,36 @@ export default function EconomicFeasibilityClient({
           }),
         };
   });
+
+  const runAndPersistCalculation = useCallback(() => {
+    const next = calculateBoundResult(plan, assumptionRevision, rentalConfirmation);
+    setCalculation(next);
+    if (next && activeTarget) {
+      void persistAnalysisRunSection({ section: "economic", target: activeTarget, result: next }).catch(() => undefined);
+    }
+  }, [activeTarget, assumptionRevision, calculateBoundResult, plan, rentalConfirmation]);
+
+  const updateRentalConfirmation = useCallback((checked: boolean) => {
+    if (!checked || !activeTarget) {
+      setRentalConfirmation(null);
+      return;
+    }
+    const confirmation = createRentalScopeConfirmation({
+      analysisRunId: activeTarget.analysisRunId,
+      officialMarketCode: activeTarget.officialReference?.marketCode ?? null,
+      method: "MANUAL_ADDRESS_REVIEW",
+      selectedRecordIds: rentalMarketResult.selectedRecordIds,
+      basis: rentalScopeBasis,
+    });
+    setRentalConfirmation(confirmation);
+    void persistAnalysisRunSection({
+      section: "rental",
+      target: activeTarget,
+      generatedAt: confirmation.confirmedAt,
+      confirmation,
+      result: rentalMarketResult,
+    }).catch(() => undefined);
+  }, [activeTarget, rentalMarketResult, rentalScopeBasis]);
 
   useEffect(() => {
     let active = true;
@@ -271,13 +307,18 @@ export default function EconomicFeasibilityClient({
 
   useEffect(() => {
     if (!hydrated) return;
-    sessionStorage.setItem(ECONOMIC_WORKSPACE_SESSION_KEY, JSON.stringify({
-      plan,
-      assumptionRevision,
-      rentalScopeBasis,
-      rentalConfirmation,
-      calculation,
-    }));
+    try {
+      sessionStorage.setItem(ECONOMIC_WORKSPACE_SESSION_KEY, JSON.stringify({
+        plan,
+        assumptionRevision,
+        rentalScopeBasis,
+        rentalConfirmation,
+        calculation,
+      }));
+    } catch {
+      // The server-side Analysis Run snapshot remains available when the
+      // browser's tab-scoped storage quota is exhausted.
+    }
   }, [assumptionRevision, calculation, hydrated, plan, rentalConfirmation, rentalScopeBasis]);
 
   const updatePlan = useCallback((updater: (current: EconomicPlanInput) => EconomicPlanInput) => {
@@ -308,12 +349,12 @@ export default function EconomicFeasibilityClient({
         <section className="panel-card border-amber-300 bg-amber-50 p-4" role="status">
           <p className="text-sm font-bold text-amber-950">{resultStatus === "STALE" ? "다시 분석 필요" : "아직 계산하지 않음"}</p>
           <p className="mt-1 text-xs leading-5 text-amber-900">{resultStatus === "STALE" ? "이 결과는 이전 분석대상 또는 이전 조건으로 생성되었습니다. 입력한 사업계획은 현재 탭에서 그대로 이어집니다." : "분석대상을 확정한 뒤 현재 조건으로 계산해 주세요."}</p>
-          <button type="button" disabled={!activeTarget} onClick={() => setCalculation(calculateBoundResult(plan, assumptionRevision, rentalConfirmation))} className="mt-3 min-h-11 rounded-lg bg-amber-900 px-4 text-sm font-bold text-white disabled:opacity-50">현재 조건으로 다시 계산</button>
+          <button type="button" disabled={!activeTarget} onClick={runAndPersistCalculation} className="mt-3 min-h-11 rounded-lg bg-amber-900 px-4 text-sm font-bold text-white disabled:opacity-50">현재 조건으로 다시 계산</button>
         </section>
       ) : (
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-xs font-semibold text-emerald-900">현재 분석대상·공식자료·임대 확인범위·사업계획 입력과 일치하는 결과입니다.</p>
-          <button type="button" onClick={() => setCalculation(calculateBoundResult(plan, assumptionRevision, rentalConfirmation))} className="btn-outline">현재 조건으로 다시 계산</button>
+          <button type="button" onClick={runAndPersistCalculation} className="btn-outline">현재 조건으로 다시 계산</button>
         </section>
       )}
       {calculation && activeTarget && calculation.binding.analysisRunId !== activeTarget.analysisRunId ? (
@@ -393,7 +434,7 @@ export default function EconomicFeasibilityClient({
           )}
           <div className="mt-4 border-t border-slate-100 pt-4">
             <label className="block text-xs font-semibold text-slate-600">범위 확인 근거<input className="mt-1 block w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value={rentalScopeBasis} onChange={(event) => { setRentalScopeBasis(event.target.value); setRentalConfirmation(null); }} placeholder="예: 대상 표본 주소를 선택 공식상권과 수동 대조" /></label>
-            <label className="mt-3 flex items-start gap-2 text-xs text-slate-600"><input className="mt-0.5" type="checkbox" disabled={!activeTarget || !officialMarketData || !rentalScopeBasis.trim()} checked={rentalConfirmationCurrent} onChange={(event) => setRentalConfirmation(event.target.checked && activeTarget ? createRentalScopeConfirmation({ analysisRunId: activeTarget.analysisRunId, officialMarketCode: activeTarget.officialReference?.marketCode ?? null, method: "MANUAL_ADDRESS_REVIEW", selectedRecordIds: rentalMarketResult.selectedRecordIds, basis: rentalScopeBasis }) : null)} /><span>현재 선택된 표본 전체를 주소 기준으로 수동 대조해 현재 분석대상 비교범위로 확인했습니다.</span></label>
+            <label className="mt-3 flex items-start gap-2 text-xs text-slate-600"><input className="mt-0.5" type="checkbox" disabled={!activeTarget || !officialMarketData || !rentalScopeBasis.trim()} checked={rentalConfirmationCurrent} onChange={(event) => updateRentalConfirmation(event.target.checked)} /><span>현재 선택된 표본 전체를 주소 기준으로 수동 대조해 현재 분석대상 비교범위로 확인했습니다.</span></label>
           </div>
         </article>
       </section>

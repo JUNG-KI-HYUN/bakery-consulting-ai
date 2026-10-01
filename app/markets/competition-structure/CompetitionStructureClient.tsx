@@ -37,6 +37,8 @@ import {
   ActiveAnalysisTargetCard,
   AnalysisWorkflow,
 } from "../AnalysisWorkflow";
+import { persistAnalysisRunSection } from "@/lib/analysis-runs/analysis-run-client";
+import type { AnalysisRunSnapshot } from "@/lib/analysis-runs/analysis-run-snapshot";
 
 const CHANNEL_LABELS: Record<NearbyCategoryId, string> = {
   bakery: "베이커리",
@@ -142,8 +144,10 @@ function parseOfficialFeatures(value: OfficialGeoJson): OfficialFeature[] {
 
 export default function CompetitionStructureClient({
   initialTarget,
+  initialPersistedResult,
 }: {
   initialTarget: ActiveAnalysisTarget | null;
+  initialPersistedResult: NonNullable<AnalysisRunSnapshot["sections"]["competition"]>["versions"][number] | null;
 }) {
   const [draftLocation, setDraftLocation] =
     useState<CompetitionInitialLocation | null>(initialTarget);
@@ -385,8 +389,14 @@ export default function CompetitionStructureClient({
   ]);
 
   useEffect(() => {
-    if (currentResult) latestResultRef.current = currentResult;
-  }, [currentResult]);
+    if (!currentResult || !executedTarget) return;
+    latestResultRef.current = currentResult;
+    void persistAnalysisRunSection({
+      section: "competition",
+      target: executedTarget,
+      result: currentResult,
+    }).catch(() => undefined);
+  }, [currentResult, executedTarget]);
 
   const result = currentResult ?? preservedResult;
   const runResultStatus: AnalysisResultStatus = analysisResultStatus(
@@ -398,6 +408,15 @@ export default function CompetitionStructureClient({
       (result?.officialAreaReference.officialMarketCode ?? null)
     ? "STALE"
     : runResultStatus;
+  const persistedResultStatus: AnalysisResultStatus = !initialPersistedResult
+    ? "NOT_RUN"
+    : initialTarget?.analysisRunId !== initialPersistedResult.binding.analysisRunId ||
+        (initialPersistedResult.binding.officialBenchmarkIdentity?.officialMarketCode ??
+          initialPersistedResult.result.officialAreaReference.officialMarketCode) !==
+          (initialTarget?.officialReference?.marketCode ?? null)
+      ? "STALE"
+      : "CURRENT";
+  const displayedResultStatus = result ? resultStatus : persistedResultStatus;
 
   const selectOfficialMarket = useCallback((marketCode: string) => {
     setManualOfficialMarketCode(marketCode);
@@ -460,8 +479,8 @@ export default function CompetitionStructureClient({
 
   return (
     <div className="space-y-4">
-      <AnalysisWorkflow active="competition" target={activeTarget} statuses={{ competition: resultStatus }} />
-      <ActiveAnalysisTargetCard target={activeTarget} status={resultStatus} officialReferencePeriod={result?.officialAreaReference.referencePeriod ?? null} />
+      <AnalysisWorkflow active="competition" target={activeTarget} statuses={{ competition: displayedResultStatus }} />
+      <ActiveAnalysisTargetCard target={activeTarget} status={displayedResultStatus} officialReferencePeriod={result?.officialAreaReference.referencePeriod ?? initialPersistedResult?.result.officialAreaReference.referencePeriod ?? null} />
       <header className="panel-card bg-gradient-to-br from-white to-[#FFF7ED] p-5 md:p-6">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-700">
           경쟁환경
@@ -507,6 +526,14 @@ export default function CompetitionStructureClient({
         <section className="panel-card border-amber-300 bg-amber-50 p-4" role="status">
           <p className="text-sm font-bold text-amber-950">다시 분석 필요</p>
           <p className="mt-1 text-xs leading-5 text-amber-900">이 결과는 이전 분석대상 또는 이전 조건으로 생성되었습니다. 현재 위치와 반경으로 경쟁환경 분석을 다시 실행해 주세요.</p>
+        </section>
+      ) : null}
+
+      {!result && initialPersistedResult ? (
+        <section className="panel-card border-blue-200 bg-blue-50 p-5" aria-label="저장된 경쟁환경 집계">
+          <p className="text-sm font-bold text-blue-950">저장된 경쟁환경 집계</p>
+          <p className="mt-1 text-xs leading-5 text-blue-900">고유 관측 후보 {initialPersistedResult.result.kakaoObservation.uniqueObservedCandidateCount}개 · {new Date(initialPersistedResult.generatedAt).toLocaleString("ko-KR")}</p>
+          <p className="mt-2 text-xs text-blue-800">외부 검색의 개별 장소 상세는 장기 저장하지 않습니다. 최신 상세 후보는 경쟁환경 분석을 다시 실행해 확인하세요.</p>
         </section>
       ) : null}
 

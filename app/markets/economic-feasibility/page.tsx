@@ -10,6 +10,7 @@ import {
 } from "@/lib/market-data/services/bakery-official-market";
 import { analyzeRentalMarket } from "@/lib/research/rental-market-analysis";
 import { listResearchRecords } from "@/lib/research/research-repository";
+import { getAnalysisRunSnapshot } from "@/lib/analysis-runs/analysis-run-repository";
 import {
   AnalysisWorkflow,
 } from "../AnalysisWorkflow";
@@ -38,6 +39,9 @@ export default async function EconomicFeasibilityPage({
   );
   const records = await listResearchRecords();
   const rentalMarketResult = analyzeRentalMarket(records, { referenceDate: referenceDateInKorea() });
+  const persistedRun = activeTarget
+    ? await getAnalysisRunSnapshot(activeTarget.analysisRunId)
+    : null;
   let officialMarketData: BakeryOfficialMarketData | null = null;
   let officialStatus = "현재 분석대상에 연결된 공식통계 참고상권이 없습니다.";
   if (activeTarget?.officialReference) {
@@ -69,6 +73,8 @@ export default async function EconomicFeasibilityPage({
         rentalMarketResult={rentalMarketResult}
         officialMarketData={officialMarketData}
         officialStatus={officialStatus}
+        initialEconomicResult={persistedRun?.sections.economic?.versions.at(-1) ?? null}
+        initialRentalConfirmation={persistedRun?.sections.rental?.versions.at(-1)?.result.confirmation ?? null}
       />
     </div>
   );

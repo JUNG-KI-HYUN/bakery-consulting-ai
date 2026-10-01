@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
 import MarketAnalysisSummary from "./MarketAnalysisSummary";
 import type {
@@ -25,7 +25,8 @@ import { adaptRadiusLivingPopulationResults } from "@/lib/market-data/basic-loca
 import { collectBasicLocationResults } from "@/lib/market-data/basic-location/result-collection";
 import { applyBasicLocationDisplayPolicy } from "@/lib/market-data/basic-location/display-policy";
 import { buildBasicLocationInterpretation } from "@/lib/market-data/basic-location/interpretation";
-import { buildP0BasicLocationViewModel } from "@/lib/market-data/basic-location/view-model";
+import { buildP0BasicLocationViewModel, type P0BasicLocationViewModel } from "@/lib/market-data/basic-location/view-model";
+import { persistAnalysisRunSection } from "@/lib/analysis-runs/analysis-run-client";
 import { getSpatialLayerDefinition } from "./spatial-layer-registry";
 
 export type MarketsWorkspaceTab =
@@ -300,6 +301,7 @@ function MarketAreaAnalysisSummary({
 export default function MarketsExplorer({
   hierarchy,
   initialTarget = null,
+  initialLocationResult = null,
   initialTab = "briefing",
   workflowStep = "target",
   requestedCaseId = null,
@@ -307,6 +309,7 @@ export default function MarketsExplorer({
 }: {
   hierarchy: MarketHierarchy;
   initialTarget?: ActiveAnalysisTarget | null;
+  initialLocationResult?: P0BasicLocationViewModel | null;
   initialTab?: MarketsWorkspaceTab;
   workflowStep?: WorkflowStep;
   requestedCaseId?: string | null;
@@ -333,6 +336,7 @@ export default function MarketsExplorer({
   const [activeTab, setActiveTab] =
     useState<MarketsWorkspaceTab>(initialTab);
   const [activeTarget, setActiveTarget] = useState<ActiveAnalysisTarget | null>(initialTarget);
+  const persistedLocationSignatureRef = useRef<string | null>(null);
   const [analysisContext, setAnalysisContext] = useState<MarketAnalysisContext | null>(null);
   const [kakaoNearbySource, setKakaoNearbySource] = useState<KakaoNearbySearchState>({
     status: "idle",
@@ -650,6 +654,31 @@ export default function MarketsExplorer({
       livingPopulation: analysisContext.livingPopulation,
     });
   }, [analysisContext, hierarchy, kakaoNearbySource]);
+  const restoredLocationResult = initialLocationResult?.analysisRunId === activeTarget?.analysisRunId
+    ? initialLocationResult
+    : null;
+  const displayedLocationResult = basicLocationViewModel ?? restoredLocationResult;
+  useEffect(() => {
+    if (!activeTarget || !basicLocationViewModel || !analysisContext?.runSnapshot) return;
+    if (kakaoNearbySource.analysisRunId && kakaoNearbySource.analysisRunId !== activeTarget.analysisRunId) return;
+    const completedAt = [
+      analysisContext.sourceCompletion.kakaoCompletedAt,
+      analysisContext.sourceCompletion.officialRelationCompletedAt,
+      analysisContext.sourceCompletion.officialStatsCompletedAt,
+      analysisContext.sourceCompletion.livingPopulationCompletedAt,
+      analysisContext.runSnapshot.createdAt,
+    ].filter((value): value is string => Boolean(value)).sort().at(-1);
+    if (!completedAt) return;
+    const signature = JSON.stringify([activeTarget.analysisRunId, completedAt, basicLocationViewModel]);
+    if (persistedLocationSignatureRef.current === signature) return;
+    persistedLocationSignatureRef.current = signature;
+    void persistAnalysisRunSection({
+      section: "location",
+      target: activeTarget,
+      generatedAt: completedAt,
+      result: basicLocationViewModel,
+    }).catch(() => { persistedLocationSignatureRef.current = null; });
+  }, [activeTarget, analysisContext, basicLocationViewModel, kakaoNearbySource.analysisRunId]);
   const linkableTarget = activeTarget &&
     activeTarget.targetKey === activeTarget.analysisRunId &&
     /^basic-location-run:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(activeTarget.analysisRunId) &&
@@ -935,7 +964,7 @@ export default function MarketsExplorer({
       {activeTab === "market-map" ? (
         analysisMode === "market-area" ? <MarketAreaAnalysisSummary snapshot={marketAreaAnalysis} onEditConditions={() => setActiveTab("briefing")} /> :
           <MarketAnalysisSummary
-            viewModel={basicLocationViewModel}
+            viewModel={displayedLocationResult}
             contextStale={pointContextStale}
             onEditConditions={() => {
               setActiveTab("briefing");

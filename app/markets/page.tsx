@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import marketHierarchyJson from "@/data/seoul-market/v1.1-final/MARKET_HIERARCHY.json";
 import { getCase } from "@/lib/cases/case-repository";
+import { getAnalysisRunSnapshot } from "@/lib/analysis-runs/analysis-run-repository";
 import { parseActiveAnalysisTarget } from "@/lib/market-data/competition-location";
 import { revalidateActiveTargetOfficialReference } from "@/lib/market-data/official-market-reference.server";
 import MarketsExplorer, { type MarketHierarchy } from "./MarketsExplorer";
@@ -24,6 +25,9 @@ export default async function MarketsPage({
   const activeTarget = await revalidateActiveTargetOfficialReference(
     parseActiveAnalysisTarget(query),
   );
+  const persistedRun = activeTarget
+    ? await getAnalysisRunSnapshot(activeTarget.analysisRunId)
+    : null;
   const requestedView = Array.isArray(query.view) ? query.view[0] : query.view;
   const workflowStep = requestedView === "location"
     ? "location"
@@ -41,6 +45,7 @@ export default async function MarketsPage({
         key={requestedCaseId ?? "direct-market-workspace"}
         hierarchy={marketHierarchy}
         initialTarget={activeTarget}
+        initialLocationResult={persistedRun?.sections.location?.versions.at(-1)?.result ?? null}
         initialTab={initialTab}
         workflowStep={workflowStep}
         requestedCaseId={requestedCaseId}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { parseActiveAnalysisTarget } from "@/lib/market-data/competition-location";
 import { revalidateActiveTargetOfficialReference } from "@/lib/market-data/official-market-reference.server";
+import { getAnalysisRunSnapshot } from "@/lib/analysis-runs/analysis-run-repository";
 import CompetitionStructureClient from "./CompetitionStructureClient";
 
 export const metadata: Metadata = {
@@ -17,9 +18,15 @@ export default async function CompetitionStructurePage({
   const initialTarget = await revalidateActiveTargetOfficialReference(
     parseActiveAnalysisTarget(await searchParams),
   );
+  const persistedRun = initialTarget
+    ? await getAnalysisRunSnapshot(initialTarget.analysisRunId)
+    : null;
   return (
     <div className="space-y-4">
-      <CompetitionStructureClient initialTarget={initialTarget} />
+      <CompetitionStructureClient
+        initialTarget={initialTarget}
+        initialPersistedResult={persistedRun?.sections.competition?.versions.at(-1) ?? null}
+      />
     </div>
   );
 }

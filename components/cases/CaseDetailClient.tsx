@@ -7,6 +7,7 @@ import {
   type CaseRecord,
 } from "@/lib/cases/case-contract";
 import { CaseFormFields, type CaseFormValues } from "./CaseFormFields";
+import { activeAnalysisTargetHref, type ActiveAnalysisTarget } from "@/lib/market-data/competition-location";
 
 function formValues(record: CaseRecord): CaseFormValues {
   return {
@@ -49,13 +50,22 @@ function formatBudget(record: CaseRecord) {
   return `${min} ~ ${max}`;
 }
 
-export function CaseDetailClient({ initialRecord }: { initialRecord: CaseRecord }) {
+export function CaseDetailClient({
+  initialRecord,
+  latestAnalysisTarget,
+}: {
+  initialRecord: CaseRecord;
+  latestAnalysisTarget: ActiveAnalysisTarget | null;
+}) {
   const [record, setRecord] = useState(initialRecord);
   const [values, setValues] = useState(() => formValues(initialRecord));
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const marketHref = `/markets?caseId=${encodeURIComponent(record.caseId)}`;
+  const marketHref = activeAnalysisTargetHref(
+    `/markets?caseId=${encodeURIComponent(record.caseId)}`,
+    latestAnalysisTarget,
+  );
   const latestAnalysis = record.analysisRunLinks.at(-1) ?? null;
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
