@@ -53,14 +53,13 @@ interface MarketAreaAnalysisSnapshot {
   geometryStatus: string;
 }
 
-const WORKSPACE_TABS: ReadonlyArray<{
+const LOCATION_VIEWS: ReadonlyArray<{
   id: MarketsWorkspaceTab;
   label: string;
 }> = [
-  { id: "briefing", label: "분석 설정" },
-  { id: "market-map", label: "기초입지 분석결과" },
-  { id: "competition", label: "경쟁 환경" },
-  { id: "public-data", label: "데이터 근거" },
+  { id: "briefing", label: "설정" },
+  { id: "market-map", label: "결과" },
+  { id: "public-data", label: "근거" },
 ];
 
 export interface MarketNode {
@@ -208,37 +207,39 @@ function CurrentAnalysisEvidence({ context }: { context: MarketAnalysisContext }
     : "자료 확인 필요";
 
   return (
-    <section aria-label="현재 분석 근거" className="panel-card p-5 md:p-6">
+    <section aria-label="현재 분석 근거" className="rounded-xl border border-stone-200 bg-white p-4">
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">현재 상담 분석 근거</p>
-        <h3 className="mt-2 text-xl font-bold text-slate-950">분석 기준 위치 · {target.confirmedAddress ?? "지도에서 선택한 위치"}</h3>
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-stone-400">현재 상담 분석 근거</p>
+        <h3 className="mt-1 text-base font-bold text-slate-950">{target.confirmedAddress ?? "지도에서 선택한 위치"}</h3>
         <p className="mt-1 text-sm text-slate-600">지도 선택 · 반경 {target.executedRadiusMeters}m</p>
       </div>
 
-      <dl className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl bg-slate-50 p-3">
+      <dl className="mt-4 divide-y divide-stone-100 border-y border-stone-200">
+        <div className="py-3">
           <dt className="text-xs font-semibold text-slate-500">현재 관련 공식상권</dt>
           <dd className="mt-1 text-sm font-bold text-slate-900">내부 {inside.length}개 · 반경 교차 {overlaps.length}개</dd>
           <dd className="mt-1 text-xs leading-5 text-slate-600">{[...inside, ...overlaps].map((market) => market.marketName).join(" · ") || "확인된 관계 없음"}</dd>
         </div>
-        <div className="rounded-xl bg-slate-50 p-3">
+        <div className="py-3">
           <dt className="text-xs font-semibold text-slate-500">실행 FRAMEONE Context</dt>
           <dd className="mt-1 text-sm font-bold text-slate-900">{context.frameone.selectedMarketName ?? "주요상권 미선택"}</dd>
           <dd className="mt-1 text-xs text-slate-600">선택 세부상권 {context.frameone.selectedSubmarketName ?? "전체"}</dd>
         </div>
-        <div className="rounded-xl bg-slate-50 p-3">
+        <div className="py-3">
           <dt className="text-xs font-semibold text-slate-500">통계 기준 공식상권</dt>
           <dd className="mt-1 text-sm font-bold text-slate-900">{statisticsMarket}</dd>
           <dd className="mt-1 text-xs text-slate-600">SALES/STORES 기준분기 {referencePeriod}</dd>
         </div>
-        <div className="rounded-xl bg-slate-50 p-3">
+        <div className="py-3">
           <dt className="text-xs font-semibold text-slate-500">수동선택 / 공간관계</dt>
           <dd className="mt-1 text-sm font-bold text-slate-900">{manual ? `${manual.marketName} · manual` : "수동선택 없음"}</dd>
           <dd className="mt-1 text-xs text-slate-600">{manual?.spatialRelation?.relation ?? "공간관계 미확인"}</dd>
         </div>
       </dl>
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+      <details className="mt-4 rounded-lg border border-stone-200 bg-stone-50">
+        <summary className="cursor-pointer px-3 py-3 text-xs font-bold text-stone-700">데이터 source 상태</summary>
+      <div className="grid gap-2 border-t border-stone-200 p-3">
         {[
           ["Kakao 장소검색", "Kakao", requestStatusLabel(context.kakaoNearby.status)],
           ["서울시 공식상권", "서울시 경계", requestStatusLabel(context.officialMarkets.status)],
@@ -252,6 +253,7 @@ function CurrentAnalysisEvidence({ context }: { context: MarketAnalysisContext }
           </div>
         ))}
       </div>
+      </details>
     </section>
   );
 }
@@ -688,6 +690,17 @@ export default function MarketsExplorer({
   const currentRunLinked = Boolean(
     linkableTarget && linkedAnalysisRunIds.includes(linkableTarget.analysisRunId),
   );
+  const workspaceStep: WorkflowStep = activeTab === "market-map"
+    ? "location"
+    : activeTab === "competition"
+      ? "competition"
+      : activeTab === "public-data"
+        ? "evidence"
+        : workflowStep;
+  const locationStatus = analysisResultStatus(
+    activeTarget?.analysisRunId,
+    analysisContext?.analysisRunId ?? displayedLocationResult?.analysisRunId,
+  );
 
   const linkCurrentAnalysisToCase = async () => {
     if (!caseContext || !linkableTarget || currentRunLinked || caseLinkPending) return;
@@ -725,28 +738,28 @@ export default function MarketsExplorer({
 
   return (
     <div className="w-full min-w-0 overflow-x-clip">
-      <div className="mb-4 space-y-4">
+      <div className="mb-3 space-y-3">
         {caseContext ? (
-          <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-[#d8c59b] bg-[#fffaf0] px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Case 연결 context">
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-[#8b6f38]">CASE와 함께 분석 중</p>
-              <p className="mt-1 break-words text-sm font-bold text-stone-950">{caseContext.name}</p>
+          <section className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-[#d8c59b] bg-[#fffaf0] px-3 py-2" aria-label="Case 연결 context">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8b6f38]">Case</p>
+              <p className="truncate text-sm font-bold text-stone-950">{caseContext.name}</p>
             </div>
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 text-[11px]">
               {linkableTarget ? (
                 currentRunLinked ? (
-                  <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">현재 Case에 연결된 분석</span>
+                  <span className="font-bold text-emerald-800">현재 분석 연결됨</span>
                 ) : (
-                  <button type="button" onClick={linkCurrentAnalysisToCase} disabled={caseLinkPending} className="min-h-11 rounded-lg bg-stone-950 px-4 text-sm font-bold text-white disabled:opacity-60">
+                  <button type="button" onClick={linkCurrentAnalysisToCase} disabled={caseLinkPending} className="min-h-9 rounded-md bg-stone-950 px-3 text-xs font-bold text-white disabled:opacity-60">
                     {caseLinkPending ? "연결 중…" : "이 분석을 Case에 연결"}
                   </button>
                 )
               ) : (
-                <span className="text-xs font-semibold text-stone-600">분석 실행 후 Case에 연결할 수 있습니다.</span>
+                <span className="font-semibold text-stone-500">분석 실행 후 연결 가능</span>
               )}
-              <Link href={`/cases/${encodeURIComponent(caseContext.caseId)}`} className="min-h-11 rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm font-bold text-stone-700">Case로 돌아가기</Link>
+              <Link href={`/cases/${encodeURIComponent(caseContext.caseId)}`} className="min-h-9 rounded-md border border-stone-300 bg-white px-3 py-2 text-xs font-bold text-stone-700">Case로 돌아가기</Link>
             </div>
-            {caseLinkError ? <p className="text-sm font-semibold text-red-700 sm:basis-full" role="alert">{caseLinkError}</p> : null}
+            {caseLinkError ? <p className="basis-full text-xs font-semibold text-red-700" role="alert">{caseLinkError}</p> : null}
           </section>
         ) : requestedCaseId ? (
           <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3" role="status">
@@ -754,77 +767,56 @@ export default function MarketsExplorer({
             <p className="mt-1 text-xs leading-5 text-amber-800">Case 연결 없이 일반 상권분석을 계속 사용할 수 있습니다.</p>
           </section>
         ) : null}
-        <AnalysisWorkflow active={workflowStep} target={activeTarget} />
+        <div className="xl:hidden">
+          <AnalysisWorkflow
+            active={workspaceStep}
+            target={activeTarget}
+            statuses={{ location: locationStatus }}
+          />
+        </div>
         <AnalysisTargetHeader
           target={activeTarget}
           status={analysisResultStatus(activeTarget?.analysisRunId, analysisContext?.analysisRunId)}
           officialReferencePeriod={analysisContext?.publicData.selectedOfficialMarketData?.referencePeriod ?? null}
         />
       </div>
-      <nav
-        aria-label="상권분석 업무 메뉴"
-        className="mb-4 flex gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-2 lg:hidden"
-      >
-        {WORKSPACE_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActiveTab(tab.id)}
-            aria-current={activeTab === tab.id ? "page" : undefined}
-            className={`min-h-11 shrink-0 rounded-lg px-4 py-2.5 text-sm font-bold ${
-              activeTab === tab.id
-                ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100"
-            }`}
-          >
-            {tab.label}
+      <div className="grid items-start gap-4 xl:grid-cols-[11rem_minmax(0,1fr)]">
+        <aside className="sticky top-24 hidden overflow-hidden xl:block">
+          <AnalysisWorkflow
+            active={workspaceStep}
+            target={activeTarget}
+            statuses={{ location: locationStatus }}
+            orientation="sidebar"
+          />
+        </aside>
+
+        <div className="flex min-w-0 flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_17rem] md:gap-4 xl:grid-cols-[minmax(0,1fr)_19rem] md:[&>*]:col-start-2 md:[&>*]:min-w-0">
+      <nav aria-label="현재 단계 보기" className="grid grid-cols-3 gap-1 rounded-lg border border-stone-200 bg-[#fbfaf7] p-1">
+        {LOCATION_VIEWS.map((view) => (
+          <button key={view.id} type="button" onClick={() => setActiveTab(view.id)} aria-current={activeTab === view.id ? "page" : undefined}
+            className={`min-h-9 rounded-md px-2 text-xs font-bold ${activeTab === view.id ? "bg-stone-950 text-white" : "text-stone-600 hover:bg-stone-100"}`}>
+            {view.label}
           </button>
         ))}
       </nav>
-
-      <div className="grid items-start gap-5 lg:grid-cols-[190px_minmax(0,1fr)]">
-        <aside className="panel-card sticky top-6 hidden overflow-hidden lg:block">
-          <p className="border-b border-slate-200 px-4 py-3 text-xs font-bold text-slate-500">
-            상권분석 업무
-          </p>
-          <nav aria-label="상권분석 업무 메뉴" className="space-y-1 p-2">
-            {WORKSPACE_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                aria-current={activeTab === tab.id ? "page" : undefined}
-                className={`min-h-11 w-full rounded-lg px-3 py-3 text-left text-sm font-bold ${
-                  activeTab === tab.id
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="min-w-0 space-y-6">
       {activeTab === "briefing" ? (
         <>
-      <section className="panel-card overflow-hidden bg-gradient-to-br from-white via-white to-[#FFF7ED]">
-        <div className="p-5 md:p-6">
+      <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
+        <div className="p-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F59E0B]">
-              분석 설정
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-stone-400">
+              현재 업무
             </p>
-            <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#0B1220] md:text-3xl">
-              분석 대상
+            <h2 className="mt-1 text-base font-bold tracking-tight text-stone-950">
+              분석 대상 설정
             </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+            <p className="mt-2 text-xs leading-5 text-stone-600">
               FRAMEONE 권역 전체를 확인할지, 한 지점의 300m·500m 주변을 상세분석할지 선택하세요.
             </p>
-            <div className="mt-5 inline-flex rounded-xl border border-slate-300 bg-slate-50 p-1" role="group" aria-label="분석 모드">
+            <div className="mt-3 grid grid-cols-2 rounded-lg border border-stone-300 bg-stone-50 p-1" role="group" aria-label="분석 모드">
               {([['market-area', '권역 분석'], ['point-detail', '위치 상세분석']] as const).map(([mode, label]) => (
                 <button key={mode} type="button" onClick={() => setAnalysisMode(mode)} aria-pressed={analysisMode === mode}
-                  className={`min-h-11 rounded-lg px-4 text-sm font-bold ${analysisMode === mode ? "bg-slate-900 text-white shadow-sm" : "text-slate-600"}`}>
+                  className={`min-h-11 rounded-md px-2 text-xs font-bold ${analysisMode === mode ? "bg-stone-950 text-white" : "text-stone-600"}`}>
                   {label}
                 </button>
               ))}
@@ -833,7 +825,7 @@ export default function MarketsExplorer({
         </div>
       </section>
 
-      <section aria-label="FRAMEONE 상권 Context" className="panel-card p-5 md:p-6">
+      <section aria-label="FRAMEONE 상권 Context" className="rounded-xl border border-stone-200 bg-white p-4">
         <div className="max-w-xl">{marketSelector}</div>
         {selectedMarket ? (
           <>
@@ -850,16 +842,16 @@ export default function MarketsExplorer({
                 ))}
               </div>
             </div>
-            <article aria-label="선택 상권 기본 브리핑" className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <article aria-label="선택 상권 기본 브리핑" className="mt-4 border-t border-stone-200 pt-4">
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-700">FRAMEONE 분석 분류</p>
               <h3 className="mt-1 text-lg font-bold text-slate-950">{selectedMarket.name}{selectedSubmarket ? ` > ${selectedSubmarket.name}` : ""} 기본 정보</h3>
-              <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+              <dl className="mt-3 grid gap-2">
                 {(selectedSubmarket ? [
                   ["FRAMEONE 주요상권", selectedMarket.name], ["선택 하위상권", selectedSubmarket.name], ["세부 검토단위", `Node ${selectedSubmarket.nodes.length}개`],
                 ] : [
                   ["자치구", selectedMarket.gu], ["하위상권", `${selectedMarket.submarkets.length}개`], ["세부 검토단위", `Node ${selectedMarket.submarkets.flatMap((submarket) => submarket.nodes).length}개`],
                 ]).map(([label, value]) => (
-                  <div key={label} className="rounded-lg bg-white p-3"><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 text-sm font-bold text-slate-900">{value}</dd></div>
+                  <div key={label} className="flex items-start justify-between gap-3 border-b border-stone-100 py-2 last:border-0"><dt className="text-xs text-stone-500">{label}</dt><dd className="text-right text-xs font-bold text-stone-900">{value}</dd></div>
                 ))}
               </dl>
               <p className="mt-4 text-xs leading-5 text-slate-600">
@@ -952,13 +944,6 @@ export default function MarketsExplorer({
         </section>
       ) : null}
         </>
-      ) : activeTab !== "market-map" ? (
-        <section className="panel-card px-5 py-4">
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">상권분석 업무</p>
-          <h2 className="mt-1 text-xl font-bold text-slate-950">
-            {WORKSPACE_TABS.find((tab) => tab.id === activeTab)?.label}
-          </h2>
-        </section>
       ) : null}
 
       {activeTab === "market-map" ? (
@@ -966,6 +951,7 @@ export default function MarketsExplorer({
           <MarketAnalysisSummary
             viewModel={displayedLocationResult}
             contextStale={pointContextStale}
+            compact
             onEditConditions={() => {
               setActiveTab("briefing");
               setAnalysisConditionsRequest((request) => request + 1);
@@ -985,7 +971,7 @@ export default function MarketsExplorer({
 
       {activeTab === "competition" && analysisMode === "market-area" ? <section className="panel-card border-dashed p-5 text-sm text-slate-600">Kakao 경쟁환경은 위치 상세분석의 실행 지점과 반경을 기준으로 제공합니다.</section> : null}
 
-      <div className={activeTab === "market-map" || (activeTab === "public-data" && !analysisContext?.target) ? "hidden" : ""}>
+      <div className="-order-1 md:!col-start-1 md:!row-start-1 md:order-none md:row-span-[20] md:sticky md:top-24 md:self-start">
       <MarketSpatialViewer
         initialTarget={activeTarget}
         selectedMarket={selectedMarketSpatialSummary}
@@ -1000,11 +986,12 @@ export default function MarketsExplorer({
         pointSelectionEnabled={analysisMode === "point-detail"}
         marketSelector={null}
         onActiveTargetChange={handleActiveTargetChange}
+        workspace
       />
       </div>
 
       {activeTab === "public-data" ? (
-      <details className="panel-card overflow-hidden">
+      <details className="panel-card overflow-hidden md:col-span-2 md:col-start-1">
         <summary className="cursor-pointer px-5 py-4 text-sm font-bold text-slate-800">
           전체 FRAMEONE 상권 계층 · 내부 상세정보
         </summary>

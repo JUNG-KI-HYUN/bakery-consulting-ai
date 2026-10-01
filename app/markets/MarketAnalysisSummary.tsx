@@ -246,16 +246,37 @@ export default function MarketAnalysisSummary({
   viewModel,
   onEditConditions,
   contextStale = false,
+  compact = false,
 }: {
   viewModel: P0BasicLocationViewModel | null;
   onEditConditions: () => void;
   contextStale?: boolean;
+  compact?: boolean;
 }) {
   if (!viewModel) {
+    if (compact) {
+      return (
+        <section aria-label="기초입지 분석결과" className="min-w-0 rounded-xl border border-stone-200 bg-white p-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-400">현재 업무</p>
+          <h2 className="mt-1 text-base font-bold text-stone-950">기초입지 분석 준비</h2>
+          <ol className="mt-4 space-y-3 text-sm text-stone-700">
+            {["위치 선택", "반경 확인", "분석 실행"].map((label, index) => (
+              <li key={label} className="flex items-center gap-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[11px] font-bold text-stone-700">{index + 1}</span>
+                <span className="font-semibold">{label}</span>
+              </li>
+            ))}
+          </ol>
+          <button type="button" onClick={onEditConditions} className="mt-4 min-h-11 w-full rounded-lg bg-stone-950 px-4 text-sm font-bold text-white">
+            위치 설정
+          </button>
+        </section>
+      );
+    }
     return (
       <section
         aria-label="기초입지 분석결과"
-        className="m-4 min-w-0 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5"
+        className={`${compact ? "min-w-0 p-4" : "m-4 min-w-0 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5"}`}
       >
         <h2 className="text-base font-bold text-slate-900">기초입지 분석결과</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -284,13 +305,13 @@ export default function MarketAnalysisSummary({
   const hasOfficialRelationEvidence = evidence.officialRelation.basisResultIds.length > 0;
 
   return (
-    <section aria-labelledby="market-analysis-summary-title" className="min-w-0 border-b border-slate-200 bg-slate-50">
+    <section aria-labelledby="market-analysis-summary-title" className={`min-w-0 ${compact ? "bg-white" : "border-b border-slate-200 bg-slate-50"}`}>
       <div aria-label="기초입지 고객 요약">
-        <header className="border-b border-blue-100 bg-blue-50 p-4 sm:p-5">
+        <header className={compact ? "border-b border-stone-200 bg-stone-50 p-4" : "border-b border-blue-100 bg-blue-50 p-4 sm:p-5"}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">FRAMEONE 기초입지 분석</p>
-              <h2 id="market-analysis-summary-title" className="mt-1.5 break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-stone-500">FRAMEONE 기초입지 분석</p>
+              <h2 id="market-analysis-summary-title" className={`${compact ? "text-base" : "text-xl sm:text-2xl"} mt-1.5 break-words font-bold tracking-tight text-slate-950`}>
                 {headerLocation} / {presentation.header.radiusMeters ? `${presentation.header.radiusMeters}m` : "분석 반경 확인 필요"}
               </h2>
               <p className="mt-2 break-words text-sm leading-6 text-slate-600">{headerTarget}</p>
@@ -307,7 +328,7 @@ export default function MarketAnalysisSummary({
               현재 선택한 FRAMEONE 상권이 실행 시점과 다릅니다. 아래 결과는 이전 분석 실행 기준으로 고정되어 있으며, 현재 선택을 반영하려면 다시 분석해야 합니다.
             </p>
           ) : null}
-          <dl className="mt-4 grid grid-cols-2 gap-2 lg:grid-cols-4">
+          <dl className={`${compact ? "grid-cols-1" : "grid-cols-2 lg:grid-cols-4"} mt-4 grid gap-2`}>
             {presentation.statusCards.map((card) => (
               <div key={card.id} className="min-w-0 rounded-lg border border-blue-100 bg-white/85 px-3 py-2.5">
                 <dt className="text-[11px] font-semibold text-slate-500">{card.label}</dt>
@@ -317,7 +338,7 @@ export default function MarketAnalysisSummary({
           </dl>
         </header>
 
-        <div className="p-4 sm:p-5">
+        <div className={compact ? "p-4" : "p-4 sm:p-5"}>
           <SummarySection title="기초입지 요약" description="현재 확인한 사실과 후속 분석 범위를 구분했습니다.">
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
               <article className="min-w-0 rounded-lg border border-blue-100 bg-blue-50/60 p-4">
@@ -353,7 +374,7 @@ export default function MarketAnalysisSummary({
         </div>
       </div>
 
-      <div className="space-y-4 p-4 sm:p-5">
+      <div className={`${compact ? "hidden" : "space-y-4 p-4 sm:p-5"}`}>
         <SummarySection title="상권 데이터 근거" description="현재 위치에서 확인 가능한 주변 업종 관측과 서울시 공식상권 참고자료입니다.">
           <div className="mt-4 divide-y divide-slate-200">
             <section aria-label={`${analysisContext.target.radiusMeters ?? "선택"}m Kakao 장소검색`} className="pb-5">

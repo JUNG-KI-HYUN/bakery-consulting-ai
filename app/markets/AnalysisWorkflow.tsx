@@ -33,23 +33,35 @@ export function AnalysisWorkflow({
   active,
   target,
   statuses = {},
+  orientation = "horizontal",
 }: {
   active: WorkflowStep;
   target: ActiveAnalysisTarget | null;
   statuses?: Partial<Record<WorkflowStep, WorkflowStatus>>;
+  orientation?: "horizontal" | "sidebar";
 }) {
   return (
-    <nav aria-label="상권분석 업무 흐름" className="panel-card flex gap-2 overflow-x-auto p-2">
+    <nav
+      aria-label="상권분석 업무 흐름"
+      className={orientation === "sidebar"
+        ? "overflow-hidden rounded-xl border border-stone-200 bg-[#fbfaf7] p-2"
+        : "flex gap-2 overflow-x-auto rounded-xl border border-stone-200 bg-[#fbfaf7] p-2"}
+    >
+      {orientation === "sidebar" ? (
+        <p className="px-3 pb-2 pt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-stone-400">
+          Analysis workflow
+        </p>
+      ) : null}
       {steps.map((step) => (
         <Link
           key={step.id}
           href={activeAnalysisTargetHref(step.pathname, target)}
           aria-current={active === step.id ? "step" : undefined}
-          className={`min-h-11 shrink-0 rounded-lg px-3 py-3 text-xs font-bold ${active === step.id ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+          className={`${orientation === "sidebar" ? "mb-1 flex w-full flex-col items-start gap-1" : "shrink-0"} min-h-11 rounded-lg px-3 py-3 text-xs font-bold ${active === step.id ? "bg-stone-950 text-white" : "text-stone-600 hover:bg-stone-100"}`}
         >
-          <span>{step.label}</span>
+          <span className="whitespace-nowrap">{step.label}</span>
           {statuses[step.id] ? (
-            <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${statuses[step.id] === "STALE" || statuses[step.id] === "NEEDS_CONFIRMATION" ? "bg-amber-100 text-amber-800" : statuses[step.id] === "CURRENT" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"}`}>
+            <span className={`${orientation === "sidebar" ? "max-w-full truncate" : "ml-2"} rounded-full px-2 py-0.5 text-[10px] ${statuses[step.id] === "STALE" || statuses[step.id] === "NEEDS_CONFIRMATION" ? "bg-amber-100 text-amber-800" : statuses[step.id] === "CURRENT" ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"}`}>
               {statusLabels[statuses[step.id]!]}
             </span>
           ) : null}

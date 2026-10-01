@@ -269,6 +269,7 @@ export default function KakaoBaseMap({
   showCompetitionStructureLink = false,
   downstreamCompetitionHref = null,
   onDraftSelectionChange,
+  workspace = false,
 }: {
   officialMarketPolygons: readonly KakaoOfficialMarketPolygon[];
   selectedOfficialMarketCode: string | null;
@@ -288,6 +289,7 @@ export default function KakaoBaseMap({
   showCompetitionStructureLink?: boolean;
   downstreamCompetitionHref?: string | null;
   onDraftSelectionChange?: (selection: KakaoInitialSelection | null) => void;
+  workspace?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const conditionsRef = useRef<HTMLElement>(null);
@@ -351,7 +353,7 @@ export default function KakaoBaseMap({
     initialSelection?.label ?? null,
   );
   const [mapVisible, setMapVisible] = useState(true);
-  const [conditionsOpen, setConditionsOpen] = useState(true);
+  const [conditionsOpen, setConditionsOpen] = useState(!workspace);
   // 편집 중인 조건과 분리해 실행 시점의 분석 대상을 표시한다.
   const [analysisTarget, setAnalysisTarget] = useState<{ label: string; marketName: string } | null>(null);
 
@@ -863,11 +865,21 @@ export default function KakaoBaseMap({
         </p>
       ) : null}
       <div className={mapVisible || !pointSelectionEnabled ? "order-2" : "hidden"}>
-        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
           <div className="min-w-0 text-xs text-slate-600">
             <p className="font-bold text-slate-900">{pointSelectionEnabled ? "Kakao 위치 상세분석 지도" : "FRAMEONE 권역 참고 지도"}</p>
             <p className="mt-1 break-words">{pointSelectionEnabled ? "지도에서 분석 기준 위치를 클릭하세요." : "지도 클릭은 분석 기준 위치를 변경하지 않습니다. FRAMEONE 권역 geometry는 표시하지 않습니다."}</p>
           </div>
+          {workspace && pointSelectionEnabled ? (
+            <button
+              type="button"
+              onClick={() => setConditionsOpen((open) => !open)}
+              aria-expanded={conditionsOpen}
+              className="min-h-10 shrink-0 rounded-lg border border-stone-300 bg-white px-3 text-xs font-bold text-stone-700"
+            >
+              {conditionsOpen ? "설정 닫기" : "위치 설정"}
+            </button>
+          ) : null}
         </div>
         <div aria-label="지도 범례" className="flex flex-wrap gap-x-4 gap-y-2 border-b border-slate-200 bg-white px-4 py-3 text-[11px] font-semibold text-slate-600">
           {pointSelectionEnabled ? <><span><span aria-hidden="true" className="text-orange-600">★</span> 분석 기준 위치</span><span><span aria-hidden="true" className="text-sky-600">●</span> 주변 업종</span><span><span aria-hidden="true" className="text-orange-500">○</span> 분석 반경 300m / 500m</span></> : null}
@@ -875,7 +887,9 @@ export default function KakaoBaseMap({
         </div>
       </div>
       <div
-        className={mapVisible || !pointSelectionEnabled ? "relative order-2 h-[360px] w-full overflow-hidden bg-slate-100 md:h-[410px]" : "relative hidden h-[360px] w-full overflow-hidden bg-slate-100 md:h-[410px]"}
+        className={mapVisible || !pointSelectionEnabled
+          ? `relative order-2 w-full overflow-hidden bg-slate-100 ${workspace ? "h-[420px] md:h-[calc(100dvh-15rem)] md:min-h-[500px] md:max-h-[720px]" : "h-[360px] md:h-[410px]"}`
+          : `relative hidden w-full overflow-hidden bg-slate-100 ${workspace ? "h-[420px] md:h-[calc(100dvh-15rem)] md:min-h-[500px] md:max-h-[720px]" : "h-[360px] md:h-[410px]"}`}
         aria-busy={status === "loading"}
       >
         <div ref={containerRef} aria-label="서울 중심 Kakao 기본 지도" className="absolute inset-0" />

@@ -174,6 +174,7 @@ export default function CompetitionStructureClient({
     useState<string | null>(initialTarget?.officialReference?.marketCode ?? null);
   const [executedOfficialMarketCode, setExecutedOfficialMarketCode] =
     useState<string | null>(null);
+  const [analysisConditionsRequest, setAnalysisConditionsRequest] = useState(0);
   const [officialMarketDataByCode, setOfficialMarketDataByCode] = useState<
     Record<string, BakeryOfficialMarketData>
   >({});
@@ -478,24 +479,17 @@ export default function CompetitionStructureClient({
   );
 
   return (
-    <div className="space-y-4">
-      <AnalysisWorkflow active="competition" target={activeTarget} statuses={{ competition: displayedResultStatus }} />
+    <div className="w-full min-w-0 overflow-x-clip">
+      <div className="mb-3 xl:hidden">
+        <AnalysisWorkflow active="competition" target={activeTarget} statuses={{ competition: displayedResultStatus }} />
+      </div>
       <ActiveAnalysisTargetCard target={activeTarget} status={displayedResultStatus} officialReferencePeriod={result?.officialAreaReference.referencePeriod ?? initialPersistedResult?.result.officialAreaReference.referencePeriod ?? null} />
-      <header className="panel-card bg-gradient-to-br from-white to-[#FFF7ED] p-5 md:p-6">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-700">
-          경쟁환경
-        </p>
-        <h1 className="mt-2 text-2xl font-black text-slate-950">
-          베이커리 경쟁환경 관측
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          Kakao 검색에 반환된 상세 후보를 중복 정규화하고 거리·방향·검색채널
-          중첩을 확인합니다. 이 결과는 전체 사업체 전수조사나 직접 경쟁 판정이
-          아닙니다.
-        </p>
-      </header>
-
-      <section className="panel-card overflow-hidden" aria-label="경쟁환경 분석 위치 선택">
+      <div className="grid items-start gap-4 xl:grid-cols-[11rem_minmax(0,1fr)]">
+        <aside className="sticky top-24 hidden xl:block">
+          <AnalysisWorkflow active="competition" target={activeTarget} statuses={{ competition: displayedResultStatus }} orientation="sidebar" />
+        </aside>
+        <div className="flex min-w-0 flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_17rem] md:gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
+      <section className="-order-1 overflow-hidden rounded-xl border border-stone-300 bg-white md:sticky md:top-24 md:order-none md:self-start" aria-label="경쟁환경 분석 지도">
         <KakaoBaseMap
           officialMarketPolygons={officialPolygons}
           selectedOfficialMarketCode={selectedOfficialMarketCode}
@@ -512,30 +506,74 @@ export default function CompetitionStructureClient({
           analysisActionLabel="경쟁환경 분석"
           addressOrPlaceSearch
           marketName="경쟁환경"
-          marketSelector={officialSelector}
+          marketSelector={null}
           view="briefing"
+          analysisConditionsRequest={analysisConditionsRequest}
+          workspace
         />
       </section>
-      {nearbySearch.status === "loading" ? (
-        <p className="panel-card p-4 text-sm font-semibold text-slate-600" role="status">Kakao 경쟁 후보를 조회하는 중입니다.</p>
-      ) : nearbySearch.error ? (
-        <p className="panel-card p-4 text-sm font-semibold text-amber-800" role="status">{nearbySearch.error}</p>
-      ) : null}
-
-      {resultStatus === "STALE" ? (
-        <section className="panel-card border-amber-300 bg-amber-50 p-4" role="status">
-          <p className="text-sm font-bold text-amber-950">다시 분석 필요</p>
-          <p className="mt-1 text-xs leading-5 text-amber-900">이 결과는 이전 분석대상 또는 이전 조건으로 생성되었습니다. 현재 위치와 반경으로 경쟁환경 분석을 다시 실행해 주세요.</p>
+      <aside className="min-w-0 space-y-3">
+        <section className="rounded-xl border border-stone-200 bg-white p-4" aria-label="경쟁환경 현재 context">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-stone-400">현재 업무</p>
+              <h1 className="mt-1 text-base font-bold text-stone-950">경쟁환경 분석</h1>
+            </div>
+            <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${displayedResultStatus === "CURRENT" ? "bg-emerald-100 text-emerald-800" : displayedResultStatus === "STALE" ? "bg-amber-100 text-amber-900" : "bg-stone-100 text-stone-600"}`}>
+              {displayedResultStatus === "CURRENT" ? "완료" : displayedResultStatus === "STALE" ? "다시 분석 필요" : "미실행"}
+            </span>
+          </div>
+          <div className="mt-4 border-y border-stone-200 py-3">
+            <p className="text-xs font-semibold text-stone-500">분석 기준 위치</p>
+            <p className="mt-1 break-words text-sm font-bold text-stone-950">{draftLocation?.label ?? "위치를 선택해 주세요"}</p>
+            <p className="mt-1 text-xs text-stone-600">반경 {draftLocation?.radiusM ?? 500}m</p>
+          </div>
+          {!result && !initialPersistedResult ? (
+            <ol className="mt-4 space-y-2 text-xs font-semibold text-stone-700">
+              {["위치 또는 상호 검색", "분석 반경 확인", "경쟁환경 분석 실행"].map((label, index) => (
+                <li key={label} className="flex items-center gap-2"><span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-stone-100 text-[10px]">{index + 1}</span>{label}</li>
+              ))}
+            </ol>
+          ) : null}
+          <button type="button" onClick={() => setAnalysisConditionsRequest((request) => request + 1)} className="mt-4 min-h-11 w-full rounded-lg bg-stone-950 px-4 text-sm font-bold text-white">
+            위치·검색 설정
+          </button>
         </section>
-      ) : null}
 
-      {!result && initialPersistedResult ? (
-        <section className="panel-card border-blue-200 bg-blue-50 p-5" aria-label="저장된 경쟁환경 집계">
-          <p className="text-sm font-bold text-blue-950">저장된 경쟁환경 집계</p>
-          <p className="mt-1 text-xs leading-5 text-blue-900">고유 관측 후보 {initialPersistedResult.result.kakaoObservation.uniqueObservedCandidateCount}개 · {new Date(initialPersistedResult.generatedAt).toLocaleString("ko-KR")}</p>
-          <p className="mt-2 text-xs text-blue-800">외부 검색의 개별 장소 상세는 장기 저장하지 않습니다. 최신 상세 후보는 경쟁환경 분석을 다시 실행해 확인하세요.</p>
-        </section>
-      ) : null}
+        {result ? (
+          <section className="rounded-xl border border-stone-200 bg-white p-4" aria-label="경쟁환경 집계 요약">
+            <h2 className="text-sm font-bold text-stone-950">현재 관측 요약</h2>
+            <dl className="mt-3 divide-y divide-stone-100 border-y border-stone-200 text-xs">
+              <div className="flex justify-between gap-3 py-2"><dt className="text-stone-500">API 상세 관측</dt><dd className="font-bold text-stone-950">{result.kakaoObservation.observedRawDetailCount}건</dd></div>
+              <div className="flex justify-between gap-3 py-2"><dt className="text-stone-500">중복 정규화 후보</dt><dd className="font-bold text-stone-950">{result.kakaoObservation.uniqueObservedCandidateCount}곳</dd></div>
+              <div className="flex justify-between gap-3 py-2"><dt className="text-stone-500">현장확인 경쟁점</dt><dd className="font-bold text-stone-950">미확인</dd></div>
+            </dl>
+          </section>
+        ) : null}
+
+        {officialSelector}
+        {nearbySearch.status === "loading" ? (
+          <p className="rounded-xl border border-stone-200 bg-white p-4 text-xs font-semibold text-stone-600" role="status">Kakao 경쟁 후보를 조회하는 중입니다.</p>
+        ) : nearbySearch.error ? (
+          <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800" role="status">{nearbySearch.error}</p>
+        ) : null}
+        {resultStatus === "STALE" ? (
+          <section className="rounded-xl border border-amber-300 bg-amber-50 p-4" role="status">
+            <p className="text-sm font-bold text-amber-950">다시 분석 필요</p>
+            <p className="mt-1 text-xs leading-5 text-amber-900">현재 위치와 반경으로 경쟁환경 분석을 다시 실행해 주세요.</p>
+          </section>
+        ) : null}
+        {!result && initialPersistedResult ? (
+          <section className="rounded-xl border border-blue-200 bg-blue-50 p-4" aria-label="저장된 경쟁환경 집계">
+            <p className="text-sm font-bold text-blue-950">저장된 경쟁환경 집계</p>
+            <p className="mt-1 text-xs leading-5 text-blue-900">고유 관측 후보 {initialPersistedResult.result.kakaoObservation.uniqueObservedCandidateCount}개</p>
+          </section>
+        ) : null}
+      </aside>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-4">
 
       {result ? (
         <>
@@ -668,6 +706,7 @@ export default function CompetitionStructureClient({
           </section>
         </>
       ) : null}
+      </div>
     </div>
   );
 }

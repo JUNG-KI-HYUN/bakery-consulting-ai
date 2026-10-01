@@ -600,6 +600,7 @@ export default function MarketSpatialViewer({
   onOpenAnalysisSummary,
   pointSelectionEnabled = true,
   onActiveTargetChange,
+  workspace = false,
 }: {
   initialTarget?: ActiveAnalysisTarget | null;
   selectedMarket: SelectedMarketSpatialSummary | null;
@@ -614,6 +615,7 @@ export default function MarketSpatialViewer({
   onOpenAnalysisSummary?: () => void;
   pointSelectionEnabled?: boolean;
   onActiveTargetChange?: (target: ActiveAnalysisTarget) => void;
+  workspace?: boolean;
 }) {
   const defaultVisibleLayerIds = useMemo(
     () =>
@@ -1709,7 +1711,7 @@ export default function MarketSpatialViewer({
       : null;
 
   return (
-    <section className="panel-card overflow-hidden" aria-labelledby="spatial-viewer-title">
+    <section className={`${workspace ? "overflow-hidden rounded-xl border border-stone-300 bg-white" : "panel-card overflow-hidden"}`} aria-labelledby="spatial-viewer-title">
       {activeTab === "public-data" ? <div className="border-b border-slate-200 bg-slate-950 px-5 py-5 text-white md:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -1732,7 +1734,7 @@ export default function MarketSpatialViewer({
         </div>
       </div> : null}
 
-      <div className="space-y-3 p-4 md:p-6">
+      <div className={workspace ? "space-y-3" : "space-y-3 p-4 md:p-6"}>
         {activeTab === "public-data" ? (
         <details className="rounded-xl border border-slate-200 bg-slate-50/80">
           <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-4 py-3 sm:flex-nowrap">
@@ -1975,7 +1977,7 @@ export default function MarketSpatialViewer({
             </div>
           ) : null}
 
-          <section className={`${activeTab === "market-map" || activeTab === "public-data" ? "hidden" : ""} overflow-hidden rounded-xl border border-slate-300 bg-white`}>
+          <section className={`${activeTab === "public-data" ? "hidden" : ""} overflow-hidden rounded-xl border border-slate-300 bg-white`}>
             <KakaoBaseMap
               marketSelector={marketSelector}
               analysisSummary={analysisSummary}
@@ -1990,7 +1992,8 @@ export default function MarketSpatialViewer({
               pointSelectionEnabled={pointSelectionEnabled}
               initialSelection={initialTarget}
               downstreamCompetitionHref={activeAnalysisTarget ? competitionEnvironmentHref : null}
-              view={activeTab === "briefing" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
+              view={activeTab === "briefing" || activeTab === "market-map" ? "briefing" : activeTab === "competition" ? "competition" : "hidden"}
+              workspace={workspace}
             />
             {activeTab === "briefing" ? (
             <p className="border-t border-slate-200 px-4 py-2.5 text-[10px] leading-4 text-slate-500">

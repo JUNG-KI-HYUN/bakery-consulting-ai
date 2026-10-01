@@ -302,7 +302,7 @@ test("markets CASE A, C–I: explicit target analysis preserves map events and e
   } finally { view.dispose(); }
 });
 
-test("STEP 6 CASE A-C/J/K/R: final tabs, default setup, navigation and empty states are safe", async () => {
+test("STEP 6 CASE A-C/J/K/R: local views, default setup, navigation and empty states are safe", async () => {
   const submarket = (marketId, id, name) => ({ parentMarketId: marketId, submarketId: id, name, administrativeDong: null, status: "text_only", nodes: [] });
   const market = (id, submarkets) => ({ marketId: id, name: id, gu: "fixture district", geometryStatus: "text_only", researchPriority: "A", bakeryMarketImportance: "A", submarkets });
   const view = fixture(MarketsExplorer, { hierarchy: { districts: [{ districtId: "fixture-district", name: "fixture district", markets: [
@@ -325,14 +325,18 @@ test("STEP 6 CASE A-C/J/K/R: final tabs, default setup, navigation and empty sta
   assert.equal(spatial().props.selectedSubmarket, null);
   assert.ok(view.button("fixture B 유일 하위상권"));
   assert.ok(!nodes(view.tree).some((node) => node.type === "button" && text(node) === "fixture A 첫 하위상권"));
-  const labels = ["분석 설정", "기초입지 분석결과", "경쟁 환경", "데이터 근거"];
+  const labels = ["설정", "결과", "근거"];
   assert.deepEqual([...new Set(nodes(view.tree).filter((node) => node.type === "button" && labels.includes(text(node))).map(text))], labels);
-  assert.ok(view.button("분석 설정").props["aria-current"]);
+  assert.ok(view.button("설정").props["aria-current"]);
+  assert.ok(!nodes(view.tree).some((node) => node.type === "button" && text(node) === "경쟁 환경"));
   assert.doesNotMatch(text(view.tree), /브리핑|상권지도|경쟁점|공공데이터/);
-  for (const [label, id] of [["기초입지 분석결과", "market-map"], ["경쟁 환경", "competition"], ["데이터 근거", "public-data"], ["분석 설정", "briefing"]]) {
+  for (const [label, id] of [["결과", "market-map"], ["근거", "public-data"], ["설정", "briefing"]]) {
     view.button(label).props.onClick(); await view.flush(); assert.equal(spatial().props.activeTab, id);
-    if (label === "기초입지 분석결과") assert.ok(renderToStaticMarkup(view.tree).includes("먼저 분석 설정에서 지도 분석지점과 반경을 선택하고 분석을 실행해 주세요."));
-    if (label === "데이터 근거") assert.ok(text(view.tree).includes("분석 실행 후 데이터 근거를 확인할 수 있습니다."));
+    if (label === "결과") {
+      assert.ok(renderToStaticMarkup(view.tree).includes("기초입지 분석 준비"));
+      assert.ok(renderToStaticMarkup(view.tree).includes("위치 선택"));
+    }
+    if (label === "근거") assert.ok(text(view.tree).includes("분석 실행 후 데이터 근거를 확인할 수 있습니다."));
   }
   const rendered = renderToStaticMarkup(view.tree);
   assert.ok(rendered.includes("overflow-x-auto"));
@@ -878,15 +882,15 @@ test("Slice 5C: tabs reuse the map while the current Run produces the STAFF P0 V
     assert.equal(summaryNode().props.viewModel.analysisRunId, firstViewModel.analysisRunId);
     assert.ok(!summaryNode().props.viewModel.dataEvidence.some((item) => item.value === 999));
 
-    for (const label of ["경쟁 환경", "데이터 근거", "기초입지 분석결과"]) {
+    for (const label of ["근거", "결과"]) {
       explorer.button(label).props.onClick(); await flush();
       assert.equal(sdk.maps.length, 1); assert.equal(sdk.maps[0], mapInstance);
       assert.equal(sdk.requests.length, requestCount);
     }
-    explorer.button("분석 설정").props.onClick(); await flush();
+    explorer.button("설정").props.onClick(); await flush();
     const selector = explorer.find((node) => node.type === "select" && node.props.value === "fixture-A");
     selector.props.onChange({ target: { value: "fixture-B" } }); await explorer.flush();
-    explorer.button("기초입지 분석결과").props.onClick(); await explorer.flush();
+    explorer.button("결과").props.onClick(); await explorer.flush();
     assert.equal(summaryNode().props.viewModel.analysisRunId, firstViewModel.analysisRunId);
     assert.ok(summaryHtml().includes("이전 분석 실행 기준으로 고정"));
   } finally { map?.dispose(); viewer?.dispose(); explorer.dispose(); }

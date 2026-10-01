@@ -63,7 +63,7 @@ test("Market workspace keeps direct access while handling valid and invalid Case
   assert.match(explorer, /Case를 찾을 수 없습니다/);
   assert.match(explorer, /일반 상권분석을 계속 사용할 수 있습니다/);
   assert.match(explorer, /이 분석을 Case에 연결/);
-  assert.match(explorer, /현재 Case에 연결된 분석/);
+  assert.match(explorer, /현재 분석 연결됨/);
   assert.match(explorer, /linkableTarget/);
   assert.match(explorer, /analysisRunLink/);
 });
