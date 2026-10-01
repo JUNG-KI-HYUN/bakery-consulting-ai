@@ -65,7 +65,7 @@ export const REMEDIATION_TEXT: Readonly<Record<RiskRemediationType, string | nul
     NEGOTIATE: "임대인 또는 상대방과 조건 협의가 필요합니다.",
     MEASURE: "현장 실측이 필요합니다.",
     EXPERT_REVIEW: "관련 전문가 확인이 필요합니다.",
-    CHANGE_PLAN: "장비 또는 공간 계획 조정 여부를 검토하세요.",
+    CHANGE_PLAN: "사업계획 또는 장비·공간 계획 조정 여부를 검토하세요.",
     NONE: null,
   });
 

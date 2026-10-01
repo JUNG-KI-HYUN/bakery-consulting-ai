@@ -3,7 +3,7 @@
  *
  * predicate는 typed evidence field만 본다. description / title을 해석하지 않는다.
  * pure: I/O, clock, randomness, mutation 없음.
- * V1 golden rule은 typed selector만으로 충분하므로 builtin predicate는 없다.
+ * V1 golden rule은 typed selector만으로 충분하므로 V1 registry에는 builtin predicate가 없다.
  */
 
 import type { CandidateDecisionEvidenceBundle } from "../decision-evidence/candidate-bundle";
@@ -47,3 +47,33 @@ export function lookupRiskPredicate(
 }
 
 export const RISK_PREDICATE_REGISTRY_V1: RiskPredicateRegistry = createRiskPredicateRegistry({});
+
+export const ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY = "economic.baseBelowBep" as const;
+
+/**
+ * Economic engine 수치는 binding이 일치하고 validation error가 없을 때만 읽는다.
+ * ECONOMIC INTEGRATION_STATE missing(binding 없음·불일치, 결과 없음, validation errors)이 있으면 false.
+ */
+function economicNumbersUsable(bundle: CandidateDecisionEvidenceBundle): boolean {
+  const economic = bundle.domainEvidence?.economic;
+  if (!economic || economic.referenceValidation.errors.length > 0) return false;
+  return !bundle.missingInformation.some(
+    (item) => item.sourceDomain === "ECONOMIC" && item.nature === "INTEGRATION_STATE",
+  );
+}
+
+/** 기존 engine 출력값끼리 비교만 한다. null·비유한수는 판단 불가로 false. 같으면 false. */
+function economicBaseBelowBep({ bundle }: RiskPredicateContext): boolean {
+  if (!economicNumbersUsable(bundle)) return false;
+  const numbers = bundle.domainEvidence.economic.referenceNullableNumbers;
+  const baseMonthlySales = numbers["scenarios.base.monthlySales"];
+  const monthlyBepSales = numbers["bep.monthlyBepSales"];
+  if (typeof baseMonthlySales !== "number" || !Number.isFinite(baseMonthlySales)) return false;
+  if (typeof monthlyBepSales !== "number" || !Number.isFinite(monthlyBepSales)) return false;
+  return baseMonthlySales < monthlyBepSales;
+}
+
+/** V1 registry 의미는 유지한다. V2는 risk-rules-v2 전용이다. */
+export const RISK_PREDICATE_REGISTRY_V2: RiskPredicateRegistry = createRiskPredicateRegistry({
+  [ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY]: economicBaseBelowBep,
+});

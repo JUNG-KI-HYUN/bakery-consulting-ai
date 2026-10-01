@@ -3,9 +3,11 @@
  *
  * HARD_BLOCKER rule은 없다. 현재 Evidence에는 "해소 불가"를 나타내는 typed field가 없으므로
  * CONSTRAINT_OBSERVED를 HARD_BLOCKER로 승격하지 않는다.
- * Economic / Location / Competition rule도 typed predicate가 정의될 때까지 두지 않는다.
+ * V1에는 Economic / Location / Competition rule이 없다. Economic rule은 V2에만 둔다.
  */
 
+import { makeDecisionEvidenceId } from "../decision-evidence/helpers";
+import { ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY } from "./predicates";
 import {
   RISK_RULE_SET_SCHEMA_VERSION,
   type RiskRemediationType,
@@ -164,4 +166,65 @@ export const RISK_RULE_SET_V1: RiskRuleSet = deepFreeze({
   schemaVersion: RISK_RULE_SET_SCHEMA_VERSION,
   ruleSetVersion: RISK_RULE_SET_V1_VERSION,
   rules: RULES,
+});
+
+/**
+ * Risk Rule Set V2 = V1 rules + Economic Stress rules. RISK_PREDICATE_REGISTRY_V2와 함께 평가한다.
+ * ruleSetVersion은 content version이다. risk-rules-v1 내용은 바꾸지 않는다.
+ *
+ * Economic finding은 ECONOMIC_STRESS로만 둔다. HARD_BLOCKER로 승격하지 않는다.
+ * 계획 임대료 vs BASE ceiling rule은 plannedRent / plannedRentToCeiling이 typed metadata로
+ * 노출되지 않아 두지 않았다 (Evidence contract 확장 필요).
+ */
+export const RISK_RULE_SET_V2_VERSION = "risk-rules-v2" as const;
+
+const ECONOMIC_RULES: readonly RiskRuleDefinition[] = [
+  {
+    ruleId: "ECONOMIC.BASE_BELOW_BEP",
+    version: RULE_VERSION,
+    domain: "ECONOMIC",
+    riskClass: "ECONOMIC_STRESS",
+    title: "BASE 시나리오 월매출이 월 손익분기 매출보다 낮음",
+    description:
+      "입력된 BASE 시나리오 월매출(사업계획 가정 기반 projection)이 Economic engine이 계산한 월 손익분기 매출보다 낮습니다. 기존 계산값끼리 비교한 결과이며 사업 성패나 계약 여부를 판정하지 않습니다.",
+    evidenceRequirements: [
+      {
+        requirementKey: "base-scenario-projection",
+        sourceDomain: "ECONOMIC",
+        bucket: "OBSERVED_FACT",
+        category: "ECONOMIC",
+        nature: "ESTIMATE",
+        evidenceId: makeDecisionEvidenceId({
+          sourceDomain: "ECONOMIC",
+          bucket: "OBSERVED_FACT",
+          category: "ECONOMIC",
+          key: "scenario-base-projection",
+        }),
+        predicateKey: ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY,
+      },
+      {
+        requirementKey: "bep-summary",
+        sourceDomain: "ECONOMIC",
+        bucket: "OBSERVED_FACT",
+        category: "BEP",
+        nature: "DERIVED_CALCULATION",
+        evidenceId: makeDecisionEvidenceId({
+          sourceDomain: "ECONOMIC",
+          bucket: "OBSERVED_FACT",
+          category: "BEP",
+          key: "bep-summary",
+        }),
+        predicateKey: ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY,
+      },
+    ],
+    defaultSeverity: "HIGH",
+    requiresHumanApproval: false,
+    remediationType: "CHANGE_PLAN",
+  },
+];
+
+export const RISK_RULE_SET_V2: RiskRuleSet = deepFreeze({
+  schemaVersion: RISK_RULE_SET_SCHEMA_VERSION,
+  ruleSetVersion: RISK_RULE_SET_V2_VERSION,
+  rules: [...RISK_RULE_SET_V1.rules, ...ECONOMIC_RULES],
 });
