@@ -41,9 +41,9 @@ test("all minimal lifecycle stages have Korean user labels", () => {
   }
 });
 
-test("Case detail exposes Case-aware market navigation and linked analysis states", () => {
+test("Case detail exposes Case-aware market navigation, candidates and linked analysis states", () => {
   const detail = read("components/cases/CaseDetailClient.tsx");
-  for (const copy of ["아직 연결된 분석이 없습니다", "아직 연결된 후보점포가 없습니다", "아직 생성된 리포트가 없습니다"]) {
+  for (const copy of ["아직 연결된 분석이 없습니다", "후보점포가 없습니다", "아직 생성된 리포트가 없습니다"]) {
     assert.match(detail, new RegExp(copy));
   }
   assert.match(detail, /`\/markets\?caseId=\$\{encodeURIComponent\(record\.caseId\)\}`/);
@@ -51,6 +51,8 @@ test("Case detail exposes Case-aware market navigation and linked analysis state
   assert.match(detail, /분석 계속하기/);
   assert.match(detail, /연결된 분석/);
   assert.match(detail, /Case에 연결됨/);
+  assert.match(detail, /후보점포 등록/);
+  assert.match(detail, /상세 열기/);
   assert.equal(detail.includes("analysisRunId:"), false);
 });
 
@@ -66,6 +68,24 @@ test("Market workspace keeps direct access while handling valid and invalid Case
   assert.match(explorer, /현재 분석 연결됨/);
   assert.match(explorer, /linkableTarget/);
   assert.match(explorer, /analysisRunLink/);
+  assert.match(explorer, /후보점포로 등록/);
+  assert.match(explorer, /candidates\/new\?origin=market/);
+  assert.match(explorer, /후보점포 등록은 Case에서 상권 분석을 시작/);
+});
+
+test("Candidate create and detail screens keep Core data separate from legacy consultation", () => {
+  const createPage = read("app/cases/[caseId]/candidates/new/page.tsx");
+  const detailPage = read("app/cases/[caseId]/candidates/[candidateId]/page.tsx");
+  const form = read("components/candidates/NewCandidateStoreForm.tsx");
+  const detail = read("components/candidates/CandidateStoreDetailClient.tsx");
+  assert.match(createPage, /getAnalysisRunSnapshot/);
+  assert.match(createPage, /MARKET_ANALYSIS/);
+  assert.match(detailPage, /candidate\.caseId !== caseRecord\.caseId/);
+  assert.match(form, /비어 있는 선택 항목은 0으로 저장하지 않습니다/);
+  assert.match(detail, /시설·계약 리스크 검토 전/);
+  assert.match(detail, /다음 단계에서 검토 예정/);
+  assert.equal(form.includes("@/components/diagnosis/CandidateStoreForm"), false);
+  assert.equal(form.includes("CandidateStoreInput"), false);
 });
 
 test("existing markets workflow contracts remain outside the Case implementation", () => {

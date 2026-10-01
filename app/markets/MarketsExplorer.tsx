@@ -9,7 +9,7 @@ import type {
   MarketAnalysisContext,
 } from "@/lib/market-data/market-analysis-context";
 import type { ActiveAnalysisTarget } from "@/lib/market-data/competition-location";
-import { activeAnalysisTargetSearchParams } from "@/lib/market-data/competition-location";
+import { activeAnalysisTargetHref, activeAnalysisTargetSearchParams } from "@/lib/market-data/competition-location";
 import { analysisResultStatus } from "@/lib/market-data/basic-location/run";
 import { AnalysisTargetHeader, AnalysisWorkflow, type WorkflowStep } from "./AnalysisWorkflow";
 import { buildMarketSummaryPresentation } from "@/lib/market-data/market-analysis-presentation";
@@ -747,13 +747,16 @@ export default function MarketsExplorer({
             </div>
             <div className="flex min-w-0 flex-wrap items-center gap-2 text-[11px]">
               {linkableTarget ? (
-                currentRunLinked ? (
-                  <span className="font-bold text-emerald-800">현재 분석 연결됨</span>
-                ) : (
-                  <button type="button" onClick={linkCurrentAnalysisToCase} disabled={caseLinkPending} className="min-h-9 rounded-md bg-stone-950 px-3 text-xs font-bold text-white disabled:opacity-60">
-                    {caseLinkPending ? "연결 중…" : "이 분석을 Case에 연결"}
-                  </button>
-                )
+                <>
+                  {currentRunLinked ? (
+                    <span className="font-bold text-emerald-800">현재 분석 연결됨</span>
+                  ) : (
+                    <button type="button" onClick={linkCurrentAnalysisToCase} disabled={caseLinkPending} className="min-h-9 rounded-md bg-stone-950 px-3 text-xs font-bold text-white disabled:opacity-60">
+                      {caseLinkPending ? "연결 중…" : "이 분석을 Case에 연결"}
+                    </button>
+                  )}
+                  <Link href={activeAnalysisTargetHref(`/cases/${encodeURIComponent(caseContext.caseId)}/candidates/new?origin=market`, linkableTarget)} className="min-h-9 rounded-md bg-[#725823] px-3 py-2 text-xs font-bold text-white">후보점포로 등록</Link>
+                </>
               ) : (
                 <span className="font-semibold text-stone-500">분석 실행 후 연결 가능</span>
               )}
@@ -765,6 +768,11 @@ export default function MarketsExplorer({
           <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3" role="status">
             <p className="text-sm font-bold text-amber-900">Case를 찾을 수 없습니다.</p>
             <p className="mt-1 text-xs leading-5 text-amber-800">Case 연결 없이 일반 상권분석을 계속 사용할 수 있습니다.</p>
+          </section>
+        ) : linkableTarget ? (
+          <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-stone-200 bg-white px-3 py-2 text-xs text-stone-600">
+            <span>후보점포 등록은 Case에서 상권 분석을 시작한 뒤 사용할 수 있습니다.</span>
+            <Link href="/" className="font-bold text-stone-950 underline underline-offset-4">Case 선택</Link>
           </section>
         ) : null}
         <div className="xl:hidden">

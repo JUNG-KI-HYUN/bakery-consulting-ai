@@ -8,6 +8,10 @@ import {
 } from "@/lib/cases/case-contract";
 import { CaseFormFields, type CaseFormValues } from "./CaseFormFields";
 import { activeAnalysisTargetHref, type ActiveAnalysisTarget } from "@/lib/market-data/competition-location";
+import {
+  CANDIDATE_STORE_STATUS_LABELS,
+  type CandidateStore,
+} from "@/lib/candidates/candidate-contract";
 
 function formValues(record: CaseRecord): CaseFormValues {
   return {
@@ -52,9 +56,11 @@ function formatBudget(record: CaseRecord) {
 
 export function CaseDetailClient({
   initialRecord,
+  initialCandidates,
   latestAnalysisTarget,
 }: {
   initialRecord: CaseRecord;
+  initialCandidates: CandidateStore[];
   latestAnalysisTarget: ActiveAnalysisTarget | null;
 }) {
   const [record, setRecord] = useState(initialRecord);
@@ -135,7 +141,23 @@ export function CaseDetailClient({
         <article className="bg-white p-5">
           <p className="text-xs font-bold text-[#8b6f38]">후보점포</p>
           <h3 className="mt-2 text-base font-bold text-stone-950">후보점포 검토</h3>
-          <p className="mt-2 text-sm text-stone-500">{record.consultationIds.length ? `${record.consultationIds.length}개 후보점포 참조` : "아직 연결된 후보점포가 없습니다."}</p>
+          {!initialCandidates.length ? (
+            <p className="mt-2 text-sm text-stone-500">후보점포가 없습니다.</p>
+          ) : (
+            <div className="mt-4 divide-y divide-stone-200 border-y border-stone-200">
+              {initialCandidates.map((candidate) => (
+                <div key={candidate.candidateId} className="py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0"><p className="truncate text-sm font-bold text-stone-950">{candidate.label}</p><p className="mt-1 truncate text-xs text-stone-500">{candidate.address ?? "주소 미입력"}</p></div>
+                    <span className="shrink-0 text-[10px] font-bold text-stone-500">{CANDIDATE_STORE_STATUS_LABELS[candidate.status]}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-stone-600">월세 {candidate.currentAskingTerms.monthlyRentWon === undefined ? "미입력" : `${candidate.currentAskingTerms.monthlyRentWon.toLocaleString("ko-KR")}원`} · {formatUpdatedAt(candidate.updatedAt)}</p>
+                  <Link href={`/cases/${encodeURIComponent(record.caseId)}/candidates/${encodeURIComponent(candidate.candidateId)}`} className="mt-2 inline-block text-xs font-bold text-stone-800 underline underline-offset-4">상세 열기</Link>
+                </div>
+              ))}
+            </div>
+          )}
+          <Link href={`/cases/${encodeURIComponent(record.caseId)}/candidates/new`} className="btn-outline mt-5">후보점포 등록</Link>
         </article>
         <article className="bg-white p-5">
           <p className="text-xs font-bold text-[#8b6f38]">리포트</p>
