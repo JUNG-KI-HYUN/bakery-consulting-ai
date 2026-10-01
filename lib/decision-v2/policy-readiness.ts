@@ -73,6 +73,15 @@ export const FINAL_DECISION_POLICY_V2: FinalDecisionPolicy = deepFreeze({
   requiredRuleSetVersion: "risk-rules-v2",
 });
 
+export const FINAL_DECISION_POLICY_V3_VERSION = "frameone-final-decision-policy-v3" as const;
+
+/** risk-rules-v3 coverage 감사용 snapshot. 필수 class / domain은 V1·V2와 같다. */
+export const FINAL_DECISION_POLICY_V3: FinalDecisionPolicy = deepFreeze({
+  ...structuredClone(FINAL_DECISION_POLICY_V1),
+  policyVersion: FINAL_DECISION_POLICY_V3_VERSION,
+  requiredRuleSetVersion: "risk-rules-v3",
+});
+
 const POLICY_KEYS = new Set([
   "policyVersion",
   "requiredRuleSetVersion",

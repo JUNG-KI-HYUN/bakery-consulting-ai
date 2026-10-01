@@ -77,3 +77,22 @@ function economicBaseBelowBep({ bundle }: RiskPredicateContext): boolean {
 export const RISK_PREDICATE_REGISTRY_V2: RiskPredicateRegistry = createRiskPredicateRegistry({
   [ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY]: economicBaseBelowBep,
 });
+
+export const ECONOMIC_PLANNED_RENT_ABOVE_BASE_CEILING_PREDICATE_KEY =
+  "economic.plannedRentAboveBaseCeiling" as const;
+
+/**
+ * Engine relation(referenceRentPlanning.plannedRentToCeiling)만 source-of-truth로 쓴다. 재비교하지 않는다.
+ * ABOVE일 때만 true. BELOW_OR_EQUAL / NOT_AVAILABLE / null은 이 rule이 trigger되지 않았다는 뜻일 뿐이다.
+ */
+function economicPlannedRentAboveBaseCeiling({ bundle }: RiskPredicateContext): boolean {
+  if (!economicNumbersUsable(bundle)) return false;
+  const planning = bundle.domainEvidence.economic.referenceRentPlanning;
+  return planning !== null && planning.plannedRentToCeiling === "ABOVE";
+}
+
+/** V3는 risk-rules-v3 전용이다. V2 predicate를 그대로 포함한다. */
+export const RISK_PREDICATE_REGISTRY_V3: RiskPredicateRegistry = createRiskPredicateRegistry({
+  ...RISK_PREDICATE_REGISTRY_V2,
+  [ECONOMIC_PLANNED_RENT_ABOVE_BASE_CEILING_PREDICATE_KEY]: economicPlannedRentAboveBaseCeiling,
+});

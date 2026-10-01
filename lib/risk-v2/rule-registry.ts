@@ -7,7 +7,10 @@
  */
 
 import { makeDecisionEvidenceId } from "../decision-evidence/helpers";
-import { ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY } from "./predicates";
+import {
+  ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY,
+  ECONOMIC_PLANNED_RENT_ABOVE_BASE_CEILING_PREDICATE_KEY,
+} from "./predicates";
 import {
   RISK_RULE_SET_SCHEMA_VERSION,
   type RiskRemediationType,
@@ -227,4 +230,47 @@ export const RISK_RULE_SET_V2: RiskRuleSet = deepFreeze({
   schemaVersion: RISK_RULE_SET_SCHEMA_VERSION,
   ruleSetVersion: RISK_RULE_SET_V2_VERSION,
   rules: [...RISK_RULE_SET_V1.rules, ...ECONOMIC_RULES],
+});
+
+/**
+ * Risk Rule Set V3 = V2 rules + 계획 월세 vs BASE 목표 임대료 상한 rule. RISK_PREDICATE_REGISTRY_V3와 함께 평가한다.
+ * risk-rules-v1 / risk-rules-v2 내용은 바꾸지 않는다.
+ */
+export const RISK_RULE_SET_V3_VERSION = "risk-rules-v3" as const;
+
+const ECONOMIC_RENT_RULES: readonly RiskRuleDefinition[] = [
+  {
+    ruleId: "ECONOMIC.RENT_ABOVE_BASE_CEILING",
+    version: RULE_VERSION,
+    domain: "ECONOMIC",
+    riskClass: "ECONOMIC_STRESS",
+    title: "계획 월세가 BASE 목표 임대료 상한 초과",
+    description:
+      "현재 입력된 사업계획 기준으로 계획 월세가 BASE 시나리오의 목표 임대료 상한을 초과합니다. Economic engine의 기존 관계 결과를 읽은 것이며 사업 성패나 계약 여부를 판정하지 않습니다.",
+    evidenceRequirements: [
+      {
+        requirementKey: "rental-market-reference-usage",
+        sourceDomain: "ECONOMIC",
+        bucket: "OBSERVED_FACT",
+        category: "ECONOMIC",
+        nature: "REFERENCE_SUMMARY",
+        evidenceId: makeDecisionEvidenceId({
+          sourceDomain: "ECONOMIC",
+          bucket: "OBSERVED_FACT",
+          category: "ECONOMIC",
+          key: "rental-market-reference-usage",
+        }),
+        predicateKey: ECONOMIC_PLANNED_RENT_ABOVE_BASE_CEILING_PREDICATE_KEY,
+      },
+    ],
+    defaultSeverity: "HIGH",
+    requiresHumanApproval: false,
+    remediationType: "NEGOTIATE",
+  },
+];
+
+export const RISK_RULE_SET_V3: RiskRuleSet = deepFreeze({
+  schemaVersion: RISK_RULE_SET_SCHEMA_VERSION,
+  ruleSetVersion: RISK_RULE_SET_V3_VERSION,
+  rules: [...RISK_RULE_SET_V2.rules, ...ECONOMIC_RENT_RULES],
 });
