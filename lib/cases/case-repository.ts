@@ -35,7 +35,9 @@ async function readCases(filePath: string): Promise<CaseRecord[]> {
     const parsed = JSON.parse(await fs.readFile(filePath, "utf8")) as unknown;
     if (!Array.isArray(parsed)) throw new TypeError("Case repository root must be an array.");
     for (const record of parsed) assertStoredCaseRecord(record);
-    return parsed as CaseRecord[];
+    return (parsed as Array<CaseRecord & { analysisRunLinks?: CaseRecord["analysisRunLinks"] }>).map(
+      (record) => ({ ...record, analysisRunLinks: record.analysisRunLinks ?? [] }),
+    );
   } catch (error) {
     if (error instanceof CaseRepositoryError) throw error;
     throw new CaseRepositoryError("Case 저장소를 읽지 못했습니다.", { cause: error });
@@ -79,6 +81,7 @@ export function createCase(input: unknown): Promise<CaseRecord> {
       lifecycleStage: "EXPLORING",
       status: "ACTIVE",
       analysisRunIds: [],
+      analysisRunLinks: [],
       consultationIds: [],
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -101,11 +104,27 @@ export function updateCase(caseId: string, input: unknown): Promise<CaseRecord |
     const current = cases[index];
     validateUpdatedBudgetRange(current, parsed);
     const lifecycleStage = parsed.lifecycleStage ?? current.lifecycleStage;
+    const analysisRunLink = parsed.analysisRunLink;
+    const alreadyLinked = analysisRunLink
+      ? current.analysisRunIds.includes(analysisRunLink.analysisRunId)
+      : false;
+    const editable = { ...parsed };
+    delete editable.analysisRunLink;
+    if (analysisRunLink && alreadyLinked && Object.keys(editable).length === 0) {
+      result = structuredClone(current);
+      return;
+    }
     const next: CaseRecord = {
       ...current,
-      ...parsed,
+      ...editable,
       lifecycleStage,
       status: statusForLifecycle(lifecycleStage),
+      analysisRunIds: analysisRunLink && !alreadyLinked
+        ? [...current.analysisRunIds, analysisRunLink.analysisRunId]
+        : current.analysisRunIds,
+      analysisRunLinks: analysisRunLink && !alreadyLinked
+        ? [...current.analysisRunLinks, { ...analysisRunLink, linkedAt: new Date().toISOString() }]
+        : current.analysisRunLinks,
       updatedAt: new Date().toISOString(),
     };
     cases[index] = next;

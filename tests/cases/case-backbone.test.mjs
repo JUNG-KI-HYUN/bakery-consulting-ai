@@ -75,6 +75,7 @@ test("Case 전용 repository와 API는 실제 프로젝트 데이터에서 격�
       assert.equal(created.lifecycleStage, "EXPLORING");
       assert.equal(created.status, "ACTIVE");
       assert.deepEqual(created.analysisRunIds, []);
+      assert.deepEqual(created.analysisRunLinks, []);
       assert.deepEqual(created.consultationIds, []);
       assert.equal(created.createdAt, created.updatedAt);
     });
@@ -103,8 +104,69 @@ test("Case 전용 repository와 API는 실제 프로젝트 데이터에서 격�
       assert.equal(updated.status, "ACTIVE");
       assert.equal(updated.createdAt, created.createdAt);
       assert.deepEqual(updated.analysisRunIds, []);
+      assert.deepEqual(updated.analysisRunLinks, []);
       assert.deepEqual(updated.consultationIds, []);
       assert.ok(Date.parse(updated.updatedAt) >= Date.parse(created.updatedAt));
+    });
+
+    await t.test("canonical AnalysisRun snapshot은 중복 없이 append되고 과거 Run을 보존한다", async () => {
+      const runA = {
+        analysisRunId: "basic-location-run:11111111-1111-4111-8111-111111111111",
+        label: "성수 테스트 위치",
+        address: "서울시 성동구 테스트 주소",
+        latitude: 37.5445,
+        longitude: 127.056,
+        radiusM: 300,
+        officialMarketName: null,
+        analyzedAt: "2026-10-01T01:00:00.000Z",
+      };
+      const link = (analysisRunLink) => detail.PATCH(new Request(`http://localhost/api/cases/${created.caseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ analysisRunLink }),
+      }), { params: Promise.resolve({ caseId: created.caseId }) });
+
+      const first = await link(runA);
+      assert.equal(first.status, 200);
+      const linkedA = await first.json();
+      assert.deepEqual(linkedA.analysisRunIds, [runA.analysisRunId]);
+      assert.equal(linkedA.analysisRunLinks[0].label, runA.label);
+      assert.ok(Date.parse(linkedA.analysisRunLinks[0].linkedAt));
+
+      const duplicate = await (await link(runA)).json();
+      assert.deepEqual(duplicate.analysisRunIds, [runA.analysisRunId]);
+      assert.equal(duplicate.analysisRunLinks.length, 1);
+      assert.equal(duplicate.updatedAt, linkedA.updatedAt);
+
+      const runB = {
+        ...runA,
+        analysisRunId: "basic-location-run:22222222-2222-4222-8222-222222222222",
+        label: "성수 재분석 위치",
+        radiusM: 500,
+        analyzedAt: "2026-10-01T02:00:00.000Z",
+      };
+      const linkedB = await (await link(runB)).json();
+      assert.deepEqual(linkedB.analysisRunIds, [runA.analysisRunId, runB.analysisRunId]);
+      assert.deepEqual(linkedB.analysisRunLinks.map((item) => item.analysisRunId), [runA.analysisRunId, runB.analysisRunId]);
+    });
+
+    await t.test("Draft 또는 가짜 식별자는 AnalysisRun으로 저장하지 않는다", async () => {
+      const response = await detail.PATCH(new Request(`http://localhost/api/cases/${created.caseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ analysisRunLink: {
+          analysisRunId: "draft-location",
+          label: null,
+          address: null,
+          latitude: 37.5,
+          longitude: 127,
+          radiusM: 300,
+          officialMarketName: null,
+          analyzedAt: "2026-10-01T01:00:00.000Z",
+        } }),
+      }), { params: Promise.resolve({ caseId: created.caseId }) });
+      assert.equal(response.status, 400);
+      assert.match((await response.json()).message, /analysisRunId/);
     });
 
     await t.test("invalid input returns 400 and does not create or mutate a Case", async () => {

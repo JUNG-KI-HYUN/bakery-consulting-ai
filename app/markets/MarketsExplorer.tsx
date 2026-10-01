@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import MarketSpatialViewer from "./MarketSpatialViewer";
 import MarketAnalysisSummary from "./MarketAnalysisSummary";
@@ -34,6 +35,12 @@ export type MarketsWorkspaceTab =
   | "public-data";
 
 export type MarketAnalysisMode = "market-area" | "point-detail";
+
+export interface CaseMarketContext {
+  caseId: string;
+  name: string;
+  analysisRunIds: string[];
+}
 
 interface MarketAreaAnalysisSnapshot {
   analysisType: "MARKET_AREA";
@@ -295,11 +302,15 @@ export default function MarketsExplorer({
   initialTarget = null,
   initialTab = "briefing",
   workflowStep = "target",
+  requestedCaseId = null,
+  caseContext = null,
 }: {
   hierarchy: MarketHierarchy;
   initialTarget?: ActiveAnalysisTarget | null;
   initialTab?: MarketsWorkspaceTab;
   workflowStep?: WorkflowStep;
+  requestedCaseId?: string | null;
+  caseContext?: CaseMarketContext | null;
 }) {
   const initialDistrict = hierarchy.districts[0];
   const initialContextMarket = hierarchy.districts
@@ -333,6 +344,11 @@ export default function MarketsExplorer({
   const [analysisConditionsRequest, setAnalysisConditionsRequest] = useState(0);
   const [analysisMode, setAnalysisMode] = useState<MarketAnalysisMode>("point-detail");
   const [marketAreaAnalysis, setMarketAreaAnalysis] = useState<MarketAreaAnalysisSnapshot | null>(null);
+  const [linkedAnalysisRunIds, setLinkedAnalysisRunIds] = useState(
+    () => caseContext?.analysisRunIds ?? [],
+  );
+  const [caseLinkPending, setCaseLinkPending] = useState(false);
+  const [caseLinkError, setCaseLinkError] = useState<string | null>(null);
   const handleAnalysisContextChange = useCallback((nextContext: MarketAnalysisContext) => {
     setAnalysisContext((current) => {
       if (current?.target && !nextContext.target) return current;
@@ -634,10 +650,81 @@ export default function MarketsExplorer({
       livingPopulation: analysisContext.livingPopulation,
     });
   }, [analysisContext, hierarchy, kakaoNearbySource]);
+  const linkableTarget = activeTarget &&
+    activeTarget.targetKey === activeTarget.analysisRunId &&
+    /^basic-location-run:[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(activeTarget.analysisRunId) &&
+    Number.isFinite(Date.parse(activeTarget.createdAt))
+      ? activeTarget
+      : null;
+  const currentRunLinked = Boolean(
+    linkableTarget && linkedAnalysisRunIds.includes(linkableTarget.analysisRunId),
+  );
+
+  const linkCurrentAnalysisToCase = async () => {
+    if (!caseContext || !linkableTarget || currentRunLinked || caseLinkPending) return;
+    setCaseLinkPending(true);
+    setCaseLinkError(null);
+    try {
+      const response = await fetch(`/api/cases/${encodeURIComponent(caseContext.caseId)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisRunLink: {
+            analysisRunId: linkableTarget.analysisRunId,
+            label: linkableTarget.label,
+            address: linkableTarget.address,
+            latitude: linkableTarget.latitude,
+            longitude: linkableTarget.longitude,
+            radiusM: linkableTarget.radiusM,
+            officialMarketName: linkableTarget.officialReference?.marketName ?? null,
+            analyzedAt: linkableTarget.createdAt,
+          },
+        }),
+      });
+      const body = await response.json() as { analysisRunIds?: string[]; message?: string };
+      if (!response.ok || !Array.isArray(body.analysisRunIds)) {
+        setCaseLinkError(body.message ?? "분석을 Case에 연결하지 못했습니다.");
+        return;
+      }
+      setLinkedAnalysisRunIds(body.analysisRunIds);
+    } catch {
+      setCaseLinkError("분석을 Case에 연결하는 중 오류가 발생했습니다.");
+    } finally {
+      setCaseLinkPending(false);
+    }
+  };
 
   return (
     <div className="w-full min-w-0 overflow-x-clip">
       <div className="mb-4 space-y-4">
+        {caseContext ? (
+          <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-[#d8c59b] bg-[#fffaf0] px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Case 연결 context">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-[#8b6f38]">CASE와 함께 분석 중</p>
+              <p className="mt-1 break-words text-sm font-bold text-stone-950">{caseContext.name}</p>
+            </div>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              {linkableTarget ? (
+                currentRunLinked ? (
+                  <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-800">현재 Case에 연결된 분석</span>
+                ) : (
+                  <button type="button" onClick={linkCurrentAnalysisToCase} disabled={caseLinkPending} className="min-h-11 rounded-lg bg-stone-950 px-4 text-sm font-bold text-white disabled:opacity-60">
+                    {caseLinkPending ? "연결 중…" : "이 분석을 Case에 연결"}
+                  </button>
+                )
+              ) : (
+                <span className="text-xs font-semibold text-stone-600">분석 실행 후 Case에 연결할 수 있습니다.</span>
+              )}
+              <Link href={`/cases/${encodeURIComponent(caseContext.caseId)}`} className="min-h-11 rounded-lg border border-stone-300 bg-white px-4 py-3 text-sm font-bold text-stone-700">Case로 돌아가기</Link>
+            </div>
+            {caseLinkError ? <p className="text-sm font-semibold text-red-700 sm:basis-full" role="alert">{caseLinkError}</p> : null}
+          </section>
+        ) : requestedCaseId ? (
+          <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3" role="status">
+            <p className="text-sm font-bold text-amber-900">Case를 찾을 수 없습니다.</p>
+            <p className="mt-1 text-xs leading-5 text-amber-800">Case 연결 없이 일반 상권분석을 계속 사용할 수 있습니다.</p>
+          </section>
+        ) : null}
         <AnalysisWorkflow active={workflowStep} target={activeTarget} />
         <AnalysisTargetHeader
           target={activeTarget}

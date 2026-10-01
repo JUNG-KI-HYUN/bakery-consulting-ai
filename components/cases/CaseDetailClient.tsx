@@ -55,6 +55,8 @@ export function CaseDetailClient({ initialRecord }: { initialRecord: CaseRecord 
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const marketHref = `/markets?caseId=${encodeURIComponent(record.caseId)}`;
+  const latestAnalysis = record.analysisRunLinks.at(-1) ?? null;
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -105,8 +107,20 @@ export function CaseDetailClient({ initialRecord }: { initialRecord: CaseRecord 
         <article className="bg-white p-5">
           <p className="text-xs font-bold text-[#8b6f38]">분석</p>
           <h3 className="mt-2 text-base font-bold text-stone-950">상권·입지 분석</h3>
-          <p className="mt-2 text-sm text-stone-500">{record.analysisRunIds.length ? `${record.analysisRunIds.length}개 분석 참조` : "아직 연결된 분석이 없습니다."}</p>
-          <Link href="/markets" className="btn-primary mt-5">상권 분석 시작</Link>
+          <p className="mt-2 text-sm text-stone-500">{record.analysisRunIds.length ? `연결된 분석 ${record.analysisRunIds.length}건` : "아직 연결된 분석이 없습니다."}</p>
+          {latestAnalysis ? (
+            <dl className="mt-4 space-y-2 rounded-lg bg-stone-50 p-3 text-sm">
+              <div><dt className="text-xs font-semibold text-stone-500">최근 분석 위치</dt><dd className="mt-1 break-words font-semibold text-stone-900">{latestAnalysis.label ?? latestAnalysis.address ?? "위치 이름 미확인"}</dd></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><dt className="text-xs font-semibold text-stone-500">분석 반경</dt><dd className="mt-1 font-semibold text-stone-900">{latestAnalysis.radiusM}m</dd></div>
+                <div><dt className="text-xs font-semibold text-stone-500">연결 상태</dt><dd className="mt-1 font-semibold text-emerald-700">Case에 연결됨</dd></div>
+              </div>
+              <div><dt className="text-xs font-semibold text-stone-500">분석 시각</dt><dd className="mt-1 font-semibold text-stone-900">{formatUpdatedAt(latestAnalysis.analyzedAt)}</dd></div>
+            </dl>
+          ) : record.analysisRunIds.length ? (
+            <p className="mt-4 rounded-lg bg-stone-50 p-3 text-xs leading-5 text-stone-600">기존 분석 참조는 있으나 표시 가능한 위치 snapshot이 없습니다.</p>
+          ) : null}
+          <Link href={marketHref} className="btn-primary mt-5">{record.analysisRunIds.length ? "분석 계속하기" : "상권 분석 시작"}</Link>
         </article>
         <article className="bg-white p-5">
           <p className="text-xs font-bold text-[#8b6f38]">후보점포</p>

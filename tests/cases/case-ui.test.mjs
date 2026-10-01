@@ -41,14 +41,31 @@ test("all minimal lifecycle stages have Korean user labels", () => {
   }
 });
 
-test("Case detail exposes empty analysis, candidate, report areas and only navigates to markets", () => {
+test("Case detail exposes Case-aware market navigation and linked analysis states", () => {
   const detail = read("components/cases/CaseDetailClient.tsx");
   for (const copy of ["아직 연결된 분석이 없습니다", "아직 연결된 후보점포가 없습니다", "아직 생성된 리포트가 없습니다"]) {
     assert.match(detail, new RegExp(copy));
   }
-  assert.match(detail, /href="\/markets"/);
+  assert.match(detail, /`\/markets\?caseId=\$\{encodeURIComponent\(record\.caseId\)\}`/);
   assert.match(detail, /상권 분석 시작/);
+  assert.match(detail, /분석 계속하기/);
+  assert.match(detail, /연결된 분석/);
+  assert.match(detail, /Case에 연결됨/);
   assert.equal(detail.includes("analysisRunId:"), false);
+});
+
+test("Market workspace keeps direct access while handling valid and invalid Case context", () => {
+  const page = read("app/markets/page.tsx");
+  const explorer = read("app/markets/MarketsExplorer.tsx");
+  assert.match(page, /query\.caseId/);
+  assert.match(page, /getCase\(requestedCaseId\)/);
+  assert.match(explorer, /Case로 돌아가기/);
+  assert.match(explorer, /Case를 찾을 수 없습니다/);
+  assert.match(explorer, /일반 상권분석을 계속 사용할 수 있습니다/);
+  assert.match(explorer, /이 분석을 Case에 연결/);
+  assert.match(explorer, /현재 Case에 연결된 분석/);
+  assert.match(explorer, /linkableTarget/);
+  assert.match(explorer, /analysisRunLink/);
 });
 
 test("existing markets workflow contracts remain outside the Case implementation", () => {
