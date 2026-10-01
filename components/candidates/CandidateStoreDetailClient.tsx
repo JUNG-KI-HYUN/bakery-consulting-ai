@@ -6,6 +6,9 @@ import {
   CANDIDATE_STORE_STATUS_LABELS,
   type CandidateStore,
 } from "@/lib/candidates/candidate-contract";
+import type { BakeryFacilityAssessment } from "@/lib/candidates/bakery-facility-assessment-contract";
+import { calculateBakeryFacilityRiskSummary } from "@/lib/candidates/bakery-facility-risk";
+import { BakeryFacilityAssessmentEditor } from "./BakeryFacilityAssessmentEditor";
 import { CandidateStoreFormFields, type CandidateStoreFormValues } from "./CandidateStoreFormFields";
 
 function valuesFromRecord(record: CandidateStore): CandidateStoreFormValues {
@@ -52,13 +55,23 @@ function money(value?: number) {
   return value === undefined ? "미입력" : `${value.toLocaleString("ko-KR")}원`;
 }
 
-export function CandidateStoreDetailClient({ initialRecord, caseName }: { initialRecord: CandidateStore; caseName: string }) {
+export function CandidateStoreDetailClient({
+  initialRecord,
+  initialFacilityAssessment,
+  caseName,
+}: {
+  initialRecord: CandidateStore;
+  initialFacilityAssessment: BakeryFacilityAssessment | null;
+  caseName: string;
+}) {
   const [record, setRecord] = useState(initialRecord);
+  const [facilityAssessment, setFacilityAssessment] = useState(initialFacilityAssessment);
   const [values, setValues] = useState(() => valuesFromRecord(initialRecord));
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const latestLink = record.analysisLinks.at(-1) ?? null;
+  const facilitySummary = calculateBakeryFacilityRiskSummary(facilityAssessment);
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -103,8 +116,10 @@ export function CandidateStoreDetailClient({ initialRecord, caseName }: { initia
       <section className="grid gap-px overflow-hidden rounded-xl border border-stone-200 bg-stone-200 md:grid-cols-3" aria-label="후보점포 상담 요약">
         <article className="bg-white p-5"><p className="text-xs font-bold text-[#8b6f38]">현재 임대조건</p><dl className="mt-3 space-y-2 text-sm"><div className="flex justify-between gap-3"><dt className="text-stone-500">보증금</dt><dd className="font-semibold">{money(record.currentAskingTerms.depositWon)}</dd></div><div className="flex justify-between gap-3"><dt className="text-stone-500">월세</dt><dd className="font-semibold">{money(record.currentAskingTerms.monthlyRentWon)}</dd></div><div className="flex justify-between gap-3"><dt className="text-stone-500">관리비</dt><dd className="font-semibold">{money(record.currentAskingTerms.maintenanceFeeWon)}</dd></div><div className="flex justify-between gap-3"><dt className="text-stone-500">권리금</dt><dd className="font-semibold">{money(record.currentAskingTerms.premiumWon)}</dd></div></dl></article>
         <article className="bg-white p-5"><p className="text-xs font-bold text-[#8b6f38]">Market Analysis</p><h3 className="mt-2 text-base font-bold text-stone-950">{latestLink ? "분석 Run 연결됨" : "연결된 분석 없음"}</h3><p className="mt-2 text-sm leading-6 text-stone-500">{latestLink ? `${latestLink.targetSnapshot.label ?? latestLink.targetSnapshot.address ?? "분석 위치"} · ${latestLink.targetSnapshot.radiusM}m` : record.source === "MARKET_WORKSPACE" ? "Market Workspace에서 등록했지만 저장된 Run snapshot은 연결되지 않았습니다." : "Case에서 직접 등록한 후보점포입니다."}</p></article>
-        <article className="bg-white p-5"><p className="text-xs font-bold text-[#8b6f38]">RISK</p><h3 className="mt-2 text-base font-bold text-stone-950">시설·계약 리스크 검토 전</h3><p className="mt-2 text-sm leading-6 text-stone-500">다음 단계에서 검토 예정입니다.</p></article>
+        <article className="bg-white p-5"><p className="text-xs font-bold text-[#8b6f38]">BAKERY FACILITY</p><h3 className="mt-2 text-base font-bold text-stone-950">Hard {facilitySummary.hardBlockers.length} · Conditional {facilitySummary.conditionalBlockers.length}</h3><p className="mt-2 text-sm leading-6 text-stone-500">확인 필요 {facilitySummary.unresolvedChecks.length} · 확인 완료 {facilitySummary.verifiedCount}</p><a href="#facility-review" className="mt-3 inline-flex text-sm font-bold text-[#725823] underline underline-offset-4">시설 검토 열기</a></article>
       </section>
+
+      <BakeryFacilityAssessmentEditor candidateId={record.candidateId} caseId={record.caseId} assessment={facilityAssessment} onSaved={setFacilityAssessment} />
 
       <form onSubmit={save} className="panel-card p-5 sm:p-6">
         <div className="mb-5 border-b border-stone-200 pb-4"><h3 className="text-lg font-bold text-stone-950">후보점포 정보</h3><p className="mt-1 text-sm text-stone-500">확인된 물건 정보와 현재 제시조건만 업데이트합니다.</p></div>

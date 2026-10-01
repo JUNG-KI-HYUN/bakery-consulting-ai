@@ -30,6 +30,9 @@
 # Candidate Store runtime data
 /data/candidates.json
 
+# Candidate Bakery Facility Assessment runtime data
+/data/candidate-facility-assessments.json
+
 # official source intake raw snapshots (keep the tracked directory placeholder)
 /data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/*
 !/data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/.gitkeep

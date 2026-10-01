@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { CandidateStoreDetailClient } from "@/components/candidates/CandidateStoreDetailClient";
+import { getBakeryFacilityAssessment } from "@/lib/candidates/bakery-facility-assessment-repository";
 import { getCandidateStore } from "@/lib/candidates/candidate-repository";
 import { getCase } from "@/lib/cases/case-repository";
 
@@ -16,5 +17,6 @@ export default async function CandidateStoreDetailPage({
     getCandidateStore(candidateId),
   ]);
   if (!caseRecord || !candidate || candidate.caseId !== caseRecord.caseId) notFound();
-  return <CandidateStoreDetailClient initialRecord={candidate} caseName={caseRecord.name} />;
+  const facilityAssessment = await getBakeryFacilityAssessment(candidate.candidateId, caseRecord.caseId);
+  return <CandidateStoreDetailClient initialRecord={candidate} initialFacilityAssessment={facilityAssessment} caseName={caseRecord.name} />;
 }

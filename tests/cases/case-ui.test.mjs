@@ -82,8 +82,11 @@ test("Candidate create and detail screens keep Core data separate from legacy co
   assert.match(createPage, /MARKET_ANALYSIS/);
   assert.match(detailPage, /candidate\.caseId !== caseRecord\.caseId/);
   assert.match(form, /비어 있는 선택 항목은 0으로 저장하지 않습니다/);
-  assert.match(detail, /시설·계약 리스크 검토 전/);
-  assert.match(detail, /다음 단계에서 검토 예정/);
+  assert.match(detail, /BakeryFacilityAssessmentEditor/);
+  assert.match(detail, /Hard \{facilitySummary\.hardBlockers\.length\}/);
+  assert.match(detail, /Conditional \{facilitySummary\.conditionalBlockers\.length\}/);
+  assert.match(detail, /확인 필요 \{facilitySummary\.unresolvedChecks\.length\}/);
+  assert.equal(read("lib/candidates/candidate-contract.ts").includes("electricity"), false);
   assert.equal(form.includes("@/components/diagnosis/CandidateStoreForm"), false);
   assert.equal(form.includes("CandidateStoreInput"), false);
 });
