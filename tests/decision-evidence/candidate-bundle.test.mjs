@@ -447,6 +447,17 @@ test("4. domain-native metadata is preserved in domainEvidence", () => {
   assert.ok(Object.keys(economic.referenceNullableNumbers).length > 0);
 });
 
+test("4-1. Economic referenceRentPlanning reaches domainEvidence unchanged", () => {
+  const input = standardInput();
+  const bundle = buildCandidateDecisionEvidenceBundle(input);
+  const source = input.economicResult.rentalMarketReference;
+  assert.deepEqual(bundle.domainEvidence.economic.referenceRentPlanning, {
+    plannedRent: source.plannedRent,
+    baseRentCeiling: source.baseRentCeiling,
+    plannedRentToCeiling: source.plannedRentToCeiling,
+  });
+});
+
 test("5. exact duplicate item ids are deduped and nothing else", () => {
   const field = fieldFixture();
   const duplicate = field.bundle.observedFacts[0];

@@ -14,6 +14,7 @@ import type {
   EconomicFeasibilityResult,
   EconomicScenarioKey,
   ProvenanceKind,
+  RentalMarketReference,
 } from "../economic-feasibility/types";
 import { createDecisionEvidenceItem } from "./helpers";
 import type {
@@ -37,6 +38,17 @@ export type EconomicProvenanceRef = {
   readonly sourceIds?: readonly string[];
 };
 
+/**
+ * EconomicFeasibilityResult.rentalMarketReference의 계획 임대료 관계 원문 (typed source-of-truth).
+ * plannedRentToCeiling은 Engine relation 결과를 그대로 쓴다. Adapter에서 재비교하지 않는다.
+ * NOT_AVAILABLE / null은 판단 가능한 값이 없다는 뜻이며 BELOW_OR_EQUAL·0으로 바꾸지 않는다.
+ */
+export type EconomicRentPlanningRef = {
+  readonly plannedRent: RentalMarketReference["plannedRent"];
+  readonly baseRentCeiling: RentalMarketReference["baseRentCeiling"];
+  readonly plannedRentToCeiling: RentalMarketReference["plannedRentToCeiling"];
+};
+
 export type EconomicDecisionEvidenceResult = {
   readonly observedFacts: readonly DecisionEvidenceItem[];
   readonly missingInformation: readonly DecisionEvidenceItem[];
@@ -55,6 +67,8 @@ export type EconomicDecisionEvidenceResult = {
    * JSON 문자열 `"null"`로 치환하지 않으며, 값 타입은 number | null 이다.
    */
   readonly referenceNullableNumbers: Readonly<Record<string, number | null>>;
+  /** EconomicFeasibilityResult가 없으면 null. */
+  readonly referenceRentPlanning: EconomicRentPlanningRef | null;
   readonly createsVerdict: false;
   readonly createsScore: false;
   readonly createsRisk: false;
@@ -213,6 +227,7 @@ export function buildEconomicDecisionEvidence(input: {
       }),
       referenceProvenance: Object.freeze([] as EconomicProvenanceRef[]),
       referenceNullableNumbers: Object.freeze({} as Record<string, number | null>),
+      referenceRentPlanning: null,
       createsVerdict: false as const,
       createsScore: false as const,
       createsRisk: false as const,
@@ -415,6 +430,11 @@ export function buildEconomicDecisionEvidence(input: {
   });
   const referenceProvenance = freezeProvenance(result.provenance);
   const referenceNullableNumbers = collectNullableNumbers(result);
+  const referenceRentPlanning: EconomicRentPlanningRef = Object.freeze({
+    plannedRent: rentalRef.plannedRent,
+    baseRentCeiling: rentalRef.baseRentCeiling,
+    plannedRentToCeiling: rentalRef.plannedRentToCeiling,
+  });
 
   return Object.freeze({
     observedFacts: Object.freeze(observedFacts),
@@ -424,6 +444,7 @@ export function buildEconomicDecisionEvidence(input: {
     referenceValidation,
     referenceProvenance,
     referenceNullableNumbers,
+    referenceRentPlanning,
     createsVerdict: false as const,
     createsScore: false as const,
     createsRisk: false as const,

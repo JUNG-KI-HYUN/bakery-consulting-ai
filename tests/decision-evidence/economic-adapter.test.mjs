@@ -499,3 +499,87 @@ test("18. forbids judgment phrases", () => {
     assert.doesNotMatch(allText(evidence), FORBIDDEN_PHRASE_PATTERN);
   }
 });
+
+// ---- typed rent planning reference (copied from engine output, no recalculation) ----
+
+function planWithRent(rentMonthly) {
+  const base = plan();
+  return { ...base, fixedMonthlyCosts: { ...base.fixedMonthlyCosts, rentMonthly } };
+}
+
+function rentPlanningOf(result) {
+  return buildEconomicDecisionEvidence({
+    economicResult: result,
+    economicBinding: matchingBinding(result),
+  }).referenceRentPlanning;
+}
+
+test("19. referenceRentPlanning copies plannedRent / baseRentCeiling / plannedRentToCeiling (ABOVE) as typed values", () => {
+  const result = buildResult();
+  assert.equal(result.rentalMarketReference.plannedRentToCeiling, "ABOVE");
+  const planning = rentPlanningOf(result);
+  assert.deepEqual(Object.keys(planning).sort(), ["baseRentCeiling", "plannedRent", "plannedRentToCeiling"]);
+  assert.equal(planning.plannedRent, result.rentalMarketReference.plannedRent);
+  assert.equal(planning.baseRentCeiling, result.rentalMarketReference.baseRentCeiling);
+  assert.equal(planning.plannedRentToCeiling, "ABOVE");
+  assert.equal(typeof planning.plannedRent, "number");
+  assert.equal(typeof planning.baseRentCeiling, "number");
+  assert.equal(Object.isFrozen(planning), true);
+});
+
+test("20. BELOW_OR_EQUAL relation from the engine is preserved", () => {
+  const result = buildResult({ plan: planWithRent(2_000_000) });
+  assert.equal(result.rentalMarketReference.plannedRentToCeiling, "BELOW_OR_EQUAL");
+  const planning = rentPlanningOf(result);
+  assert.equal(planning.plannedRentToCeiling, "BELOW_OR_EQUAL");
+  assert.equal(planning.plannedRent, result.rentalMarketReference.plannedRent);
+  assert.equal(planning.baseRentCeiling, result.rentalMarketReference.baseRentCeiling);
+});
+
+test("21. NOT_AVAILABLE and baseRentCeiling null are kept as-is (not BELOW_OR_EQUAL, not 0, not false)", () => {
+  const cloned = structuredClone(buildResult());
+  cloned.rentalMarketReference.baseRentCeiling = null;
+  cloned.rentalMarketReference.plannedRentToCeiling = "NOT_AVAILABLE";
+  const planning = rentPlanningOf(cloned);
+  assert.equal(planning.baseRentCeiling, null);
+  assert.equal(planning.plannedRentToCeiling, "NOT_AVAILABLE");
+  assert.notEqual(planning.baseRentCeiling, 0);
+  assert.notEqual(planning.plannedRentToCeiling, "BELOW_OR_EQUAL");
+  assert.equal(planning.plannedRent, cloned.rentalMarketReference.plannedRent);
+  assert.doesNotMatch(JSON.stringify(planning), /"baseRentCeiling":(0|"null"|false)/);
+});
+
+test("22. typed values are readable without the description; null economicResult → referenceRentPlanning null", () => {
+  const result = buildResult();
+  const evidence = buildEconomicDecisionEvidence({
+    economicResult: result,
+    economicBinding: matchingBinding(result),
+  });
+  const withoutText = JSON.parse(JSON.stringify(evidence));
+  for (const item of withoutText.observedFacts) item.description = "";
+  assert.deepEqual(withoutText.referenceRentPlanning, {
+    plannedRent: result.rentalMarketReference.plannedRent,
+    baseRentCeiling: result.rentalMarketReference.baseRentCeiling,
+    plannedRentToCeiling: result.rentalMarketReference.plannedRentToCeiling,
+  });
+  const absent = buildEconomicDecisionEvidence({ economicResult: null, economicBinding: null });
+  assert.equal(absent.referenceRentPlanning, null);
+});
+
+test("23. rent planning reference: no mutation, JSON serializable, no Risk / Verdict / Score", () => {
+  const result = buildResult();
+  const snapshot = structuredClone(result);
+  const evidence = buildEconomicDecisionEvidence({
+    economicResult: result,
+    economicBinding: matchingBinding(result),
+  });
+  assert.deepEqual(result, snapshot);
+  assert.deepEqual(JSON.parse(JSON.stringify(evidence.referenceRentPlanning)), evidence.referenceRentPlanning);
+  assert.equal(evidence.createsRisk, false);
+  assert.equal(evidence.createsVerdict, false);
+  assert.equal(evidence.createsScore, false);
+  assert.equal(evidence.observedConstraints, undefined);
+  for (const key of Object.keys(evidence.referenceRentPlanning)) {
+    assert.doesNotMatch(key, /risk|verdict|score|recommend|approv/i);
+  }
+});
