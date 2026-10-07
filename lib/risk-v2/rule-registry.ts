@@ -10,6 +10,11 @@ import { makeDecisionEvidenceId } from "../decision-evidence/helpers";
 import {
   ECONOMIC_BASE_BELOW_BEP_PREDICATE_KEY,
   ECONOMIC_PLANNED_RENT_ABOVE_BASE_CEILING_PREDICATE_KEY,
+  LEASE_BAKERY_USE_REFUSED_PREDICATE_KEY,
+  LEASE_BUSINESS_USE_RESTRICTION_PRESENT_PREDICATE_KEY,
+  LEASE_CONSTRUCTION_CONSENT_REFUSED_PREDICATE_KEY,
+  LEASE_ELECTRICAL_UPGRADE_REFUSED_PREDICATE_KEY,
+  LEASE_EXHAUST_CONSENT_REFUSED_PREDICATE_KEY,
 } from "./predicates";
 import {
   RISK_RULE_SET_SCHEMA_VERSION,
@@ -273,4 +278,102 @@ export const RISK_RULE_SET_V3: RiskRuleSet = deepFreeze({
   schemaVersion: RISK_RULE_SET_SCHEMA_VERSION,
   ruleSetVersion: RISK_RULE_SET_V3_VERSION,
   rules: [...RISK_RULE_SET_V2.rules, ...ECONOMIC_RENT_RULES],
+});
+
+/**
+ * Risk Rule Set V4 = V3 rules + Candidate Lease constraint rules.
+ * REFUSED / RESTRICTION_PRESENT는 사람 검토가 필요한 조건으로만 분류하며 HARD_BLOCKER로 승격하지 않는다.
+ */
+export const RISK_RULE_SET_V4_VERSION = "risk-rules-v4" as const;
+
+function candidateLeaseConstraintRule(input: {
+  ruleId: string;
+  title: string;
+  description: string;
+  evidenceKey: string;
+  predicateKey: string;
+  remediationType: "EXPERT_REVIEW" | "NEGOTIATE";
+}): RiskRuleDefinition {
+  return {
+    ruleId: input.ruleId,
+    version: RULE_VERSION,
+    domain: "LEASE",
+    riskClass: "CONDITIONAL_BLOCKER",
+    title: input.title,
+    description: input.description,
+    evidenceRequirements: [
+      {
+        requirementKey: "candidate-lease-constraint",
+        sourceDomain: "LEASE",
+        bucket: "OBSERVED_CONSTRAINT",
+        category: "LEASE",
+        nature: "OBSERVATION",
+        importance: "CORE",
+        evidenceId: makeDecisionEvidenceId({
+          sourceDomain: "LEASE",
+          bucket: "OBSERVED_CONSTRAINT",
+          category: "LEASE",
+          key: input.evidenceKey,
+        }),
+        predicateKey: input.predicateKey,
+      },
+    ],
+    defaultSeverity: "HIGH",
+    requiresHumanApproval: true,
+    remediationType: input.remediationType,
+  };
+}
+
+const CANDIDATE_LEASE_RULES: readonly RiskRuleDefinition[] = [
+  candidateLeaseConstraintRule({
+    ruleId: "LEASE.BUSINESS_USE_RESTRICTION_PRESENT",
+    title: "후보점포 사용 제한 확인",
+    description:
+      "현재 후보점포 계약자료에 업종 또는 사용 제한이 기록되어 있습니다. 제한의 대상·범위와 베이커리 운영에 미치는 영향은 관련 전문가의 추가 검토가 필요합니다.",
+    evidenceKey: "candidate-condition-business-use-restriction",
+    predicateKey: LEASE_BUSINESS_USE_RESTRICTION_PRESENT_PREDICATE_KEY,
+    remediationType: "EXPERT_REVIEW",
+  }),
+  candidateLeaseConstraintRule({
+    ruleId: "LEASE.BAKERY_USE_REFUSED",
+    title: "베이커리 제조형 사용 동의 거절 기록",
+    description:
+      "현재 확인 근거에서 베이커리 제조형 사용에 대한 임대인 동의가 거절 상태로 기록되어 있습니다. 운영계획과 협의 가능성을 사람이 추가 검토해야 합니다.",
+    evidenceKey: "candidate-consent-bakery-manufacturing-use",
+    predicateKey: LEASE_BAKERY_USE_REFUSED_PREDICATE_KEY,
+    remediationType: "NEGOTIATE",
+  }),
+  candidateLeaseConstraintRule({
+    ruleId: "LEASE.EXHAUST_CONSENT_REFUSED",
+    title: "배기 관련 임대인 동의 거절 기록",
+    description:
+      "배기 관련 임대인 동의가 거절 상태로 기록되어 있습니다. 기존 배기 사용, 대체 경로 또는 장비·제조 방식의 가능성은 별도 확인이 필요합니다.",
+    evidenceKey: "candidate-consent-exhaust",
+    predicateKey: LEASE_EXHAUST_CONSENT_REFUSED_PREDICATE_KEY,
+    remediationType: "NEGOTIATE",
+  }),
+  candidateLeaseConstraintRule({
+    ruleId: "LEASE.ELECTRICAL_UPGRADE_REFUSED",
+    title: "전기 증설 관련 임대인 동의 거절 기록",
+    description:
+      "전기 증설 관련 임대인 동의가 거절 상태로 기록되어 있습니다. 기존 전력용량의 충분성은 이 항목에서 판단하지 않으며 별도 확인이 필요합니다.",
+    evidenceKey: "candidate-consent-electrical-upgrade",
+    predicateKey: LEASE_ELECTRICAL_UPGRADE_REFUSED_PREDICATE_KEY,
+    remediationType: "NEGOTIATE",
+  }),
+  candidateLeaseConstraintRule({
+    ruleId: "LEASE.CONSTRUCTION_CONSENT_REFUSED",
+    title: "공사 관련 임대인 동의 거절 기록",
+    description:
+      "공사 관련 임대인 동의가 거절 상태로 기록되어 있습니다. 현재 운영계획에 실제 공사가 필요한지는 이 항목에서 판단하지 않으며 별도 확인이 필요합니다.",
+    evidenceKey: "candidate-consent-construction",
+    predicateKey: LEASE_CONSTRUCTION_CONSENT_REFUSED_PREDICATE_KEY,
+    remediationType: "NEGOTIATE",
+  }),
+];
+
+export const RISK_RULE_SET_V4: RiskRuleSet = deepFreeze({
+  schemaVersion: RISK_RULE_SET_SCHEMA_VERSION,
+  ruleSetVersion: RISK_RULE_SET_V4_VERSION,
+  rules: [...RISK_RULE_SET_V3.rules, ...CANDIDATE_LEASE_RULES],
 });

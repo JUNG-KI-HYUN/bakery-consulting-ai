@@ -8,6 +8,14 @@
 
 import type { DecisionEvidenceItem } from "../decision-evidence/types";
 import type { SupportedCandidateDecisionEvidenceBundle } from "./candidate-evidence-versions";
+import {
+  CANDIDATE_LEASE_PREDICATES,
+  LEASE_BAKERY_USE_REFUSED_PREDICATE_KEY,
+  LEASE_BUSINESS_USE_RESTRICTION_PRESENT_PREDICATE_KEY,
+  LEASE_CONSTRUCTION_CONSENT_REFUSED_PREDICATE_KEY,
+  LEASE_ELECTRICAL_UPGRADE_REFUSED_PREDICATE_KEY,
+  LEASE_EXHAUST_CONSENT_REFUSED_PREDICATE_KEY,
+} from "./lease-predicates";
 import type { RiskEvidenceRequirement, RiskRuleDefinition } from "./types";
 
 export interface RiskPredicateContext {
@@ -96,3 +104,17 @@ export const RISK_PREDICATE_REGISTRY_V3: RiskPredicateRegistry = createRiskPredi
   ...RISK_PREDICATE_REGISTRY_V2,
   [ECONOMIC_PLANNED_RENT_ABOVE_BASE_CEILING_PREDICATE_KEY]: economicPlannedRentAboveBaseCeiling,
 });
+
+/** V4는 V3 Economic predicate와 Candidate Lease typed predicate 5개를 함께 보존한다. */
+export const RISK_PREDICATE_REGISTRY_V4: RiskPredicateRegistry = createRiskPredicateRegistry({
+  ...RISK_PREDICATE_REGISTRY_V3,
+  ...CANDIDATE_LEASE_PREDICATES,
+});
+
+export {
+  LEASE_BAKERY_USE_REFUSED_PREDICATE_KEY,
+  LEASE_BUSINESS_USE_RESTRICTION_PRESENT_PREDICATE_KEY,
+  LEASE_CONSTRUCTION_CONSENT_REFUSED_PREDICATE_KEY,
+  LEASE_ELECTRICAL_UPGRADE_REFUSED_PREDICATE_KEY,
+  LEASE_EXHAUST_CONSENT_REFUSED_PREDICATE_KEY,
+};
