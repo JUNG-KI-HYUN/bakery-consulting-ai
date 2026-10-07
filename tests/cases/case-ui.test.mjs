@@ -86,6 +86,9 @@ test("Candidate create and detail screens keep Core data separate from legacy co
   assert.match(detail, /Hard \{facilitySummary\.hardBlockers\.length\}/);
   assert.match(detail, /Conditional \{facilitySummary\.conditionalBlockers\.length\}/);
   assert.match(detail, /확인 필요 \{facilitySummary\.unresolvedChecks\.length\}/);
+  assert.match(detail, /CandidateLeaseAssessmentEditor/);
+  assert.match(detail, /Hard \{leaseSummary\.hardIssues\.length\}/);
+  assert.match(detail, /Conditional \{leaseSummary\.conditionalIssues\.length\}/);
   assert.equal(read("lib/candidates/candidate-contract.ts").includes("electricity"), false);
   assert.equal(form.includes("@/components/diagnosis/CandidateStoreForm"), false);
   assert.equal(form.includes("CandidateStoreInput"), false);
