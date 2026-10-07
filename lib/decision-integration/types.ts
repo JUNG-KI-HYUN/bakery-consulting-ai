@@ -68,6 +68,37 @@ export interface CandidateDecisionContext {
   readonly createsRisk: false;
 }
 
+export const CANDIDATE_DECISION_CONTEXT_V2_SCHEMA_VERSION =
+  "candidate-decision-context-v2" as const;
+
+/**
+ * Candidate-specific Lease Evidence snapshot binding (CandidateLeaseEvidenceSnapshot.snapshotId).
+ * Rental Market Reference용 LeaseAnalysisBinding과 별개이며 서로 대체하지 않는다.
+ * ID만 가진다. 금액·조건·consent·evidence를 복제하지 않는다.
+ */
+export interface CandidateLeaseEvidenceBinding {
+  readonly snapshotId: string;
+}
+
+/**
+ * V1 binding 의미를 그대로 계승하고 candidateLeaseBinding만 추가한다.
+ * V1 context는 이 타입으로 해석하지 않는다.
+ */
+export interface CandidateDecisionContextV2 {
+  readonly schemaVersion: typeof CANDIDATE_DECISION_CONTEXT_V2_SCHEMA_VERSION;
+  readonly candidateStoreId: string;
+  readonly locationBinding: LocationAnalysisBinding | null;
+  /** Rental Market Reference binding (V1과 동일). */
+  readonly leaseBinding: LeaseAnalysisBinding | null;
+  readonly candidateLeaseBinding: CandidateLeaseEvidenceBinding | null;
+  readonly economicBinding: EconomicAnalysisBinding | null;
+  readonly fieldBinding: FieldSpaceBinding | null;
+  readonly createdAt: string;
+  readonly createsVerdict: false;
+  readonly createsScore: false;
+  readonly createsRisk: false;
+}
+
 export type CandidateDecisionValidationFailure = {
   readonly ok: false;
   readonly code: "INVALID_BINDING";

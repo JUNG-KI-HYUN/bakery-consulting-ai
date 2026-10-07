@@ -7,13 +7,18 @@ import { isCandidateStoreId, isSiteSurveyId } from "../field/identifiers";
 import { isLayoutId } from "../space-fit/identifiers";
 import type {
   CandidateDecisionContext,
+  CandidateDecisionContextV2,
   CandidateDecisionValidationResult,
+  CandidateLeaseEvidenceBinding,
   EconomicAnalysisBinding,
   FieldSpaceBinding,
   LeaseAnalysisBinding,
   LocationAnalysisBinding,
 } from "./types";
-import { CANDIDATE_DECISION_CONTEXT_SCHEMA_VERSION } from "./types";
+import {
+  CANDIDATE_DECISION_CONTEXT_SCHEMA_VERSION,
+  CANDIDATE_DECISION_CONTEXT_V2_SCHEMA_VERSION,
+} from "./types";
 
 function fail(message: string): CandidateDecisionValidationResult<never> {
   return { ok: false, code: "INVALID_BINDING", message };
@@ -214,6 +219,114 @@ export function validateCandidateDecisionContext(
       candidateStoreId: record.candidateStoreId.trim(),
       locationBinding: location.value,
       leaseBinding: lease.value,
+      economicBinding: economic.value,
+      fieldBinding: field.value,
+      createdAt: record.createdAt.trim(),
+      createsVerdict: false as const,
+      createsScore: false as const,
+      createsRisk: false as const,
+    }),
+  };
+}
+
+export function validateCandidateLeaseEvidenceBinding(
+  value: unknown,
+): CandidateDecisionValidationResult<CandidateLeaseEvidenceBinding | null> {
+  if (value === null) return { ok: true, value: null };
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return fail("candidateLeaseBinding must be object or null");
+  }
+  const record = value as Record<string, unknown>;
+  const unknownKey = Object.keys(record).find((key) => key !== "snapshotId");
+  if (unknownKey !== undefined) {
+    return fail(`candidateLeaseBinding must not include ${unknownKey}`);
+  }
+  if (!isNonEmptyString(record.snapshotId)) {
+    return fail("candidateLeaseBinding.snapshotId must be a non-empty string");
+  }
+  return {
+    ok: true,
+    value: Object.freeze({ snapshotId: record.snapshotId.trim() }),
+  };
+}
+
+const CANDIDATE_DECISION_CONTEXT_V2_KEYS: ReadonlySet<string> = new Set([
+  "schemaVersion",
+  "candidateStoreId",
+  "locationBinding",
+  "leaseBinding",
+  "candidateLeaseBinding",
+  "economicBinding",
+  "fieldBinding",
+  "createdAt",
+  "createsVerdict",
+  "createsScore",
+  "createsRisk",
+]);
+
+/** V1과 달리 정의되지 않은 top-level key를 버리지 않고 reject한다. */
+export function validateCandidateDecisionContextV2(
+  value: unknown,
+): CandidateDecisionValidationResult<CandidateDecisionContextV2> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return fail("CandidateDecisionContextV2 must be an object");
+  }
+  const record = value as Record<string, unknown>;
+  if (record.schemaVersion !== CANDIDATE_DECISION_CONTEXT_V2_SCHEMA_VERSION) {
+    return fail("unsupported CandidateDecisionContextV2 schemaVersion");
+  }
+  const unknownKey = Object.keys(record).find((key) => !CANDIDATE_DECISION_CONTEXT_V2_KEYS.has(key));
+  if (unknownKey !== undefined) {
+    return fail(`CandidateDecisionContextV2 must not include ${unknownKey}`);
+  }
+  if (!isNonEmptyString(record.candidateStoreId)) {
+    return fail("candidateStoreId must be a non-empty string");
+  }
+  if (!isCandidateStoreId(record.candidateStoreId.trim())) {
+    return fail("candidateStoreId must use store_<uuid>");
+  }
+  if (!isNonEmptyString(record.createdAt)) {
+    return fail("createdAt must be a non-empty string");
+  }
+  if (record.createsVerdict !== false) {
+    return fail("createsVerdict must be false");
+  }
+  if (record.createsScore !== false) {
+    return fail("createsScore must be false");
+  }
+  if (record.createsRisk !== false) {
+    return fail("createsRisk must be false");
+  }
+
+  const location = validateLocationAnalysisBinding(
+    "locationBinding" in record ? record.locationBinding : null,
+  );
+  if (!location.ok) return location;
+  const lease = validateLeaseAnalysisBinding(
+    "leaseBinding" in record ? record.leaseBinding : null,
+  );
+  if (!lease.ok) return lease;
+  const candidateLease = validateCandidateLeaseEvidenceBinding(
+    "candidateLeaseBinding" in record ? record.candidateLeaseBinding : null,
+  );
+  if (!candidateLease.ok) return candidateLease;
+  const economic = validateEconomicAnalysisBinding(
+    "economicBinding" in record ? record.economicBinding : null,
+  );
+  if (!economic.ok) return economic;
+  const field = validateFieldSpaceBinding(
+    "fieldBinding" in record ? record.fieldBinding : null,
+  );
+  if (!field.ok) return field;
+
+  return {
+    ok: true,
+    value: Object.freeze({
+      schemaVersion: CANDIDATE_DECISION_CONTEXT_V2_SCHEMA_VERSION,
+      candidateStoreId: record.candidateStoreId.trim(),
+      locationBinding: location.value,
+      leaseBinding: lease.value,
+      candidateLeaseBinding: candidateLease.value,
       economicBinding: economic.value,
       fieldBinding: field.value,
       createdAt: record.createdAt.trim(),
