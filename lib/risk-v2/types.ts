@@ -6,7 +6,7 @@
  * legacy lib/diagnosis/calculateRisk.ts와 독립이다.
  */
 
-import type { CandidateDecisionEvidenceBundle } from "../decision-evidence/candidate-bundle";
+import type { SupportedCandidateDecisionEvidenceBundle } from "./candidate-evidence-versions";
 import type {
   DecisionEvidenceBucket,
   DecisionEvidenceCategory,
@@ -183,7 +183,7 @@ export interface RiskFinding {
 
 /** 향후 deterministic engine 입력. generatedAt 등 시간은 이번 Phase에서 만들지 않는다. */
 export interface RiskEvaluationInput {
-  readonly evidenceBundle: CandidateDecisionEvidenceBundle;
+  readonly evidenceBundle: SupportedCandidateDecisionEvidenceBundle;
   readonly ruleSetVersion: string;
 }
 

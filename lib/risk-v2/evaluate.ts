@@ -1,14 +1,18 @@
 /**
  * Deterministic Risk Evaluator V1.
  *
- * CandidateDecisionEvidenceBundle → RuleDefinition → typed requirement matching
+ * Candidate Decision Evidence bundle (v1 또는 v2) → RuleDefinition → typed requirement matching
  * → optional predicate → RiskFinding → RiskEvaluationResult.
  * description / title 해석, regex 판정, LLM, I/O, clock, randomness 없음.
  * Score / Verdict를 만들지 않는다. severity는 rule.defaultSeverity를 그대로 쓴다.
  */
 
-import type { CandidateDecisionEvidenceBundle } from "../decision-evidence/candidate-bundle";
 import type { DecisionEvidenceItem } from "../decision-evidence/types";
+import {
+  isSupportedCandidateEvidenceVersion,
+  unsupportedCandidateEvidenceVersionError,
+  type SupportedCandidateDecisionEvidenceBundle,
+} from "./candidate-evidence-versions";
 import {
   lookupRiskPredicate,
   RISK_PREDICATE_REGISTRY_V1,
@@ -101,7 +105,7 @@ function failure(errors: readonly string[]): RiskEvaluationFailure {
 }
 
 function indexEvidence(
-  bundle: CandidateDecisionEvidenceBundle,
+  bundle: SupportedCandidateDecisionEvidenceBundle,
   errors: string[],
 ): readonly DecisionEvidenceItem[] {
   const seen = new Map<string, string>();
@@ -150,7 +154,7 @@ function compareText(left: string, right: string): number {
 
 function evaluateRule(
   rule: RiskRuleDefinition,
-  bundle: CandidateDecisionEvidenceBundle,
+  bundle: SupportedCandidateDecisionEvidenceBundle,
   items: readonly DecisionEvidenceItem[],
   predicates: RiskPredicateRegistry,
 ): RiskFinding | null {
@@ -210,8 +214,8 @@ export function evaluateRiskRules(
     );
   }
   const bundle = input.evidenceBundle;
-  if (!bundle || bundle.schemaVersion !== "candidate-decision-evidence-v1") {
-    errors.push("evidenceBundle.schemaVersion은 candidate-decision-evidence-v1이어야 합니다.");
+  if (!bundle || !isSupportedCandidateEvidenceVersion(bundle.schemaVersion)) {
+    errors.push(unsupportedCandidateEvidenceVersionError());
     return failure(errors);
   }
   if (typeof bundle.candidateStoreId !== "string" || !bundle.candidateStoreId.trim()) {

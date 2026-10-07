@@ -3,7 +3,7 @@
  * 통과 시 입력을 복제·freeze한 값을 돌려주며 입력 객체는 mutation/freeze하지 않는다.
  */
 
-import type { CandidateDecisionEvidenceBundle } from "../decision-evidence/candidate-bundle";
+import type { SupportedCandidateDecisionEvidenceBundle } from "./candidate-evidence-versions";
 import type {
   DecisionEvidenceBucket,
   DecisionEvidenceCategory,
@@ -467,7 +467,7 @@ export function validateRiskFindingAgainstRule(
   return finish<RiskFinding>(errors, finding);
 }
 
-function bundleItems(bundle: CandidateDecisionEvidenceBundle): Map<string, DecisionEvidenceItem> {
+function bundleItems(bundle: SupportedCandidateDecisionEvidenceBundle): Map<string, DecisionEvidenceItem> {
   const items = new Map<string, DecisionEvidenceItem>();
   for (const list of [
     bundle.observedFacts,
@@ -488,7 +488,7 @@ function bundleItems(bundle: CandidateDecisionEvidenceBundle): Map<string, Decis
  */
 export function validateRiskFindingEvidenceLinks(
   finding: RiskFinding,
-  bundle: CandidateDecisionEvidenceBundle,
+  bundle: SupportedCandidateDecisionEvidenceBundle,
 ): RiskContractValidationResult<RiskFinding> {
   const errors: Errors = [];
   collectFindingErrors(errors, "finding", finding);

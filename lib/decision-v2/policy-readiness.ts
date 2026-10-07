@@ -8,9 +8,10 @@
  */
 
 import {
-  CANDIDATE_DECISION_EVIDENCE_SCHEMA_VERSION,
-  type CandidateDecisionEvidenceBundle,
-} from "../decision-evidence/candidate-bundle";
+  isSupportedCandidateEvidenceVersion,
+  unsupportedCandidateEvidenceVersionError,
+  type SupportedCandidateDecisionEvidenceBundle,
+} from "../risk-v2/candidate-evidence-versions";
 import { buildDecisionReviewCompleteness } from "../risk-v2/decision-review";
 import type { RiskRegister } from "../risk-v2/risk-register";
 import { RISK_CLASSES, RISK_DOMAINS, type RiskClass, type RiskDomain, type RiskRuleSet } from "../risk-v2/types";
@@ -163,7 +164,7 @@ function inCanonicalOrder<T extends string>(canonical: readonly T[], values: Ite
 export function buildFinalDecisionPolicyReadiness(input: {
   policy: FinalDecisionPolicy;
   riskRuleSet: RiskRuleSet;
-  evidenceBundle: CandidateDecisionEvidenceBundle;
+  evidenceBundle: SupportedCandidateDecisionEvidenceBundle;
   riskRegister: RiskRegister;
 }): FinalDecisionOutcome<FinalDecisionPolicyReadiness> {
   if (!isRecord(input)) return failure("INVALID_FINAL_DECISION_READINESS", ["input은 객체여야 합니다."]);
@@ -178,8 +179,8 @@ export function buildFinalDecisionPolicyReadiness(input: {
   const reviewOutcome = buildDecisionReviewCompleteness(input.riskRegister);
   if (!reviewOutcome.ok) errors.push(...reviewOutcome.errors.map((entry) => `riskRegister: ${entry}`));
   const bundle = input.evidenceBundle;
-  if (!isRecord(bundle) || bundle.schemaVersion !== CANDIDATE_DECISION_EVIDENCE_SCHEMA_VERSION) {
-    errors.push(`evidenceBundle.schemaVersion은 ${CANDIDATE_DECISION_EVIDENCE_SCHEMA_VERSION}이어야 합니다.`);
+  if (!isRecord(bundle) || !isSupportedCandidateEvidenceVersion(bundle.schemaVersion)) {
+    errors.push(unsupportedCandidateEvidenceVersionError());
   } else if (!isNonEmptyString(bundle.candidateStoreId)) {
     errors.push("evidenceBundle.candidateStoreId가 비어 있습니다.");
   }

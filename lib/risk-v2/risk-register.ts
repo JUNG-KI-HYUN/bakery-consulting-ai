@@ -5,7 +5,11 @@
  * 새 RiskFinding을 만들지 않는다. persistence, resolution update 없음.
  */
 
-import type { CandidateDecisionEvidenceBundle } from "../decision-evidence/candidate-bundle";
+import {
+  isSupportedCandidateEvidenceVersion,
+  unsupportedCandidateEvidenceVersionError,
+  type SupportedCandidateDecisionEvidenceBundle,
+} from "./candidate-evidence-versions";
 import {
   RISK_CLASSES,
   RISK_SEVERITIES,
@@ -103,7 +107,7 @@ export function summarizeRiskRegisterEntries(
   };
 }
 
-function duplicateEvidenceIds(bundle: CandidateDecisionEvidenceBundle): string[] {
+function duplicateEvidenceIds(bundle: SupportedCandidateDecisionEvidenceBundle): string[] {
   const seen = new Set<string>();
   const duplicates: string[] = [];
   for (const list of [
@@ -126,7 +130,7 @@ function duplicateEvidenceIds(bundle: CandidateDecisionEvidenceBundle): string[]
  * 입력 bundle / evaluation을 mutation·freeze하지 않는다.
  */
 export function buildRiskRegister(input: {
-  evidenceBundle: CandidateDecisionEvidenceBundle;
+  evidenceBundle: SupportedCandidateDecisionEvidenceBundle;
   evaluation: RiskEvaluationResult;
 }): RiskRegisterOutcome<RiskRegister> {
   const errors: string[] = [];
@@ -136,8 +140,8 @@ export function buildRiskRegister(input: {
   }
   const evaluation = evaluationCheck.value;
   const bundle = input.evidenceBundle;
-  if (!bundle || bundle.schemaVersion !== "candidate-decision-evidence-v1") {
-    return riskRegisterFailure(["evidenceBundle.schemaVersion은 candidate-decision-evidence-v1이어야 합니다."]);
+  if (!bundle || !isSupportedCandidateEvidenceVersion(bundle.schemaVersion)) {
+    return riskRegisterFailure([unsupportedCandidateEvidenceVersionError()]);
   }
   if (bundle.candidateStoreId !== evaluation.candidateStoreId) {
     errors.push("evidenceBundle.candidateStoreId와 evaluation.candidateStoreId가 다릅니다.");
