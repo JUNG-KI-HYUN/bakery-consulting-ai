@@ -55,6 +55,41 @@ export interface ContractReadinessResult {
   evaluatedAt: string;
 }
 
+export interface ContractReadinessInputBinding {
+  facilityAssessmentId: string | null;
+  facilityUpdatedAt: string | null;
+  leaseAssessmentId: string | null;
+  leaseUpdatedAt: string | null;
+  analysisRunId: string | null;
+  economicGeneratedAt: string | null;
+  economicEngineVersion: string | null;
+  economicAssumptionRevision: number | null;
+}
+
+export interface CandidateContractReadinessSnapshot {
+  readinessSnapshotId: string;
+  candidateId: string;
+  caseId: string;
+  schemaVersion: typeof CONTRACT_READINESS_SCHEMA_VERSION;
+  ruleVersion: typeof CONTRACT_READINESS_RULE_VERSION;
+  result: Pick<ContractReadinessResult,
+    "readinessStatus" | "blockingIssues" | "reviewIssues" | "evidenceGaps" | "nextActions"
+  >;
+  inputBinding: ContractReadinessInputBinding;
+  sourceReferences: ContractReadinessSourceReferences;
+  evaluatedAt: string;
+  savedAt: string;
+  createsVerdict: false;
+  createsApproval: false;
+}
+
+export interface CandidateContractReadinessView {
+  currentEvaluation: ContractReadinessResult;
+  latestSavedSnapshot: CandidateContractReadinessSnapshot | null;
+  snapshotCount: number;
+  isLatestSnapshotStale: boolean | null;
+}
+
 export interface ContractReadinessInput {
   candidate: Pick<CandidateStore, "candidateId" | "caseId" | "analysisLinks">;
   facilityAssessment: BakeryFacilityAssessment | null;
@@ -68,4 +103,27 @@ export class ContractReadinessInputError extends Error {
     super(message);
     this.name = "ContractReadinessInputError";
   }
+}
+
+export function contractReadinessInputBinding(
+  sourceReferences: ContractReadinessSourceReferences,
+): ContractReadinessInputBinding {
+  return {
+    facilityAssessmentId: sourceReferences.facility?.assessmentId ?? null,
+    facilityUpdatedAt: sourceReferences.facility?.updatedAt ?? null,
+    leaseAssessmentId: sourceReferences.lease?.assessmentId ?? null,
+    leaseUpdatedAt: sourceReferences.lease?.updatedAt ?? null,
+    analysisRunId: sourceReferences.analysisRun?.analysisRunId ?? null,
+    economicGeneratedAt: sourceReferences.economic?.generatedAt ?? null,
+    economicEngineVersion: sourceReferences.economic?.engineVersion ?? null,
+    economicAssumptionRevision: sourceReferences.economic?.assumptionRevision ?? null,
+  };
+}
+
+export function isContractReadinessSnapshotStale(
+  snapshot: Pick<CandidateContractReadinessSnapshot, "inputBinding">,
+  currentEvaluation: Pick<ContractReadinessResult, "sourceReferences">,
+) {
+  return JSON.stringify(snapshot.inputBinding)
+    !== JSON.stringify(contractReadinessInputBinding(currentEvaluation.sourceReferences));
 }

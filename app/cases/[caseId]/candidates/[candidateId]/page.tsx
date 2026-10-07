@@ -3,6 +3,7 @@ import { CandidateStoreDetailClient } from "@/components/candidates/CandidateSto
 import { getBakeryFacilityAssessment } from "@/lib/candidates/bakery-facility-assessment-repository";
 import { getCandidateLeaseAssessment } from "@/lib/candidates/candidate-lease-assessment-repository";
 import { getCandidateStore } from "@/lib/candidates/candidate-repository";
+import { getCandidateContractReadinessView } from "@/lib/candidates/contract-readiness-repository";
 import { getCase } from "@/lib/cases/case-repository";
 
 export const dynamic = "force-dynamic";
@@ -18,9 +19,10 @@ export default async function CandidateStoreDetailPage({
     getCandidateStore(candidateId),
   ]);
   if (!caseRecord || !candidate || candidate.caseId !== caseRecord.caseId) notFound();
-  const [facilityAssessment, leaseAssessment] = await Promise.all([
+  const [facilityAssessment, leaseAssessment, readinessView] = await Promise.all([
     getBakeryFacilityAssessment(candidate.candidateId, caseRecord.caseId),
     getCandidateLeaseAssessment(candidate.candidateId, caseRecord.caseId),
+    getCandidateContractReadinessView(candidate.candidateId, caseRecord.caseId),
   ]);
-  return <CandidateStoreDetailClient initialRecord={candidate} initialFacilityAssessment={facilityAssessment} initialLeaseAssessment={leaseAssessment} caseName={caseRecord.name} />;
+  return <CandidateStoreDetailClient initialRecord={candidate} initialFacilityAssessment={facilityAssessment} initialLeaseAssessment={leaseAssessment} initialReadinessView={readinessView} caseName={caseRecord.name} />;
 }

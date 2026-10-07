@@ -89,6 +89,12 @@ test("Candidate create and detail screens keep Core data separate from legacy co
   assert.match(detail, /CandidateLeaseAssessmentEditor/);
   assert.match(detail, /Hard \{leaseSummary\.hardIssues\.length\}/);
   assert.match(detail, /Conditional \{leaseSummary\.conditionalIssues\.length\}/);
+  assert.match(detailPage, /getCandidateContractReadinessView/);
+  assert.match(detail, /CandidateContractReadinessPanel/);
+  const readinessPanel = read("components/candidates/CandidateContractReadinessPanel.tsx");
+  assert.match(readinessPanel, /계약 검토 준비상태/);
+  assert.match(readinessPanel, /현재 검토상태 저장/);
+  assert.match(readinessPanel, /계약 승인이나 추천을 의미하지 않습니다/);
   assert.equal(read("lib/candidates/candidate-contract.ts").includes("electricity"), false);
   assert.equal(form.includes("@/components/diagnosis/CandidateStoreForm"), false);
   assert.equal(form.includes("CandidateStoreInput"), false);
