@@ -54,11 +54,13 @@ export function CandidateContractReadinessPanel({
   caseId,
   view,
   onViewChange,
+  onSnapshotSaved,
 }: {
   candidateId: string;
   caseId: string;
   view: CandidateContractReadinessView;
   onViewChange: (view: CandidateContractReadinessView) => void;
+  onSnapshotSaved?: () => void;
 }) {
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -83,6 +85,7 @@ export function CandidateContractReadinessPanel({
         return;
       }
       onViewChange(body);
+      onSnapshotSaved?.();
       setMessage("현재 근거 기준의 Contract Readiness Snapshot을 저장했습니다.");
     } catch {
       setError("현재 검토상태를 저장하는 중 오류가 발생했습니다.");

@@ -95,6 +95,13 @@ test("Candidate create and detail screens keep Core data separate from legacy co
   assert.match(readinessPanel, /계약 검토 준비상태/);
   assert.match(readinessPanel, /현재 검토상태 저장/);
   assert.match(readinessPanel, /계약 승인이나 추천을 의미하지 않습니다/);
+  assert.match(detailPage, /getCandidateHumanDecisionView/);
+  assert.match(detail, /CandidateHumanDecisionPanel/);
+  const decisionPanel = read("components/candidates/CandidateHumanDecisionPanel.tsx");
+  assert.match(decisionPanel, /FRAMEONE 최종 판단/);
+  assert.match(decisionPanel, /최종 판단이 아직 기록되지 않았습니다/);
+  assert.match(decisionPanel, /현재 자료 기준의 계약 검토상태를 먼저 저장하세요/);
+  assert.match(decisionPanel, /법률·세무·인허가·전기·소방·위생/);
   assert.equal(read("lib/candidates/candidate-contract.ts").includes("electricity"), false);
   assert.equal(form.includes("@/components/diagnosis/CandidateStoreForm"), false);
   assert.equal(form.includes("CandidateStoreInput"), false);

@@ -11,8 +11,10 @@ import { calculateBakeryFacilityRiskSummary } from "@/lib/candidates/bakery-faci
 import type { CandidateLeaseAssessment } from "@/lib/candidates/candidate-lease-assessment-contract";
 import { calculateCandidateLeaseRiskSummary } from "@/lib/candidates/candidate-lease-risk";
 import type { CandidateContractReadinessView } from "@/lib/candidates/contract-readiness-contract";
+import type { CandidateHumanDecisionView } from "@/lib/candidates/human-decision-contract";
 import { BakeryFacilityAssessmentEditor } from "./BakeryFacilityAssessmentEditor";
 import { CandidateContractReadinessPanel } from "./CandidateContractReadinessPanel";
+import { CandidateHumanDecisionPanel } from "./CandidateHumanDecisionPanel";
 import { CandidateLeaseAssessmentEditor } from "./CandidateLeaseAssessmentEditor";
 import { CandidateStoreFormFields, type CandidateStoreFormValues } from "./CandidateStoreFormFields";
 
@@ -65,18 +67,21 @@ export function CandidateStoreDetailClient({
   initialFacilityAssessment,
   initialLeaseAssessment,
   initialReadinessView,
+  initialDecisionView,
   caseName,
 }: {
   initialRecord: CandidateStore;
   initialFacilityAssessment: BakeryFacilityAssessment | null;
   initialLeaseAssessment: CandidateLeaseAssessment | null;
   initialReadinessView: CandidateContractReadinessView;
+  initialDecisionView: CandidateHumanDecisionView;
   caseName: string;
 }) {
   const [record, setRecord] = useState(initialRecord);
   const [facilityAssessment, setFacilityAssessment] = useState(initialFacilityAssessment);
   const [leaseAssessment, setLeaseAssessment] = useState(initialLeaseAssessment);
   const [readinessView, setReadinessView] = useState(initialReadinessView);
+  const [decisionView, setDecisionView] = useState(initialDecisionView);
   const [values, setValues] = useState(() => valuesFromRecord(initialRecord));
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -93,6 +98,21 @@ export function CandidateStoreDetailClient({
     } catch {
       // Assessment editors retain their own save result when the aggregate refresh fails.
     }
+  };
+
+  const refreshDecision = async () => {
+    try {
+      const response = await fetch(`/api/candidates/${encodeURIComponent(record.candidateId)}/decision?caseId=${encodeURIComponent(record.caseId)}`);
+      const body = await response.json() as CandidateHumanDecisionView | { message?: string };
+      if (response.ok && "latestDecision" in body) setDecisionView(body);
+    } catch {
+      // The last saved decision remains visible if aggregate refresh fails.
+    }
+  };
+
+  const refreshReviewState = () => {
+    void refreshReadiness();
+    void refreshDecision();
   };
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
@@ -142,9 +162,10 @@ export function CandidateStoreDetailClient({
         <article className="bg-white p-5"><p className="text-xs font-bold text-[#8b6f38]">LEASE REVIEW</p><h3 className="mt-2 text-base font-bold text-stone-950">Hard {leaseSummary.hardIssues.length} · Conditional {leaseSummary.conditionalIssues.length}</h3><p className="mt-2 text-sm leading-6 text-stone-500">확인 필요 {leaseSummary.unresolvedChecks.length} · 확인 완료 {leaseSummary.verifiedCount}</p><a href="#lease-review" className="mt-3 inline-flex text-sm font-bold text-[#725823] underline underline-offset-4">임대차 검토 열기</a></article>
       </section>
 
-      <BakeryFacilityAssessmentEditor candidateId={record.candidateId} caseId={record.caseId} assessment={facilityAssessment} onSaved={(assessment) => { setFacilityAssessment(assessment); void refreshReadiness(); }} />
-      <CandidateLeaseAssessmentEditor candidateId={record.candidateId} caseId={record.caseId} currentAskingTerms={record.currentAskingTerms} assessment={leaseAssessment} onSaved={(assessment) => { setLeaseAssessment(assessment); void refreshReadiness(); }} />
-      <CandidateContractReadinessPanel candidateId={record.candidateId} caseId={record.caseId} view={readinessView} onViewChange={setReadinessView} />
+      <BakeryFacilityAssessmentEditor candidateId={record.candidateId} caseId={record.caseId} assessment={facilityAssessment} onSaved={(assessment) => { setFacilityAssessment(assessment); refreshReviewState(); }} />
+      <CandidateLeaseAssessmentEditor candidateId={record.candidateId} caseId={record.caseId} currentAskingTerms={record.currentAskingTerms} assessment={leaseAssessment} onSaved={(assessment) => { setLeaseAssessment(assessment); refreshReviewState(); }} />
+      <CandidateContractReadinessPanel candidateId={record.candidateId} caseId={record.caseId} view={readinessView} onViewChange={setReadinessView} onSnapshotSaved={() => { void refreshDecision(); }} />
+      <CandidateHumanDecisionPanel candidateId={record.candidateId} caseId={record.caseId} view={decisionView} onViewChange={setDecisionView} />
 
       <form onSubmit={save} className="panel-card p-5 sm:p-6">
         <div className="mb-5 border-b border-stone-200 pb-4"><h3 className="text-lg font-bold text-stone-950">후보점포 정보</h3><p className="mt-1 text-sm text-stone-500">확인된 물건 정보와 현재 제시조건만 업데이트합니다.</p></div>
