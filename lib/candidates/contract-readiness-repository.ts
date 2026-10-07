@@ -132,6 +132,21 @@ export async function getCandidateContractReadinessView(candidateId: string, cas
   return viewFrom(evaluation, snapshots.filter((item) => item.candidateId === candidateId && item.caseId === caseId));
 }
 
+export async function getCandidateContractReadinessSnapshot(
+  candidateId: string,
+  caseId: string,
+  readinessSnapshotId: string,
+) {
+  await pendingWrite;
+  await ownedCandidate(candidateId, caseId);
+  const snapshots = await readSnapshots(readinessFilePath());
+  return structuredClone(snapshots.find((item) =>
+    item.readinessSnapshotId === readinessSnapshotId
+    && item.candidateId === candidateId
+    && item.caseId === caseId
+  ) ?? null);
+}
+
 export function saveCandidateContractReadinessSnapshot(candidateId: string, caseId: string): Promise<CandidateContractReadinessView> {
   const filePath = readinessFilePath();
   let view!: CandidateContractReadinessView;

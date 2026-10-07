@@ -151,6 +151,7 @@ export function CandidateStoreDetailClient({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full border border-[#d8c59b] bg-[#f8f2e6] px-3 py-1.5 text-xs font-bold text-[#725823]">{CANDIDATE_STORE_STATUS_LABELS[record.status]}</span>
+          <Link href={`/cases/${encodeURIComponent(record.caseId)}/candidates/${encodeURIComponent(record.candidateId)}/report`} className="btn-primary">고객 리포트 보기</Link>
           <Link href={`/cases/${encodeURIComponent(record.caseId)}`} className="btn-outline">Case로 돌아가기</Link>
         </div>
       </header>

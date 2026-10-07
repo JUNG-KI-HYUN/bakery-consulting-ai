@@ -136,6 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const setAnalysisHeader = useCallback((value: AnalysisHeaderContextValue | null) => {
     setRegisteredHeader(value);
   }, []);
+  const isCandidateCustomerReport = /^\/cases\/[^/]+\/candidates\/[^/]+\/report$/.test(pathname);
 
   useEffect(() => {
     const readTarget = () => {
@@ -165,6 +166,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
     return parts.join(" · ");
   })();
+
+  if (isCandidateCustomerReport) {
+    return (
+      <AnalysisHeaderContext.Provider value={setAnalysisHeader}>
+        <main className="min-h-dvh min-w-0 bg-[#f5f4f0] px-3 py-4 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+          {children}
+        </main>
+      </AnalysisHeaderContext.Provider>
+    );
+  }
 
   return (
     <AnalysisHeaderContext.Provider value={setAnalysisHeader}>

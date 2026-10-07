@@ -1,0 +1,39 @@
+[
+  {
+    "readinessSnapshotId": "contract-readiness-report-smoke",
+    "candidateId": "candidate-report-smoke",
+    "caseId": "case-report-smoke",
+    "schemaVersion": "frameone.contract-readiness.v1",
+    "ruleVersion": "contract-readiness-v1",
+    "result": {
+      "readinessStatus": "REVIEW_REQUIRED",
+      "blockingIssues": [],
+      "reviewIssues": [],
+      "evidenceGaps": [
+        { "code": "FACILITY_ASSESSMENT_MISSING", "source": "FACILITY", "message": "시설 검토가 없습니다." },
+        { "code": "LEASE_ASSESSMENT_MISSING", "source": "LEASE", "message": "임대차 검토가 없습니다." },
+        { "code": "ANALYSIS_RUN_LINK_MISSING", "source": "ANALYSIS_RUN", "message": "Candidate에 연결된 Analysis Run이 없습니다." }
+      ],
+      "nextActions": [
+        "시설 검토를 생성하고 필수 항목을 확인합니다.",
+        "임대차 검토를 생성하고 계약 전 확인항목을 검토합니다.",
+        "Candidate에 저장된 Analysis Run을 연결합니다."
+      ]
+    },
+    "inputBinding": {
+      "facilityAssessmentId": null,
+      "facilityUpdatedAt": null,
+      "leaseAssessmentId": null,
+      "leaseUpdatedAt": null,
+      "analysisRunId": null,
+      "economicGeneratedAt": null,
+      "economicEngineVersion": null,
+      "economicAssumptionRevision": null
+    },
+    "sourceReferences": { "facility": null, "lease": null, "analysisRun": null, "economic": null },
+    "evaluatedAt": "2026-10-07T01:00:00.000Z",
+    "savedAt": "2026-10-07T01:00:00.000Z",
+    "createsVerdict": false,
+    "createsApproval": false
+  }
+]

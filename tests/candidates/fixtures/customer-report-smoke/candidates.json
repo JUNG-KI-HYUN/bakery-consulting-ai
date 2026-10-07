@@ -1,0 +1,22 @@
+[
+  {
+    "candidateId": "candidate-report-smoke",
+    "caseId": "case-report-smoke",
+    "label": "고객 리포트 UI Fixture 점포",
+    "address": "서울특별시 테스트 주소",
+    "unit": "1층",
+    "propertyFacts": {
+      "floor": "1층",
+      "exclusiveAreaSqm": 49.5,
+      "frontageM": 6.2,
+      "parkingStatus": "UNKNOWN",
+      "parkingNote": "Fixture: 현장 확인 필요"
+    },
+    "currentAskingTerms": {},
+    "status": "REVIEWING",
+    "source": "CASE_DIRECT",
+    "analysisLinks": [],
+    "createdAt": "2026-10-07T01:00:00.000Z",
+    "updatedAt": "2026-10-07T01:00:00.000Z"
+  }
+]

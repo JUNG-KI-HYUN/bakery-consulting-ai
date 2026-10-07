@@ -1,0 +1,39 @@
+[
+  {
+    "decisionId": "human-decision-report-smoke",
+    "candidateId": "candidate-report-smoke",
+    "caseId": "case-report-smoke",
+    "schemaVersion": "frameone.candidate-human-decision.v1",
+    "basis": {
+      "readinessSnapshotId": "contract-readiness-report-smoke",
+      "readinessStatus": "REVIEW_REQUIRED",
+      "readinessSavedAt": "2026-10-07T01:00:00.000Z",
+      "readinessInputBinding": {
+        "facilityAssessmentId": null,
+        "facilityUpdatedAt": null,
+        "leaseAssessmentId": null,
+        "leaseUpdatedAt": null,
+        "analysisRunId": null,
+        "economicGeneratedAt": null,
+        "economicEngineVersion": null,
+        "economicAssumptionRevision": null
+      }
+    },
+    "verdict": "CONDITIONAL_RECOMMEND",
+    "rationale": "Fixture 자료에서는 계약 전 필수 근거를 확보하는 조건으로만 다음 검토를 진행합니다.",
+    "support": {
+      "positiveFactors": ["후보점포 기본정보가 등록되었습니다."],
+      "keyRisks": ["시설·임대차·상권 근거가 아직 없습니다."],
+      "unresolvedConditions": ["현장 및 계약자료 확인 전입니다."],
+      "conditionsBeforeProceeding": ["시설·임대차·상권 근거를 확보합니다."],
+      "landlordConfirmations": ["필수 시설공사 가능 여부를 서면 확인합니다."],
+      "expertConfirmations": ["전기·소방·위생·인허가 조건을 확인합니다."],
+      "nextActions": ["시설 검토부터 진행합니다."]
+    },
+    "reviewerName": "Fixture 담당자",
+    "decidedAt": "2026-10-07T01:00:00.000Z",
+    "previousDecisionId": null,
+    "createsAutomaticRecommendation": false,
+    "decidedByHuman": true
+  }
+]
