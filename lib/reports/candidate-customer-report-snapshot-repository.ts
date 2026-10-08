@@ -148,6 +148,12 @@ export async function getCandidateCustomerReportSnapshotView(candidateId: string
   return viewFrom(snapshots.filter((item) => item.candidateId === candidateId && item.caseId === caseId));
 }
 
+export async function listCandidateCustomerReportSnapshotsByCase(caseId: string) {
+  await pendingWrite;
+  const snapshots = await readSnapshots(snapshotFilePath());
+  return structuredClone(snapshots.filter((item) => item.caseId === caseId));
+}
+
 export async function getCandidateCustomerReportSnapshot(
   candidateId: string,
   caseId: string,

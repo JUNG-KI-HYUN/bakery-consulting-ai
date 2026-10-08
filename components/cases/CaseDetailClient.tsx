@@ -58,10 +58,18 @@ export function CaseDetailClient({
   initialRecord,
   initialCandidates,
   latestAnalysisTarget,
+  issuedReports,
 }: {
   initialRecord: CaseRecord;
   initialCandidates: CandidateStore[];
   latestAnalysisTarget: ActiveAnalysisTarget | null;
+  issuedReports: Array<{
+    reportSnapshotId: string;
+    candidateId: string;
+    candidateLabel: string;
+    verdictLabel: string;
+    issuedAt: string;
+  }>;
 }) {
   const [record, setRecord] = useState(initialRecord);
   const [values, setValues] = useState(() => formValues(initialRecord));
@@ -73,6 +81,17 @@ export function CaseDetailClient({
     latestAnalysisTarget,
   );
   const latestAnalysis = record.analysisRunLinks.at(-1) ?? null;
+  const customer = record.customerProfile;
+  const recommendation = record.frameoneRecommendation;
+  const capitalPlan = recommendation?.capitalPlan;
+  const primaryCandidate = initialCandidates[0] ?? null;
+  const candidateAreaPyeong = primaryCandidate?.propertyFacts.exclusiveAreaSqm === undefined
+    ? null
+    : primaryCandidate.propertyFacts.exclusiveAreaSqm / 3.305785;
+  const money = (value: number | undefined) => value === undefined ? "확인 필요" : `${value.toLocaleString("ko-KR")}원`;
+  const yesNo = (value: boolean | undefined) => value === undefined ? "확인 필요" : value ? "YES" : "NO";
+  const range = (min: number | undefined, max: number | undefined, suffix: string) =>
+    min === undefined && max === undefined ? "확인 필요" : `${min ?? "확인 필요"}~${max ?? "확인 필요"}${suffix}`;
 
   const save = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -119,6 +138,54 @@ export function CaseDetailClient({
         </dl>
       </section>
 
+      <section className="space-y-4" aria-label="상담 출처별 정보">
+        <article className="rounded-xl border border-sky-200 bg-white p-5 sm:p-6">
+          <h3 className="text-lg font-bold text-stone-950">고객 상담정보</h3>
+          <p className="mt-1 text-sm text-stone-600">고객이 상담 과정에서 제공한 정보입니다.</p>
+          {!customer ? <p className="mt-4 text-sm text-stone-500">저장된 고객 상담정보가 없습니다.</p> : <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div><dt className="text-xs font-semibold text-stone-500">브랜드</dt><dd className="mt-1 text-sm font-bold">{customer.brandName ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">총 가용자본</dt><dd className="mt-1 text-sm font-bold">{money(customer.totalAvailableCapitalWon)}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">대표 직접근무</dt><dd className="mt-1 text-sm font-bold">{yesNo(customer.ownerWorksInStore)}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">대표 역할</dt><dd className="mt-1 text-sm font-bold">{customer.ownerRoles?.join(" / ") ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">희망형태</dt><dd className="mt-1 text-sm font-bold">{customer.conceptPreference ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">희망지역</dt><dd className="mt-1 text-sm font-bold">{customer.areaPreferenceNote ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">희망면적</dt><dd className="mt-1 text-sm font-bold">{range(customer.preferredAreaMinPyeong, customer.preferredAreaMaxPyeong, "평")}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">목표 월 세전 영업이익</dt><dd className="mt-1 text-sm font-bold">{money(customer.targetMonthlyOwnerIncomeWon)}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">직접 제조 / 커피</dt><dd className="mt-1 text-sm font-bold">{yesNo(customer.directManufacturing)} / {yesNo(customer.coffeeSales)}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">홀 / 배달</dt><dd className="mt-1 text-sm font-bold">{customer.hallPreference ?? "확인 필요"} / {customer.deliveryPreference ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">인력 계획</dt><dd className="mt-1 text-sm font-bold">{customer.employeePlan ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">추천 요청</dt><dd className="mt-1 text-sm font-bold">{customer.unknownBudgetItems?.join(", ") ?? "없음"}</dd></div>
+          </dl>}
+        </article>
+
+        <article className="rounded-xl border border-amber-200 bg-white p-5 sm:p-6">
+          <h3 className="text-lg font-bold text-stone-950">FRAMEONE 권장조건</h3>
+          <p className="mt-1 text-sm text-stone-600">현재 상담정보와 분석을 바탕으로 상담자가 제안한 검토 기준입니다. 시장·시설 확인에 따라 변경될 수 있습니다.</p>
+          {!recommendation ? <p className="mt-4 text-sm text-stone-500">저장된 상담자 권장조건이 없습니다.</p> : <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div><dt className="text-xs font-semibold text-stone-500">권장 사업모델</dt><dd className="mt-1 text-sm font-bold">{recommendation.recommendedConcept ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">권장 탐색면적</dt><dd className="mt-1 text-sm font-bold">{range(recommendation.recommendedAreaMinPyeong, recommendation.recommendedAreaMaxPyeong, "평")}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">권장 좌석</dt><dd className="mt-1 text-sm font-bold">{range(recommendation.recommendedSeatMin, recommendation.recommendedSeatMax, "석")}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">인력</dt><dd className="mt-1 text-sm font-bold">{recommendation.staffingRecommendation ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">운전자금 보존</dt><dd className="mt-1 text-sm font-bold">{money(capitalPlan?.operatingReserveWon)}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">개점 전 투자한도</dt><dd className="mt-1 text-sm font-bold">{money(capitalPlan?.preOpeningInvestmentLimitWon)}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">권리금 정책</dt><dd className="mt-1 text-sm font-bold">{recommendation.premiumPolicy ?? "확인 필요"}</dd></div>
+            <div><dt className="text-xs font-semibold text-stone-500">시설전략</dt><dd className="mt-1 text-sm font-bold">{recommendation.facilityStrategy ?? "확인 필요"}</dd></div>
+          </dl>}
+          {recommendation?.seatRecommendationNote ? <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">{recommendation.seatRecommendationNote}</p> : null}
+        </article>
+
+        <article className="rounded-xl border border-emerald-200 bg-white p-5 sm:p-6">
+          <h3 className="text-lg font-bold text-stone-950">후보점포 실제조건</h3>
+          <p className="mt-1 text-sm text-stone-600">후보점포에서 확인하거나 제공받은 실제 조건입니다.</p>
+          {!primaryCandidate ? <p className="mt-4 text-sm text-stone-500">등록된 후보점포가 없습니다.</p> : <div className="mt-5 overflow-x-auto"><table className="min-w-full text-left text-sm"><thead><tr className="border-b border-stone-200 text-xs text-stone-500"><th className="p-2">항목</th><th className="p-2">고객 희망</th><th className="p-2">FRAMEONE 권장</th><th className="p-2">후보점포</th></tr></thead><tbody className="divide-y divide-stone-100">
+            <tr><th className="p-2">면적</th><td className="p-2">{range(customer?.preferredAreaMinPyeong, customer?.preferredAreaMaxPyeong, "평")}</td><td className="p-2">{range(recommendation?.recommendedAreaMinPyeong, recommendation?.recommendedAreaMaxPyeong, "평")}</td><td className="p-2">{candidateAreaPyeong === null ? "확인 필요" : `${candidateAreaPyeong.toFixed(1)}평`}</td></tr>
+            <tr><th className="p-2">좌석</th><td className="p-2">{customer?.hallPreference ?? "확인 필요"}</td><td className="p-2">{range(recommendation?.recommendedSeatMin, recommendation?.recommendedSeatMax, "석 검토")}</td><td className="p-2">도면 확인 필요</td></tr>
+            <tr><th className="p-2">보증금</th><td className="p-2">{customer?.unknownBudgetItems?.includes("보증금") ? "추천 요청" : "확인 필요"}</td><td className="p-2">{money(capitalPlan?.depositBudgetWon)}</td><td className="p-2">{money(primaryCandidate.currentAskingTerms.depositWon)}</td></tr>
+            <tr><th className="p-2">권리금</th><td className="p-2">{customer?.unknownBudgetItems?.includes("권리금") ? "추천 요청" : "확인 필요"}</td><td className="p-2">{recommendation?.premiumPolicy ?? "확인 필요"}</td><td className="p-2">{money(primaryCandidate.currentAskingTerms.premiumWon)}</td></tr>
+          </tbody></table></div>}
+        </article>
+      </section>
+
       <section className="grid gap-px overflow-hidden rounded-xl border border-stone-200 bg-stone-200 lg:grid-cols-3" aria-label="Case 업무 연결">
         <article className="bg-white p-5">
           <p className="text-xs font-bold text-[#8b6f38]">분석</p>
@@ -162,7 +229,7 @@ export function CaseDetailClient({
         <article className="bg-white p-5">
           <p className="text-xs font-bold text-[#8b6f38]">리포트</p>
           <h3 className="mt-2 text-base font-bold text-stone-950">컨설팅 결과</h3>
-          <p className="mt-2 text-sm text-stone-500">아직 생성된 리포트가 없습니다.</p>
+          {!issuedReports.length ? <p className="mt-2 text-sm text-stone-500">아직 생성된 리포트가 없습니다.</p> : <div className="mt-4 divide-y divide-stone-200 border-y border-stone-200">{issuedReports.map((report) => <div key={report.reportSnapshotId} className="py-3"><p className="text-sm font-bold text-stone-950">{report.candidateLabel}</p><p className="mt-1 text-xs text-stone-500">{report.verdictLabel} · {formatUpdatedAt(report.issuedAt)}</p><Link href={`/cases/${encodeURIComponent(record.caseId)}/candidates/${encodeURIComponent(report.candidateId)}/report/${encodeURIComponent(report.reportSnapshotId)}`} className="mt-2 inline-block text-xs font-bold text-stone-800 underline underline-offset-4">Report 열기</Link></div>)}</div>}
         </article>
       </section>
 

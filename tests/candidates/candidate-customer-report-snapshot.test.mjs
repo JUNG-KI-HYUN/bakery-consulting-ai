@@ -214,6 +214,8 @@ test("Customer Report Snapshot repository and UI contract", async (t) => {
     assert.equal(firstSnapshot.reportStatusAtIssue, "REPORT_READY");
     assert.equal(firstSnapshot.immutable, true);
     assert.equal(firstSnapshot.materializedReport.meta.reportStatus, "REPORT_READY");
+    assert.ok(firstSnapshot.materializedReport.consultation);
+    assert.equal(firstSnapshot.materializedReport.consultation.candidateActual.askingTerms.monthlyRentWon, undefined);
     assert.equal(firstSnapshot.decisionId, "human-decision-report-smoke");
     assert.equal(firstSnapshot.readinessSnapshotId, "contract-readiness-report-smoke");
     assert.equal(firstSnapshot.materializedReport.decision.verdictLabel, "조건부 추천");

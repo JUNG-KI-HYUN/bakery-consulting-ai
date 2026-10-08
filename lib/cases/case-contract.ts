@@ -25,6 +25,57 @@ export interface CaseAnalysisRunLink {
 
 export type CaseAnalysisRunLinkInput = Omit<CaseAnalysisRunLink, "linkedAt">;
 
+export interface CaseCustomerProfile {
+  brandName?: string;
+  totalAvailableCapitalWon?: number;
+  ownerWorksInStore?: boolean;
+  ownerRoles?: string[];
+  conceptPreference?: string;
+  areaPreferenceNote?: string;
+  preferredAreaMinPyeong?: number;
+  preferredAreaMaxPyeong?: number;
+  directManufacturing?: boolean;
+  coffeeSales?: boolean;
+  hallPreference?: string;
+  deliveryPreference?: string;
+  employeePlan?: string;
+  targetMonthlyOwnerIncomeWon?: number;
+  loanPreference?: string;
+  equipmentSupportNeeded?: string;
+  taxLaborPmNeeded?: string;
+  longTermPlan?: string;
+  unknownBudgetItems?: string[];
+  expectedDailyTransactionsNote?: string;
+}
+
+export interface CaseCapitalPlan {
+  totalCapitalWon?: number;
+  operatingReserveWon?: number;
+  depositBudgetWon?: number;
+  equipmentBudgetWon?: number;
+  fitoutBudgetWon?: number;
+  openingCostBudgetWon?: number;
+  premiumBudgetWon?: number;
+  preOpeningInvestmentLimitWon?: number;
+}
+
+export interface CaseFrameoneRecommendation {
+  recommendedConcept?: string;
+  recommendedAreaMinPyeong?: number;
+  recommendedAreaMaxPyeong?: number;
+  recommendedSeatMin?: number;
+  recommendedSeatMax?: number;
+  seatRecommendationNote?: string;
+  staffingRecommendation?: string;
+  directManufacturing?: boolean;
+  initialDelivery?: boolean;
+  brunch?: boolean;
+  capitalPlan?: CaseCapitalPlan;
+  premiumPolicy?: string;
+  facilityStrategy?: string;
+  recommendationNotes?: string;
+}
+
 export const CASE_LIFECYCLE_LABELS: Record<CaseLifecycleStage, string> = {
   EXPLORING: "탐색중",
   CANDIDATE_REVIEW: "후보검토",
@@ -44,6 +95,8 @@ export interface CaseRecord {
   budgetMin?: number;
   budgetMax?: number;
   targetOpeningDate?: string;
+  customerProfile?: CaseCustomerProfile;
+  frameoneRecommendation?: CaseFrameoneRecommendation;
   lifecycleStage: CaseLifecycleStage;
   status: CaseStatus;
   analysisRunIds: string[];
@@ -61,6 +114,8 @@ export interface CaseCreateInput {
   budgetMin?: number;
   budgetMax?: number;
   targetOpeningDate?: string;
+  customerProfile?: CaseCustomerProfile;
+  frameoneRecommendation?: CaseFrameoneRecommendation;
 }
 
 export interface CaseUpdateInput extends Partial<CaseCreateInput> {
@@ -107,6 +162,89 @@ function optionalBudget(value: unknown, label: string) {
     throw new CaseValidationError(`${label}은(는) 0 이상의 정수여야 합니다.`);
   }
   return value;
+}
+
+function optionalBoolean(value: unknown, label: string) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "boolean") throw new CaseValidationError(`${label} 형식이 올바르지 않습니다.`);
+  return value;
+}
+
+function optionalNumber(value: unknown, label: string) {
+  if (value === undefined || value === null || value === "") return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    throw new CaseValidationError(`${label}은(는) 0 이상의 숫자여야 합니다.`);
+  }
+  return value;
+}
+
+function optionalTextArray(value: unknown, label: string) {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value) || value.length > 30) throw new CaseValidationError(`${label} 형식이 올바르지 않습니다.`);
+  return value.map((item) => requiredText(item, label, 100));
+}
+
+function customerProfileInput(value: unknown): CaseCustomerProfile | undefined {
+  if (value === undefined || value === null) return undefined;
+  const input = inputObject(value);
+  return {
+    brandName: optionalText(input.brandName, "브랜드명"),
+    totalAvailableCapitalWon: optionalBudget(input.totalAvailableCapitalWon, "총 가용자본"),
+    ownerWorksInStore: optionalBoolean(input.ownerWorksInStore, "대표 직접근무"),
+    ownerRoles: optionalTextArray(input.ownerRoles, "대표 역할"),
+    conceptPreference: optionalText(input.conceptPreference, "희망형태", 500),
+    areaPreferenceNote: optionalText(input.areaPreferenceNote, "희망지역", 500),
+    preferredAreaMinPyeong: optionalNumber(input.preferredAreaMinPyeong, "희망 최소면적"),
+    preferredAreaMaxPyeong: optionalNumber(input.preferredAreaMaxPyeong, "희망 최대면적"),
+    directManufacturing: optionalBoolean(input.directManufacturing, "직접 제조"),
+    coffeeSales: optionalBoolean(input.coffeeSales, "커피 판매"),
+    hallPreference: optionalText(input.hallPreference, "홀 희망", 500),
+    deliveryPreference: optionalText(input.deliveryPreference, "배달 희망", 500),
+    employeePlan: optionalText(input.employeePlan, "직원 계획", 500),
+    targetMonthlyOwnerIncomeWon: optionalBudget(input.targetMonthlyOwnerIncomeWon, "목표 월 영업이익"),
+    loanPreference: optionalText(input.loanPreference, "대출 계획", 500),
+    equipmentSupportNeeded: optionalText(input.equipmentSupportNeeded, "장비 지원", 500),
+    taxLaborPmNeeded: optionalText(input.taxLaborPmNeeded, "세무·노무 지원", 500),
+    longTermPlan: optionalText(input.longTermPlan, "장기 계획", 500),
+    unknownBudgetItems: optionalTextArray(input.unknownBudgetItems, "추천 요청 예산항목"),
+    expectedDailyTransactionsNote: optionalText(input.expectedDailyTransactionsNote, "결제건수 메모", 500),
+  };
+}
+
+function capitalPlanInput(value: unknown): CaseCapitalPlan | undefined {
+  if (value === undefined || value === null) return undefined;
+  const input = inputObject(value);
+  return {
+    totalCapitalWon: optionalBudget(input.totalCapitalWon, "총 자본"),
+    operatingReserveWon: optionalBudget(input.operatingReserveWon, "보존 운전자금"),
+    depositBudgetWon: optionalBudget(input.depositBudgetWon, "보증금 예산"),
+    equipmentBudgetWon: optionalBudget(input.equipmentBudgetWon, "장비 예산"),
+    fitoutBudgetWon: optionalBudget(input.fitoutBudgetWon, "인테리어·설비 예산"),
+    openingCostBudgetWon: optionalBudget(input.openingCostBudgetWon, "초도비용 예산"),
+    premiumBudgetWon: optionalBudget(input.premiumBudgetWon, "권리금 예산"),
+    preOpeningInvestmentLimitWon: optionalBudget(input.preOpeningInvestmentLimitWon, "개점 전 투자한도"),
+  };
+}
+
+function frameoneRecommendationInput(value: unknown): CaseFrameoneRecommendation | undefined {
+  if (value === undefined || value === null) return undefined;
+  const input = inputObject(value);
+  return {
+    recommendedConcept: optionalText(input.recommendedConcept, "권장 사업모델", 500),
+    recommendedAreaMinPyeong: optionalNumber(input.recommendedAreaMinPyeong, "권장 최소면적"),
+    recommendedAreaMaxPyeong: optionalNumber(input.recommendedAreaMaxPyeong, "권장 최대면적"),
+    recommendedSeatMin: optionalNumber(input.recommendedSeatMin, "권장 최소좌석"),
+    recommendedSeatMax: optionalNumber(input.recommendedSeatMax, "권장 최대좌석"),
+    seatRecommendationNote: optionalText(input.seatRecommendationNote, "좌석 권장 주의사항", 500),
+    staffingRecommendation: optionalText(input.staffingRecommendation, "인력 권장안", 500),
+    directManufacturing: optionalBoolean(input.directManufacturing, "직접 제조 권장"),
+    initialDelivery: optionalBoolean(input.initialDelivery, "초기 배달 권장"),
+    brunch: optionalBoolean(input.brunch, "브런치 권장"),
+    capitalPlan: capitalPlanInput(input.capitalPlan),
+    premiumPolicy: optionalText(input.premiumPolicy, "권리금 정책", 500),
+    facilityStrategy: optionalText(input.facilityStrategy, "시설 전략", 500),
+    recommendationNotes: optionalText(input.recommendationNotes, "권장안 메모", 1000),
+  };
 }
 
 function optionalDate(value: unknown) {
@@ -185,6 +323,8 @@ export function parseCaseCreateInput(value: unknown): CaseCreateInput {
     budgetMin: optionalBudget(input.budgetMin, "최소 예산"),
     budgetMax: optionalBudget(input.budgetMax, "최대 예산"),
     targetOpeningDate: optionalDate(input.targetOpeningDate),
+    customerProfile: customerProfileInput(input.customerProfile),
+    frameoneRecommendation: frameoneRecommendationInput(input.frameoneRecommendation),
   };
   validateBudgetRange(result.budgetMin, result.budgetMax);
   return result;
@@ -202,6 +342,8 @@ export function parseCaseUpdateInput(value: unknown): CaseUpdateInput {
     "targetOpeningDate",
     "lifecycleStage",
     "analysisRunLink",
+    "customerProfile",
+    "frameoneRecommendation",
   ];
   if (!allowedKeys.some((key) => Object.hasOwn(input, key))) {
     throw new CaseValidationError("수정할 Case 항목이 없습니다.");
@@ -214,6 +356,8 @@ export function parseCaseUpdateInput(value: unknown): CaseUpdateInput {
   if (Object.hasOwn(input, "budgetMin")) result.budgetMin = optionalBudget(input.budgetMin, "최소 예산");
   if (Object.hasOwn(input, "budgetMax")) result.budgetMax = optionalBudget(input.budgetMax, "최대 예산");
   if (Object.hasOwn(input, "targetOpeningDate")) result.targetOpeningDate = optionalDate(input.targetOpeningDate);
+  if (Object.hasOwn(input, "customerProfile")) result.customerProfile = customerProfileInput(input.customerProfile);
+  if (Object.hasOwn(input, "frameoneRecommendation")) result.frameoneRecommendation = frameoneRecommendationInput(input.frameoneRecommendation);
   if (Object.hasOwn(input, "lifecycleStage")) {
     if (!CASE_LIFECYCLE_STAGES.includes(input.lifecycleStage as CaseLifecycleStage)) {
       throw new CaseValidationError("알 수 없는 Case 단계입니다.");
@@ -276,4 +420,6 @@ export function assertStoredCaseRecord(value: unknown): asserts value is CaseRec
   optionalText(input.bakeryType, "베이커리 형태");
   optionalText(input.preferredArea, "희망지역");
   optionalDate(input.targetOpeningDate);
+  customerProfileInput(input.customerProfile);
+  frameoneRecommendationInput(input.frameoneRecommendation);
 }

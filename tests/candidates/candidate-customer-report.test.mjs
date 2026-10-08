@@ -181,6 +181,35 @@ test("readiness snapshot binding remains the report basis", () => {
   assert.equal(report.readiness.status, "READY");
 });
 
+test("customer goal, FRAMEONE recommendation, capital plan, and Candidate actual stay separated", () => {
+  const input = makeInput();
+  input.caseRecord.customerProfile = {
+    totalAvailableCapitalWon: 100_000_000,
+    targetMonthlyOwnerIncomeWon: 4_000_000,
+    unknownBudgetItems: ["보증금"],
+  };
+  input.caseRecord.frameoneRecommendation = {
+    recommendedAreaMinPyeong: 30,
+    recommendedAreaMaxPyeong: 35,
+    capitalPlan: { depositBudgetWon: 30_000_000, operatingReserveWon: 20_000_000 },
+  };
+  input.candidate.propertyFacts.exclusiveAreaSqm = 112.4;
+  input.candidate.currentAskingTerms = { depositWon: 30_000_000, monthlyRentWon: 3_500_000, premiumWon: 0 };
+  input.analysisRun.sections.economic.versions[0].result.bep = {
+    monthlyBepSales: 17_218_750,
+    dailyBepSales: 688_750,
+    requiredDailyTransactionsForBep: 68.875,
+    contributionMarginRate: 0.64,
+  };
+  const report = assembleCandidateCustomerReport(input);
+  assert.equal(report.consultation.customer.totalAvailableCapitalWon, 100_000_000);
+  assert.equal(report.consultation.frameone.capitalPlan.operatingReserveWon, 20_000_000);
+  assert.equal(report.consultation.candidateActual.askingTerms.monthlyRentWon, 3_500_000);
+  assert.equal(report.economics.requiredDemand.requiredMonthlySales, 23_468_750);
+  assert.equal(report.economics.requiredDemand.marketDemandAssessment, "REQUIRES_ADDITIONAL_ANALYSIS");
+  assert.notEqual(report.consultation.customer.unknownBudgetItems[0], report.consultation.candidateActual.askingTerms.depositWon);
+});
+
 for (const [source, message] of [
   ["facility", /시설 검토 기준/],
   ["lease", /임대차 검토 기준/],
@@ -443,6 +472,15 @@ test("customer UI labels context as reference material, not direct Human Decisio
   assert.match(source, /Human Decision에 직접 binding된 근거가 아닙니다/);
   assert.equal(source.includes("최종 판단 근거"), false);
   assert.equal(source.includes("계약 판단 확정 근거"), false);
+});
+
+test("customer economics is labeled as validation scenarios, not market demand forecast", () => {
+  const source = fs.readFileSync(path.join(root, "components/reports/CandidateCustomerReportDocument.tsx"), "utf8");
+  assert.match(source, /검증 시나리오/);
+  assert.match(source, /상권에서 실제 발생할 것으로 예측한 수요가 아니라/);
+  assert.match(source, /시장수요 충족 가능성/);
+  assert.match(source, /추가 분석 필요/);
+  assert.equal(source.includes("예상 결제건수"), false);
 });
 
 test("customer report route is separated from the staff navigation shell", () => {

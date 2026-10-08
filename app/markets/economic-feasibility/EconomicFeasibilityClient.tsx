@@ -364,7 +364,7 @@ export default function EconomicFeasibilityClient({
       ) : null}
       <section className="panel-card p-5 md:p-6">
         <h3 className="text-lg font-bold">사업계획 입력</h3>
-        <p className="mt-1 text-xs text-slate-500">모든 금액은 원, 비율은 화면에서 %로 입력합니다. 일 결제건수는 Flow에서 자동 생성하지 않습니다.</p>
+        <p className="mt-1 text-xs text-slate-500">모든 금액은 원, 비율은 화면에서 %로 입력합니다. 일 결제건수는 시장 수요예측값이 아니라 사업비용 구조를 검토하기 위한 검증 시나리오 입력값입니다.</p>
         <div className="mt-5 grid gap-5 xl:grid-cols-2">
           <div className="grid gap-3 sm:grid-cols-2">
             <NumberInput label="예상 객단가" value={plan.expectedTicket} onChange={(value) => updatePlan((current) => ({ ...current, expectedTicket: value }))} />
@@ -395,7 +395,7 @@ export default function EconomicFeasibilityClient({
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-xl bg-[#0B1220] p-4 text-white"><p className="text-xs text-slate-300">기준 시나리오 추정 월매출</p><p className="mt-2 font-bold"><Money value={result.scenarios.base.monthlySales} /></p></article>
+        <article className="rounded-xl bg-[#0B1220] p-4 text-white"><p className="text-xs text-slate-300">기준 검증 시나리오 월매출</p><p className="mt-2 font-bold"><Money value={result.scenarios.base.monthlySales} /></p><p className="mt-1 text-xs text-slate-300">입력 가정 기반 매출 시뮬레이션</p></article>
         <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">손익분기매출</p><p className="mt-2 font-bold"><Money value={result.bep.monthlyBepSales} /></p></article>
         <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">BEP 필요 일매출</p><p className="mt-2 font-bold"><Money value={result.bep.dailyBepSales} /></p></article>
         <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">BEP 필요 일결제건수</p><p className="mt-2 font-bold">{result.bep.requiredDailyTransactionsForBep === null ? "계산 불가" : `${result.bep.requiredDailyTransactionsForBep.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}건 (운영 참고 ${Math.ceil(result.bep.requiredDailyTransactionsForBep)}건)`}</p></article>

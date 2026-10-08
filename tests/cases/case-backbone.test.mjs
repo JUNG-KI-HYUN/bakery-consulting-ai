@@ -77,7 +77,42 @@ test("Case 전용 repository와 API는 실제 프로젝트 데이터에서 격�
       assert.deepEqual(created.analysisRunIds, []);
       assert.deepEqual(created.analysisRunLinks, []);
       assert.deepEqual(created.consultationIds, []);
+      assert.equal(created.customerProfile, undefined);
+      assert.equal(created.frameoneRecommendation, undefined);
       assert.equal(created.createdAt, created.updatedAt);
+    });
+
+    await t.test("customer input and FRAMEONE recommendation save and load without mixing", async () => {
+      const customerProfile = {
+        brandName: "테스트 베이커리",
+        totalAvailableCapitalWon: 100_000_000,
+        ownerWorksInStore: true,
+        ownerRoles: ["운영", "판매"],
+        targetMonthlyOwnerIncomeWon: 4_000_000,
+        unknownBudgetItems: ["보증금", "권리금"],
+      };
+      const frameoneRecommendation = {
+        recommendedConcept: "제조형 + 테이크아웃 중심",
+        recommendedAreaMinPyeong: 30,
+        recommendedAreaMaxPyeong: 35,
+        capitalPlan: { depositBudgetWon: 30_000_000, premiumBudgetWon: 0 },
+        premiumPolicy: "0원 우선",
+      };
+      const response = await detail.PATCH(new Request(`http://localhost/api/cases/${created.caseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerProfile, frameoneRecommendation }),
+      }), { params: Promise.resolve({ caseId: created.caseId }) });
+      assert.equal(response.status, 200);
+      const saved = await response.json();
+      assert.deepEqual(saved.customerProfile, customerProfile);
+      assert.deepEqual(saved.frameoneRecommendation, frameoneRecommendation);
+      assert.equal(saved.customerProfile.unknownBudgetItems.includes("보증금"), true);
+      assert.equal(saved.frameoneRecommendation.capitalPlan.depositBudgetWon, 30_000_000);
+      const loaded = await detail.GET(new Request(`http://localhost/api/cases/${created.caseId}`), {
+        params: Promise.resolve({ caseId: created.caseId }),
+      });
+      assert.deepEqual((await loaded.json()).frameoneRecommendation, frameoneRecommendation);
     });
 
     await t.test("Case list and detail return the created record", async () => {

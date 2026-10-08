@@ -54,6 +54,13 @@ test("Case detail exposes Case-aware market navigation, candidates and linked an
   assert.match(detail, /후보점포 등록/);
   assert.match(detail, /상세 열기/);
   assert.equal(detail.includes("analysisRunId:"), false);
+  for (const copy of ["고객 상담정보", "FRAMEONE 권장조건", "후보점포 실제조건", "고객이 상담 과정에서 제공한 정보입니다", "시장·시설 확인에 따라 변경될 수 있습니다"]) {
+    assert.match(detail, new RegExp(copy));
+  }
+  assert.match(detail, /Report 열기/);
+  const page = read("app/cases/[caseId]/page.tsx");
+  assert.match(page, /listCandidateCustomerReportSnapshotsByCase/);
+  assert.match(page, /reportSnapshotId/);
 });
 
 test("Market workspace keeps direct access while handling valid and invalid Case context", () => {

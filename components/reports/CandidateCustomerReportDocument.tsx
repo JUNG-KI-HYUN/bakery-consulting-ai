@@ -22,6 +22,10 @@ function percent(value: number | null | undefined) {
   return value === null || value === undefined ? "확인 필요" : `${(value * 100).toFixed(1)}%`;
 }
 
+function range(min: number | undefined, max: number | undefined, suffix: string) {
+  return min === undefined && max === undefined ? "확인 필요" : `${min ?? "확인 필요"}~${max ?? "확인 필요"}${suffix}`;
+}
+
 function availability(status: "AVAILABLE" | "NOT_AVAILABLE") {
   return status === "AVAILABLE" ? "참고자료 있음" : "자료 없음";
 }
@@ -119,6 +123,11 @@ export function CandidateCustomerReportDocument({ report }: { report: CandidateC
   const verdictTone = report.decision.verdict === "RISK" ? "danger" : report.decision.verdict === "RECOMMEND" ? "safe" : "warning";
   const parking = report.candidateSummary.parkingStatus === "AVAILABLE" ? "가능" : report.candidateSummary.parkingStatus === "UNAVAILABLE" ? "불가" : "확인 필요";
   const leaseTerms = report.lease.reviewedTerms;
+  const consultation = report.consultation;
+  const customer = consultation?.customer;
+  const recommendation = consultation?.frameone;
+  const capitalPlan = recommendation?.capitalPlan;
+  const actualTerms = consultation?.candidateActual.askingTerms;
 
   return (
     <article className="report-doc mx-auto max-w-[1080px] space-y-5 pb-12 text-stone-900">
@@ -153,11 +162,29 @@ export function CandidateCustomerReportDocument({ report }: { report: CandidateC
         ]} />
       </Section>
 
+      {consultation ? <Section number="A–D" title="상담 기준과 자금계획">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <article className="rounded-xl border border-sky-200 p-4"><h3 className="font-bold">A. 고객 목표 및 상담정보</h3><p className="mt-1 text-xs text-stone-500">고객이 상담 과정에서 제공한 정보입니다.</p><dl className="mt-4 space-y-2 text-sm"><div><dt className="text-stone-500">브랜드</dt><dd className="font-semibold">{customer?.brandName ?? "확인 필요"}</dd></div><div><dt className="text-stone-500">총 가용자본</dt><dd className="font-semibold">{money(customer?.totalAvailableCapitalWon)}</dd></div><div><dt className="text-stone-500">희망면적</dt><dd className="font-semibold">{range(customer?.preferredAreaMinPyeong, customer?.preferredAreaMaxPyeong, "평")}</dd></div><div><dt className="text-stone-500">목표 월 세전 영업이익</dt><dd className="font-semibold">{money(customer?.targetMonthlyOwnerIncomeWon)}</dd></div></dl></article>
+          <article className="rounded-xl border border-amber-200 p-4"><h3 className="font-bold">B. FRAMEONE 권장조건</h3><p className="mt-1 text-xs text-stone-500">상담자가 제안한 검토 기준이며 자동 추천 결과가 아닙니다.</p><dl className="mt-4 space-y-2 text-sm"><div><dt className="text-stone-500">사업모델</dt><dd className="font-semibold">{recommendation?.recommendedConcept ?? "확인 필요"}</dd></div><div><dt className="text-stone-500">탐색면적</dt><dd className="font-semibold">{range(recommendation?.recommendedAreaMinPyeong, recommendation?.recommendedAreaMaxPyeong, "평")}</dd></div><div><dt className="text-stone-500">좌석</dt><dd className="font-semibold">{range(recommendation?.recommendedSeatMin, recommendation?.recommendedSeatMax, "석 검토")}</dd></div><div><dt className="text-stone-500">권리금 정책</dt><dd className="font-semibold">{recommendation?.premiumPolicy ?? "확인 필요"}</dd></div></dl></article>
+          <article className="rounded-xl border border-emerald-200 p-4"><h3 className="font-bold">C. 후보점포 실제조건</h3><p className="mt-1 text-xs text-stone-500">후보점포에서 확인하거나 제공받은 조건입니다.</p><dl className="mt-4 space-y-2 text-sm"><div><dt className="text-stone-500">전용면적</dt><dd className="font-semibold">{consultation.candidateActual.exclusiveAreaSqm === null ? "확인 필요" : `${(consultation.candidateActual.exclusiveAreaSqm / 3.305785).toFixed(1)}평`}</dd></div><div><dt className="text-stone-500">보증금</dt><dd className="font-semibold">{money(actualTerms?.depositWon)}</dd></div><div><dt className="text-stone-500">월세 / 관리비</dt><dd className="font-semibold">{money(actualTerms?.monthlyRentWon)} / {money(actualTerms?.maintenanceFeeWon)}</dd></div><div><dt className="text-stone-500">권리금</dt><dd className="font-semibold">{money(actualTerms?.premiumWon)}</dd></div></dl></article>
+        </div>
+        <div className="mt-5"><h3 className="mb-3 text-sm font-bold">D. 자금계획 비교</h3><KeyValueGrid items={[
+          { label: "총 가용자본", value: money(customer?.totalAvailableCapitalWon) },
+          { label: "보존 운전자금", value: money(capitalPlan?.operatingReserveWon) },
+          { label: "개점 전 투자한도", value: money(capitalPlan?.preOpeningInvestmentLimitWon) },
+          { label: "보증금 예산", value: money(capitalPlan?.depositBudgetWon) },
+          { label: "장비 예산", value: money(capitalPlan?.equipmentBudgetWon) },
+          { label: "인테리어·설비", value: money(capitalPlan?.fitoutBudgetWon) },
+          { label: "초도재료·집기·기타", value: money(capitalPlan?.openingCostBudgetWon) },
+          { label: "권리금 예산", value: money(capitalPlan?.premiumBudgetWon) },
+        ]} /></div>
+      </Section> : null}
+
       <Section number="02" title="Executive Summary" basis={dateTime(report.meta.basisAt)}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <article className="rounded-xl border border-stone-200 p-4"><p className="text-xs font-semibold text-stone-500">FRAMEONE 최종 판단</p><div className="mt-3"><StatusPill tone={verdictTone}>{report.executiveSummary.verdictLabel}</StatusPill></div></article>
           <article className="rounded-xl border border-stone-200 p-4"><p className="text-xs font-semibold text-stone-500">Contract Readiness</p><p className="mt-3 font-bold">{report.executiveSummary.readinessStatus}</p></article>
-          <article className="rounded-xl border border-stone-200 p-4"><p className="text-xs font-semibold text-stone-500">기준 시나리오 월매출</p><p className="mt-3 font-bold">{money(report.executiveSummary.baseMonthlySalesEstimate)}</p><p className="mt-1 text-xs text-stone-500">입력 가정 기반 추정치</p></article>
+          <article className="rounded-xl border border-stone-200 p-4"><p className="text-xs font-semibold text-stone-500">기준 검증 시나리오 월매출</p><p className="mt-3 font-bold">{money(report.executiveSummary.baseMonthlySalesEstimate)}</p><p className="mt-1 text-xs text-stone-500">입력 가정 기반 매출 시뮬레이션</p></article>
           <article className="rounded-xl border border-stone-200 p-4"><p className="text-xs font-semibold text-stone-500">월 손익분기 매출</p><p className="mt-3 font-bold">{money(report.executiveSummary.monthlyBepSales)}</p><p className="mt-1 text-xs text-stone-500">입력 가정 기반 추정치</p></article>
         </div>
         <div className="mt-5 grid gap-4 lg:grid-cols-2"><div><h3 className="mb-3 text-sm font-bold">핵심 리스크</h3><BulletList items={report.executiveSummary.keyRisks} empty="기록된 핵심 리스크 없음" /></div><div><h3 className="mb-3 text-sm font-bold">계약 전 핵심 완료조건</h3><BulletList items={report.executiveSummary.conditionsBeforeProceeding} empty="기록된 완료조건 없음" /></div></div>
@@ -217,10 +244,15 @@ export function CandidateCustomerReportDocument({ report }: { report: CandidateC
       </Section>
 
       <Section number="09" title="사업성 / BEP" basis={dateTime(report.economics.generatedAt)}>
-        {report.economics.status === "NOT_AVAILABLE" ? <Empty>경제성 필수 입력값이 확인되지 않았거나 Decision 기준 계산 결과를 조회하지 못해 현재 손익분기점을 계산할 수 없습니다.</Empty> : <><div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">아래 매출·수익·손익분기점은 저장된 입력 가정에 따른 추정치입니다. 실제 매출이나 수익을 보장하지 않습니다.</div><div className="mt-4"><h3 className="mb-3 text-sm font-bold">입력 가정</h3><KeyValueGrid items={report.economics.assumptions.map((item) => ({ label: item.label, value: `${item.value.toLocaleString("ko-KR")} ${item.unit}` }))} /></div><div className="mt-5"><h3 className="mb-3 text-sm font-bold">저장된 시나리오 결과</h3><div className="grid gap-3 md:grid-cols-3">{report.economics.scenarios.map((scenario) => <article key={scenario.label} className="rounded-lg border border-stone-200 p-4"><p className="font-bold">{scenario.label}</p><dl className="mt-3 space-y-2 text-sm"><div className="flex justify-between gap-3"><dt className="text-stone-500">월매출 추정</dt><dd className="font-semibold">{money(scenario.monthlySales)}</dd></div><div className="flex justify-between gap-3"><dt className="text-stone-500">영업이익 추정</dt><dd className="font-semibold">{money(scenario.estimatedOperatingProfit)}</dd></div><div className="flex justify-between gap-3"><dt className="text-stone-500">월세 부담률</dt><dd className="font-semibold">{percent(scenario.rentBurdenRate)}</dd></div></dl></article>)}</div></div><div className="mt-5"><h3 className="mb-3 text-sm font-bold">손익분기점</h3><KeyValueGrid items={[
+        <p className="mb-3 text-xs text-stone-500">사업성 수치는 입력 가정에 따른 추정치이며 실제 매출이나 수익을 보장하지 않습니다.</p>
+        {report.economics.status === "NOT_AVAILABLE" ? <Empty>경제성 필수 입력값이 확인되지 않았거나 Decision 기준 계산 결과를 조회하지 못해 현재 손익분기점을 계산할 수 없습니다.</Empty> : <><div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">아래 결제건수는 상권에서 실제 발생할 것으로 예측한 수요가 아니라, 현재 사업비용 구조를 검토하기 위한 시나리오 입력값입니다. 매출·수익·손익분기점은 입력 가정 기반 시뮬레이션이며 실제 결과를 보장하지 않습니다.</div><div className="mt-4"><h3 className="mb-3 text-sm font-bold">입력 가정</h3><KeyValueGrid items={report.economics.assumptions.map((item) => ({ label: item.label, value: `${item.value.toLocaleString("ko-KR")} ${item.unit}` }))} /></div><div className="mt-5"><h3 className="mb-3 text-sm font-bold">검증 시나리오</h3><div className="grid gap-3 md:grid-cols-3">{report.economics.scenarios.map((scenario) => <article key={scenario.label} className="rounded-lg border border-stone-200 p-4"><p className="font-bold">{scenario.label}</p><dl className="mt-3 space-y-2 text-sm"><div className="flex justify-between gap-3"><dt className="text-stone-500">입력 가정 기반 월매출</dt><dd className="font-semibold">{money(scenario.monthlySales)}</dd></div><div className="flex justify-between gap-3"><dt className="text-stone-500">영업이익 시뮬레이션</dt><dd className="font-semibold">{money(scenario.estimatedOperatingProfit)}</dd></div><div className="flex justify-between gap-3"><dt className="text-stone-500">월세 부담률</dt><dd className="font-semibold">{percent(scenario.rentBurdenRate)}</dd></div></dl></article>)}</div></div><div className="mt-5"><h3 className="mb-3 text-sm font-bold">필요 수요</h3><KeyValueGrid items={[
           { label: "월 손익분기 매출", value: money(report.economics.bep?.monthlyBepSales) },
           { label: "일 손익분기 매출", value: money(report.economics.bep?.dailyBepSales) },
-          { label: "필요 일 거래건수", value: number(report.economics.bep?.requiredDailyTransactions, "건") },
+          { label: "BEP 필요 일 결제건수", value: number(report.economics.bep?.requiredDailyTransactions, "건") },
+          { label: "목표 월 세전 영업이익", value: money(report.economics.requiredDemand?.targetMonthlyOwnerIncomeWon) },
+          { label: "목표소득 달성 필요 월매출", value: money(report.economics.requiredDemand?.requiredMonthlySales) },
+          { label: "목표소득 달성 필요 일 결제건수", value: number(report.economics.requiredDemand?.requiredDailyTransactions, "건") },
+          { label: "시장수요 충족 가능성", value: "추가 분석 필요", note: "검증된 시장수요 예측 엔진 결과가 아닙니다." },
           { label: "계산 버전", value: report.economics.engineVersion ?? "확인 필요", note: `가정 revision ${report.economics.assumptionRevision ?? "확인 필요"}` },
         ]} /></div>{report.economics.officialBenchmark ? <article className="mt-5 rounded-lg border border-blue-200 bg-blue-50 p-4"><p className="text-sm font-bold text-blue-950">공식상권 참고값 — 후보점포 예상매출과 별도</p><p className="mt-2 text-sm text-blue-900">{report.economics.officialBenchmark.label}: {money(report.economics.officialBenchmark.value)}{report.economics.officialBenchmark.period ? ` · ${report.economics.officialBenchmark.period}` : ""}</p><p className="mt-2 text-xs leading-5 text-blue-800">{report.economics.officialBenchmark.limitation}</p></article> : null}</>}
       </Section>

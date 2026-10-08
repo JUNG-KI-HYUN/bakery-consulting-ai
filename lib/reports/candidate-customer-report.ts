@@ -26,6 +26,7 @@ import {
   type CandidateHumanDecision,
 } from "../candidates/human-decision-contract";
 import type { CaseRecord } from "../cases/case-contract";
+import type { EconomicFeasibilityResult } from "../economic-feasibility/types";
 
 export const CANDIDATE_CUSTOMER_REPORT_SCHEMA_VERSION = "frameone.candidate-customer-report.v1" as const;
 
@@ -89,6 +90,14 @@ export interface CandidateCustomerReport {
     monthlyBepSales: number | null;
     baseMonthlySalesEstimate: number | null;
   };
+  consultation?: {
+    customer: CaseRecord["customerProfile"] | null;
+    frameone: CaseRecord["frameoneRecommendation"] | null;
+    candidateActual: {
+      exclusiveAreaSqm: number | null;
+      askingTerms: CandidateStore["currentAskingTerms"];
+    };
+  };
   locationMarket: {
     status: "AVAILABLE" | "NOT_AVAILABLE";
     analysisTarget: { label: string | null; address: string | null; radiusM: number } | null;
@@ -150,6 +159,12 @@ export interface CandidateCustomerReport {
     assumptions: Array<{ label: string; value: number; unit: string }>;
     scenarios: Array<{ label: string; monthlySales: number | null; estimatedOperatingProfit: number | null; rentBurdenRate: number | null }>;
     bep: { monthlyBepSales: number | null; dailyBepSales: number | null; requiredDailyTransactions: number | null } | null;
+    requiredDemand?: {
+      targetMonthlyOwnerIncomeWon: number;
+      requiredMonthlySales: number | null;
+      requiredDailyTransactions: number | null;
+      marketDemandAssessment: "REQUIRES_ADDITIONAL_ANALYSIS";
+    } | null;
     officialBenchmark: { label: string; value: number | null; period: string | null; limitation: string } | null;
     limitations: string[];
   };
@@ -266,6 +281,25 @@ function reportMetricValue(value: unknown): string | number | boolean | null {
   if (value === null || typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value;
   if (Array.isArray(value)) return value.map(String).join(", ");
   return null;
+}
+
+export function calculateTargetIncomeRequiredDemand(
+  economic: EconomicFeasibilityResult,
+  targetMonthlyOwnerIncomeWon: number | undefined,
+) {
+  if (targetMonthlyOwnerIncomeWon === undefined) return null;
+  const contributionMarginRate = economic.bep.contributionMarginRate;
+  const monthlyBepSales = economic.bep.monthlyBepSales;
+  // 목표소득 필요매출 = BEP 매출 + 목표 월 영업이익 / 공헌이익률.
+  // 필요 일 결제건수 = 목표소득 필요매출 / 월 영업일 / 객단가.
+  if (monthlyBepSales === null || contributionMarginRate === null || contributionMarginRate <= 0) {
+    return { targetMonthlyOwnerIncomeWon, requiredMonthlySales: null, requiredDailyTransactions: null };
+  }
+  const requiredMonthlySales = monthlyBepSales + targetMonthlyOwnerIncomeWon / contributionMarginRate;
+  const requiredDailyTransactions = economic.inputs.operatingDaysPerMonth > 0 && economic.inputs.expectedTicket > 0
+    ? requiredMonthlySales / economic.inputs.operatingDaysPerMonth / economic.inputs.expectedTicket
+    : null;
+  return { targetMonthlyOwnerIncomeWon, requiredMonthlySales, requiredDailyTransactions };
 }
 
 export function assembleCandidateCustomerReport(input: CandidateCustomerReportInput): CandidateCustomerReport {
@@ -418,6 +452,9 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
   );
 
   const economic = economicUsable ? economicResult : null;
+  const requiredDemand = economic
+    ? calculateTargetIncomeRequiredDemand(economic, input.caseRecord.customerProfile?.targetMonthlyOwnerIncomeWon)
+    : null;
   const scenarioLabels = { conservative: "보수", base: "기준", upside: "상향" } as const;
   const assumptions = economic ? [
     { label: "객단가 가정", value: economic.inputs.expectedTicket, unit: "원" },
@@ -486,6 +523,14 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
       conditionsBeforeProceeding: [...decisionDetails.conditionsBeforeProceeding],
       monthlyBepSales: economic?.bep.monthlyBepSales ?? null,
       baseMonthlySalesEstimate: economic?.scenarios.base.monthlySales ?? null,
+    },
+    consultation: {
+      customer: input.caseRecord.customerProfile ? structuredClone(input.caseRecord.customerProfile) : null,
+      frameone: input.caseRecord.frameoneRecommendation ? structuredClone(input.caseRecord.frameoneRecommendation) : null,
+      candidateActual: {
+        exclusiveAreaSqm: input.candidate.propertyFacts.exclusiveAreaSqm ?? null,
+        askingTerms: structuredClone(input.candidate.currentAskingTerms),
+      },
     },
     locationMarket: {
       status: locationVersion && target ? "AVAILABLE" : "NOT_AVAILABLE",
@@ -585,6 +630,10 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
         dailyBepSales: economic.bep.dailyBepSales,
         requiredDailyTransactions: economic.bep.requiredDailyTransactionsForBep,
       },
+      requiredDemand: requiredDemand ? {
+        ...requiredDemand,
+        marketDemandAssessment: "REQUIRES_ADDITIONAL_ANALYSIS",
+      } : null,
       officialBenchmark: economic.officialBenchmark.status === "AVAILABLE" ? {
         label: economic.officialBenchmark.label,
         value: economic.officialBenchmark.value,
@@ -594,7 +643,7 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
       limitations: [...economic.limitations],
     } : {
       status: "NOT_AVAILABLE", generatedAt: null, engineVersion: null, assumptionRevision: null,
-      assumptions: [], scenarios: [], bep: null, officialBenchmark: null, limitations: [],
+      assumptions: [], scenarios: [], bep: null, requiredDemand: null, officialBenchmark: null, limitations: [],
     },
     readiness: {
       status: readiness?.result.readinessStatus ?? "자료 없음",
