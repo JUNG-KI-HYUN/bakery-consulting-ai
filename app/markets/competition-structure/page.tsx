@@ -15,8 +15,11 @@ export default async function CompetitionStructurePage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const query = await searchParams;
+  const caseIdValue = Array.isArray(query.caseId) ? query.caseId[0] : query.caseId;
+  const caseId = caseIdValue?.trim() || null;
   const initialTarget = await revalidateActiveTargetOfficialReference(
-    parseActiveAnalysisTarget(await searchParams),
+    parseActiveAnalysisTarget(query),
   );
   const persistedRun = initialTarget
     ? await getAnalysisRunSnapshot(initialTarget.analysisRunId)
@@ -24,6 +27,7 @@ export default async function CompetitionStructurePage({
   return (
     <div className="space-y-4">
       <CompetitionStructureClient
+        caseId={caseId}
         initialTarget={initialTarget}
         initialPersistedResult={persistedRun?.sections.competition?.versions.at(-1) ?? null}
       />

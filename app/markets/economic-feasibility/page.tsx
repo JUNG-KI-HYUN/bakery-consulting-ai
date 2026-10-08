@@ -34,8 +34,11 @@ export default async function EconomicFeasibilityPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const query = await searchParams;
+  const caseIdValue = Array.isArray(query.caseId) ? query.caseId[0] : query.caseId;
+  const caseId = caseIdValue?.trim() || null;
   const activeTarget = await revalidateActiveTargetOfficialReference(
-    parseActiveAnalysisTarget(await searchParams),
+    parseActiveAnalysisTarget(query),
   );
   const records = await listResearchRecords();
   const rentalMarketResult = analyzeRentalMarket(records, { referenceDate: referenceDateInKorea() });
@@ -59,7 +62,7 @@ export default async function EconomicFeasibilityPage({
 
   return (
     <div className="space-y-6">
-      <AnalysisWorkflow active="economic" target={activeTarget} />
+      <AnalysisWorkflow active="economic" target={activeTarget} caseId={caseId} />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs font-bold tracking-[0.16em] text-[#2563EB]">사업성·손익</p>

@@ -97,8 +97,11 @@ export default async function RentalResearchPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const query = await searchParams;
+  const caseIdValue = Array.isArray(query.caseId) ? query.caseId[0] : query.caseId;
+  const caseId = caseIdValue?.trim() || null;
   const activeTarget = await revalidateActiveTargetOfficialReference(
-    parseActiveAnalysisTarget(await searchParams),
+    parseActiveAnalysisTarget(query),
   );
   const records = await listResearchRecords();
   const referenceDate = referenceDateInKorea();
@@ -107,7 +110,7 @@ export default async function RentalResearchPage({
 
   return (
     <div className="space-y-6">
-      <AnalysisWorkflow active="rental" target={activeTarget} statuses={{ rental: records.length ? "NEEDS_CONFIRMATION" : "NOT_RUN" }} />
+      <AnalysisWorkflow active="rental" target={activeTarget} caseId={caseId} statuses={{ rental: records.length ? "NEEDS_CONFIRMATION" : "NOT_RUN" }} />
       <ActiveAnalysisTargetCard target={activeTarget} status="NOT_RUN" />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>

@@ -22,8 +22,8 @@ type AppNavId = "home" | "analysis" | "candidates" | "reports";
 const primaryNavigation: Array<{ id: AppNavId; href: string; label: string }> = [
   { id: "home", href: "/", label: "홈" },
   { id: "analysis", href: "/markets", label: "분석" },
-  { id: "candidates", href: "/consultations", label: "후보점포" },
-  { id: "reports", href: "/reports/sample-001", label: "리포트" },
+  { id: "candidates", href: "/", label: "후보점포" },
+  { id: "reports", href: "/", label: "리포트" },
 ];
 
 type AnalysisHeaderContextValue = {
@@ -190,7 +190,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div className="mt-auto hidden border-t border-stone-200 pt-4 xl:block">
             <p className="px-3 text-[10px] font-bold uppercase tracking-[0.16em] text-stone-400">더보기</p>
-            <Link href="/consultations/new" className="mt-2 block rounded-lg px-3 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 hover:text-stone-950">새 후보점포 진단</Link>
+            <Link href="/" className="mt-2 block rounded-lg px-3 py-2 text-xs font-semibold text-stone-600 hover:bg-stone-100 hover:text-stone-950">Case에서 후보점포 등록</Link>
           </div>
         </aside>
 
@@ -204,7 +204,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <div className="absolute left-0 top-12 w-64 rounded-xl border border-stone-200 bg-white p-3 shadow-xl">
                   <p className="mb-3 px-3 text-xs font-bold tracking-[0.12em] text-stone-950">FRAMEONE</p>
                   <NavigationLinks active={active} mobile />
-                  <Link href="/consultations/new" onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")} className="mt-3 block border-t border-stone-200 px-3 pt-3 text-xs font-semibold text-stone-600">새 후보점포 진단</Link>
+                  <Link href="/" onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")} className="mt-3 block border-t border-stone-200 px-3 pt-3 text-xs font-semibold text-stone-600">Case에서 후보점포 등록</Link>
                 </div>
               </details>
 

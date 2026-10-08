@@ -143,9 +143,11 @@ function parseOfficialFeatures(value: OfficialGeoJson): OfficialFeature[] {
 }
 
 export default function CompetitionStructureClient({
+  caseId,
   initialTarget,
   initialPersistedResult,
 }: {
+  caseId: string | null;
   initialTarget: ActiveAnalysisTarget | null;
   initialPersistedResult: NonNullable<AnalysisRunSnapshot["sections"]["competition"]>["versions"][number] | null;
 }) {
@@ -481,12 +483,12 @@ export default function CompetitionStructureClient({
   return (
     <div className="w-full min-w-0 overflow-x-clip">
       <div className="mb-3 xl:hidden">
-        <AnalysisWorkflow active="competition" target={activeTarget} statuses={{ competition: displayedResultStatus }} />
+        <AnalysisWorkflow active="competition" target={activeTarget} caseId={caseId} statuses={{ competition: displayedResultStatus }} />
       </div>
       <ActiveAnalysisTargetCard target={activeTarget} status={displayedResultStatus} officialReferencePeriod={result?.officialAreaReference.referencePeriod ?? initialPersistedResult?.result.officialAreaReference.referencePeriod ?? null} />
       <div className="grid items-start gap-4 xl:grid-cols-[11rem_minmax(0,1fr)]">
         <aside className="sticky top-24 hidden xl:block">
-          <AnalysisWorkflow active="competition" target={activeTarget} statuses={{ competition: displayedResultStatus }} orientation="sidebar" />
+          <AnalysisWorkflow active="competition" target={activeTarget} caseId={caseId} statuses={{ competition: displayedResultStatus }} orientation="sidebar" />
         </aside>
         <div className="flex min-w-0 flex-col gap-4 md:grid md:grid-cols-[minmax(0,1fr)_17rem] md:gap-4 xl:grid-cols-[minmax(0,1fr)_19rem]">
       <section className="-order-1 overflow-hidden rounded-xl border border-stone-300 bg-white md:sticky md:top-24 md:order-none md:self-start" aria-label="경쟁환경 분석 지도">

@@ -123,7 +123,10 @@ test("official-market relation candidates are recalculated from the new detail p
 });
 
 test("Competition, Rental, and Economic pages share the active-target workflow snapshot", () => {
-  const workflow = fs.readFileSync(path.join(root, "app/markets/AnalysisWorkflow.tsx"), "utf8");
+  const workflow = [
+    "app/markets/AnalysisWorkflow.tsx",
+    "lib/navigation/case-aware-market-navigation.ts",
+  ].map((file) => fs.readFileSync(path.join(root, file), "utf8")).join("\n");
   const competition = fs.readFileSync(path.join(root, "app/markets/competition-structure/CompetitionStructureClient.tsx"), "utf8");
   const rental = fs.readFileSync(path.join(root, "app/markets/rental-research/page.tsx"), "utf8");
   for (const label of ["1. 분석대상", "2. 입지·상권", "3. 경쟁환경", "4. 임대시장", "5. 사업성·손익", "6. 후보점포 진단", "7. 데이터·근거"]) {

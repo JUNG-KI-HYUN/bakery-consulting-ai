@@ -7,20 +7,23 @@ import { test } from "node:test";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
-test("App Shell exposes the four primary product areas without replacing direct routes", () => {
+test("App Shell routes Case-dependent candidate and report areas through the Case Inbox", () => {
   const shell = read("components/app-shell/AppShell.tsx");
-  for (const route of ["/", "/markets", "/consultations", "/reports/sample-001"]) {
+  for (const route of ["/", "/markets", "/", "/"]) {
     assert.match(shell, new RegExp(`href: \\\"${route.replaceAll("/", "\\/")}\\\"`));
   }
   for (const label of ["홈", "분석", "후보점포", "리포트"]) {
     assert.match(shell, new RegExp(`label: \\\"${label}\\\"`));
   }
-  assert.match(shell, /href="\/consultations\/new"/);
+  assert.doesNotMatch(shell, /href: "\/consultations"/);
+  assert.doesNotMatch(shell, /href: "\/reports\/sample-001"/);
+  assert.doesNotMatch(shell, /href="\/consultations\/new"/);
+  assert.match(shell, /Case에서 후보점포 등록/);
 });
 
 test("App Navigation and the seven-step analysis workflow remain separate hierarchies", () => {
   const shell = read("components/app-shell/AppShell.tsx");
-  const workflow = read("app/markets/AnalysisWorkflow.tsx");
+  const workflow = `${read("app/markets/AnalysisWorkflow.tsx")}\n${read("lib/navigation/case-aware-market-navigation.ts")}`;
   assert.match(shell, /FRAMEONE 주요 메뉴/);
   assert.match(workflow, /상권분석 업무 흐름/);
   for (const label of ["1. 분석대상", "2. 입지·상권", "3. 경쟁환경", "4. 임대시장", "5. 사업성·손익", "6. 후보점포 진단", "7. 데이터·근거"]) {

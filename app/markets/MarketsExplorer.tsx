@@ -779,6 +779,7 @@ export default function MarketsExplorer({
           <AnalysisWorkflow
             active={workspaceStep}
             target={activeTarget}
+            caseId={caseContext?.caseId ?? null}
             statuses={{ location: locationStatus }}
           />
         </div>
@@ -793,6 +794,7 @@ export default function MarketsExplorer({
           <AnalysisWorkflow
             active={workspaceStep}
             target={activeTarget}
+            caseId={caseContext?.caseId ?? null}
             statuses={{ location: locationStatus }}
             orientation="sidebar"
           />

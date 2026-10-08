@@ -7,18 +7,13 @@ import {
   type ActiveAnalysisTarget,
 } from "@/lib/market-data/competition-location";
 import type { AnalysisResultStatus } from "@/lib/market-data/basic-location/run";
+import {
+  caseAwareMarketWorkflowPath,
+  MARKET_WORKFLOW_STEPS,
+  type MarketWorkflowStep,
+} from "@/lib/navigation/case-aware-market-navigation";
 
-export type WorkflowStep = "target" | "location" | "competition" | "rental" | "economic" | "candidate" | "evidence";
-
-const steps: Array<{ id: WorkflowStep; label: string; pathname: string }> = [
-  { id: "target", label: "1. 분석대상", pathname: "/markets?view=target" },
-  { id: "location", label: "2. 입지·상권", pathname: "/markets?view=location" },
-  { id: "competition", label: "3. 경쟁환경", pathname: "/markets/competition-structure" },
-  { id: "rental", label: "4. 임대시장", pathname: "/markets/rental-research" },
-  { id: "economic", label: "5. 사업성·손익", pathname: "/markets/economic-feasibility" },
-  { id: "candidate", label: "6. 후보점포 진단", pathname: "/consultations/new" },
-  { id: "evidence", label: "7. 데이터·근거", pathname: "/markets?view=evidence" },
-];
+export type WorkflowStep = MarketWorkflowStep;
 
 type WorkflowStatus = AnalysisResultStatus | "NEEDS_CONFIRMATION";
 
@@ -32,11 +27,13 @@ const statusLabels: Record<WorkflowStatus, string> = {
 export function AnalysisWorkflow({
   active,
   target,
+  caseId = null,
   statuses = {},
   orientation = "horizontal",
 }: {
   active: WorkflowStep;
   target: ActiveAnalysisTarget | null;
+  caseId?: string | null;
   statuses?: Partial<Record<WorkflowStep, WorkflowStatus>>;
   orientation?: "horizontal" | "sidebar";
 }) {
@@ -52,10 +49,10 @@ export function AnalysisWorkflow({
           Analysis workflow
         </p>
       ) : null}
-      {steps.map((step) => (
+      {MARKET_WORKFLOW_STEPS.map((step) => (
         <Link
           key={step.id}
-          href={activeAnalysisTargetHref(step.pathname, target)}
+          href={activeAnalysisTargetHref(caseAwareMarketWorkflowPath(step, caseId), target)}
           aria-current={active === step.id ? "step" : undefined}
           className={`${orientation === "sidebar" ? "mb-1 flex w-full flex-col items-start gap-1" : "shrink-0"} min-h-11 rounded-lg px-3 py-3 text-xs font-bold ${active === step.id ? "bg-stone-950 text-white" : "text-stone-600 hover:bg-stone-100"}`}
         >
