@@ -38,6 +38,10 @@ import {
   activeAnalysisTargetHref,
   type ActiveAnalysisTarget,
 } from "@/lib/market-data/competition-location";
+import {
+  caseAwareMarketWorkflowPath,
+  MARKET_WORKFLOW_STEPS,
+} from "@/lib/navigation/case-aware-market-navigation";
 import type {
   MarketDataMetric,
   MarketDataObservation,
@@ -586,7 +590,18 @@ function InspectorField({ label, value }: { label: string; value: string }) {
   );
 }
 
+const COMPETITION_WORKFLOW_STEP = (() => {
+  const step = MARKET_WORKFLOW_STEPS.find(
+    (candidate) => candidate.id === "competition",
+  );
+  if (!step) {
+    throw new Error("Competition workflow step is not configured.");
+  }
+  return step;
+})();
+
 export default function MarketSpatialViewer({
+  caseId = null,
   initialTarget = null,
   selectedMarket,
   selectedSubmarket,
@@ -602,6 +617,7 @@ export default function MarketSpatialViewer({
   onActiveTargetChange,
   workspace = false,
 }: {
+  caseId?: string | null;
   initialTarget?: ActiveAnalysisTarget | null;
   selectedMarket: SelectedMarketSpatialSummary | null;
   selectedSubmarket: SelectedSubmarketSpatialSummary | null;
@@ -1496,7 +1512,7 @@ export default function MarketSpatialViewer({
       )
     : initialTarget;
   const competitionEnvironmentHref = activeAnalysisTargetHref(
-    "/markets/competition-structure",
+    caseAwareMarketWorkflowPath(COMPETITION_WORKFLOW_STEP, caseId),
     activeAnalysisTarget,
   );
   useEffect(() => {

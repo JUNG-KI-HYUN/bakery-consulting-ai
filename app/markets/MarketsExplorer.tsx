@@ -983,6 +983,7 @@ export default function MarketsExplorer({
 
       <div className="-order-1 md:!col-start-1 md:!row-start-1 md:order-none md:row-span-[20] md:sticky md:top-24 md:self-start">
       <MarketSpatialViewer
+        caseId={caseContext?.caseId ?? null}
         initialTarget={activeTarget}
         selectedMarket={selectedMarketSpatialSummary}
         selectedSubmarket={selectedSubmarketSpatialSummary}
