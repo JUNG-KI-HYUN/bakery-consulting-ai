@@ -141,6 +141,20 @@ function calculate(mutator) {
   return calculateContractReadiness(input);
 }
 
+function economicSelection(overrides = {}) {
+  return {
+    schemaVersion: "frameone.candidate-economic-selection.v1",
+    candidateId: "candidate-a",
+    caseId: "case-a",
+    analysisRunId: RUN_ID,
+    generatedAt: AT,
+    assumptionRevision: 1,
+    engineVersion: "economic-feasibility-v1",
+    selectedAt: AT,
+    ...overrides,
+  };
+}
+
 test("Facility Hard Blocker는 Contract Readiness를 BLOCKED로 유지한다", () => {
   const result = calculate((input) => {
     input.facilityAssessment.checks.electricity = { state: "NOT_FEASIBLE", verificationStatus: "VERIFIED", sourceType: "FIELD" };
@@ -331,4 +345,47 @@ test("복수 Economic version에 더 최신 generatedAt이 있어도 자동 선�
   assert.equal(result.readinessStatus, "REVIEW_REQUIRED");
   assert.ok(result.evidenceGaps.some((item) => item.code === "ECONOMIC_VERSION_SELECTION_REQUIRED"));
   assert.equal(result.sourceReferences.economic, null);
+});
+
+test("복수 Economic version에서 명시적으로 선택한 version만 계약판정 근거로 사용한다", () => {
+  const later = "2026-10-08T01:00:00.000Z";
+  const result = calculate((input) => {
+    input.analysisRun.sections.economic.versions.push(economicVersion(RUN_ID, later));
+    input.economicSelection = economicSelection();
+  });
+  assert.equal(result.readinessStatus, "READY");
+  assert.equal(result.sourceReferences.economic.generatedAt, AT);
+});
+
+test("현재 Analysis Run에 없는 Economic 선택 identity는 REVIEW_REQUIRED다", () => {
+  const result = calculate((input) => {
+    input.analysisRun.sections.economic.versions.push(economicVersion(RUN_ID, "2026-10-08T01:00:00.000Z"));
+    input.economicSelection = economicSelection({ generatedAt: "2026-10-09T01:00:00.000Z" });
+  });
+  assert.equal(result.readinessStatus, "REVIEW_REQUIRED");
+  assert.ok(result.reviewIssues.some((item) => item.code === "ECONOMIC_VERSION_SELECTION_INVALID"));
+  assert.equal(result.sourceReferences.economic, null);
+});
+
+test("다른 Analysis Run 또는 Candidate의 Economic 선택은 REVIEW_REQUIRED다", () => {
+  const wrongRun = calculate((input) => {
+    input.analysisRun.sections.economic.versions.push(economicVersion(RUN_ID, "2026-10-08T01:00:00.000Z"));
+    input.economicSelection = economicSelection({ analysisRunId: OTHER_RUN_ID });
+  });
+  const wrongCandidate = calculate((input) => {
+    input.analysisRun.sections.economic.versions.push(economicVersion(RUN_ID, "2026-10-08T01:00:00.000Z"));
+    input.economicSelection = economicSelection({ candidateId: "candidate-b" });
+  });
+  assert.ok(wrongRun.reviewIssues.some((item) => item.code === "ECONOMIC_SELECTION_RUN_MISMATCH"));
+  assert.ok(wrongCandidate.reviewIssues.some((item) => item.code === "ECONOMIC_SELECTION_OWNERSHIP_MISMATCH"));
+});
+
+test("명시적으로 선택된 Economic version도 기존 validation을 통과해야 한다", () => {
+  const result = calculate((input) => {
+    input.analysisRun.sections.economic.versions[0].result.validation.errors = ["선택된 version 입력 오류"];
+    input.analysisRun.sections.economic.versions.push(economicVersion(RUN_ID, "2026-10-08T01:00:00.000Z"));
+    input.economicSelection = economicSelection();
+  });
+  assert.equal(result.readinessStatus, "REVIEW_REQUIRED");
+  assert.ok(result.reviewIssues.some((item) => item.code === "ECONOMIC_VALIDATION_ERROR"));
 });

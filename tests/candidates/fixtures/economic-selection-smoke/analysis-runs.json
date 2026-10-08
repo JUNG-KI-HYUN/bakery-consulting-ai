@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "frameone.analysis-run-registry.v1",
+  "runs": [
+    {
+      "schemaVersion": "frameone.analysis-run-snapshot.v1",
+      "analysisRunId": "basic-location-run:33333333-3333-4333-8333-333333333333",
+      "targetSnapshot": {
+        "analysisRunId": "basic-location-run:33333333-3333-4333-8333-333333333333",
+        "label": "Economic 선택 Fixture 위치",
+        "address": "서울특별시 테스트 주소",
+        "latitude": 37.5,
+        "longitude": 127,
+        "radiusM": 300,
+        "source": "candidate_store",
+        "explorationSnapshot": { "source": "fixture" },
+        "officialReference": null,
+        "createdAt": "2026-10-08T01:00:00.000Z",
+        "updatedAt": "2026-10-08T01:00:00.000Z"
+      },
+      "createdAt": "2026-10-08T01:00:00.000Z",
+      "updatedAt": "2026-10-08T02:00:00.000Z",
+      "sections": {
+        "economic": {
+          "versions": [
+            {
+              "generatedAt": "2026-10-08T01:00:00.000Z",
+              "binding": { "analysisRunId": "basic-location-run:33333333-3333-4333-8333-333333333333", "officialBenchmarkIdentity": null, "rentalConfirmationId": null, "assumptionRevision": 1 },
+              "result": {
+                "schemaVersion": "frameone.economic-feasibility.v1",
+                "inputs": { "fixedMonthlyCosts": { "rentMonthly": 4000000, "managementFeeMonthly": 300000 } },
+                "scenarios": { "base": { "monthlySales": 30000000 } },
+                "bep": { "monthlyBepSales": 20000000, "dailyBepSales": 800000 },
+                "validation": { "errors": [], "warnings": [] },
+                "metadata": { "engineVersion": "economic-feasibility-v1", "generatedAt": "2026-10-08T01:00:00.000Z" }
+              }
+            },
+            {
+              "generatedAt": "2026-10-08T02:00:00.000Z",
+              "binding": { "analysisRunId": "basic-location-run:33333333-3333-4333-8333-333333333333", "officialBenchmarkIdentity": null, "rentalConfirmationId": null, "assumptionRevision": 2 },
+              "result": {
+                "schemaVersion": "frameone.economic-feasibility.v1",
+                "inputs": { "fixedMonthlyCosts": { "rentMonthly": 4200000, "managementFeeMonthly": 300000 } },
+                "scenarios": { "base": { "monthlySales": 32000000 } },
+                "bep": { "monthlyBepSales": 21000000, "dailyBepSales": 840000 },
+                "validation": { "errors": [], "warnings": [] },
+                "metadata": { "engineVersion": "economic-feasibility-v1", "generatedAt": "2026-10-08T02:00:00.000Z" }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

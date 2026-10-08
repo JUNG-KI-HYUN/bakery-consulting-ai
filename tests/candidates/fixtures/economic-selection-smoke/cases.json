@@ -1,0 +1,14 @@
+[
+  {
+    "caseId": "case-economic-selection-smoke",
+    "name": "Economic 선택 브라우저 확인 Fixture",
+    "clientName": "Fixture 고객",
+    "lifecycleStage": "CANDIDATE_REVIEW",
+    "status": "ACTIVE",
+    "analysisRunIds": ["basic-location-run:33333333-3333-4333-8333-333333333333"],
+    "analysisRunLinks": [],
+    "consultationIds": [],
+    "createdAt": "2026-10-08T01:00:00.000Z",
+    "updatedAt": "2026-10-08T01:00:00.000Z"
+  }
+]

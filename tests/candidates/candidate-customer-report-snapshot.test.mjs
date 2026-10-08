@@ -131,6 +131,7 @@ before(() => {
     facility: path.join(tempRoot, "facility.json"),
     lease: path.join(tempRoot, "lease.json"),
     readiness: path.join(tempRoot, "readiness.json"),
+    economicSelections: path.join(tempRoot, "economic-selections.json"),
     decisions: path.join(tempRoot, "decisions.json"),
     snapshots: path.join(tempRoot, "report-snapshots.json"),
   };
@@ -144,6 +145,7 @@ before(() => {
     decisions: "decisions.json",
   })) fs.copyFileSync(path.join(fixtureRoot, fixture), paths[key]);
   writeJson(paths.snapshots, []);
+  writeJson(paths.economicSelections, []);
   originalEnv = { ...process.env };
   Object.assign(process.env, {
     FRAMEONE_CASES_FILE: paths.cases,
@@ -152,6 +154,7 @@ before(() => {
     FRAMEONE_CANDIDATE_FACILITY_FILE: paths.facility,
     FRAMEONE_CANDIDATE_LEASE_FILE: paths.lease,
     FRAMEONE_CONTRACT_READINESS_FILE: paths.readiness,
+    FRAMEONE_CANDIDATE_ECONOMIC_SELECTIONS_FILE: paths.economicSelections,
     FRAMEONE_CANDIDATE_DECISIONS_FILE: paths.decisions,
     FRAMEONE_CUSTOMER_REPORT_SNAPSHOTS_FILE: paths.snapshots,
   });

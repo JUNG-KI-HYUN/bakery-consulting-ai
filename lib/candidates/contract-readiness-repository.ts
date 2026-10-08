@@ -5,6 +5,7 @@ import { getAnalysisRunSnapshot } from "../analysis-runs/analysis-run-repository
 import { getBakeryFacilityAssessment } from "./bakery-facility-assessment-repository";
 import { getCandidateStore } from "./candidate-repository";
 import { getCandidateLeaseAssessment } from "./candidate-lease-assessment-repository";
+import { getCandidateEconomicSelection } from "./candidate-economic-selection-repository";
 import {
   CONTRACT_READINESS_RULE_VERSION,
   CONTRACT_READINESS_SCHEMA_VERSION,
@@ -92,9 +93,10 @@ async function ownedCandidate(candidateId: string, caseId: string) {
 
 async function currentEvaluation(candidateId: string, caseId: string): Promise<ContractReadinessResult> {
   const candidate = await ownedCandidate(candidateId, caseId);
-  const [facilityAssessment, leaseAssessment] = await Promise.all([
+  const [facilityAssessment, leaseAssessment, economicSelection] = await Promise.all([
     getBakeryFacilityAssessment(candidateId, caseId),
     getCandidateLeaseAssessment(candidateId, caseId),
+    getCandidateEconomicSelection(candidateId, caseId),
   ]);
   const analysisRun = candidate.analysisLinks.length === 1
     ? await getAnalysisRunSnapshot(candidate.analysisLinks[0].analysisRunId)
@@ -104,6 +106,7 @@ async function currentEvaluation(candidateId: string, caseId: string): Promise<C
     facilityAssessment,
     leaseAssessment,
     analysisRun,
+    economicSelection,
     evaluatedAt: new Date().toISOString(),
   });
 }

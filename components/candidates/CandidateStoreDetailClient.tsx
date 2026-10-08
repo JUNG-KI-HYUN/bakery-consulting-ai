@@ -12,11 +12,13 @@ import type { CandidateLeaseAssessment } from "@/lib/candidates/candidate-lease-
 import { calculateCandidateLeaseRiskSummary } from "@/lib/candidates/candidate-lease-risk";
 import type { CandidateContractReadinessView } from "@/lib/candidates/contract-readiness-contract";
 import type { CandidateHumanDecisionView } from "@/lib/candidates/human-decision-contract";
+import type { CandidateEconomicSelectionView } from "@/lib/candidates/candidate-economic-selection-contract";
 import { BakeryFacilityAssessmentEditor } from "./BakeryFacilityAssessmentEditor";
 import { CandidateContractReadinessPanel } from "./CandidateContractReadinessPanel";
 import { CandidateHumanDecisionPanel } from "./CandidateHumanDecisionPanel";
 import { CandidateLeaseAssessmentEditor } from "./CandidateLeaseAssessmentEditor";
 import { CandidateStoreFormFields, type CandidateStoreFormValues } from "./CandidateStoreFormFields";
+import { CandidateEconomicVersionSelector } from "./CandidateEconomicVersionSelector";
 
 function valuesFromRecord(record: CandidateStore): CandidateStoreFormValues {
   return {
@@ -66,6 +68,7 @@ export function CandidateStoreDetailClient({
   initialRecord,
   initialFacilityAssessment,
   initialLeaseAssessment,
+  initialEconomicSelectionView,
   initialReadinessView,
   initialDecisionView,
   caseName,
@@ -73,6 +76,7 @@ export function CandidateStoreDetailClient({
   initialRecord: CandidateStore;
   initialFacilityAssessment: BakeryFacilityAssessment | null;
   initialLeaseAssessment: CandidateLeaseAssessment | null;
+  initialEconomicSelectionView: CandidateEconomicSelectionView;
   initialReadinessView: CandidateContractReadinessView;
   initialDecisionView: CandidateHumanDecisionView;
   caseName: string;
@@ -165,6 +169,7 @@ export function CandidateStoreDetailClient({
 
       <BakeryFacilityAssessmentEditor candidateId={record.candidateId} caseId={record.caseId} assessment={facilityAssessment} onSaved={(assessment) => { setFacilityAssessment(assessment); refreshReviewState(); }} />
       <CandidateLeaseAssessmentEditor candidateId={record.candidateId} caseId={record.caseId} currentAskingTerms={record.currentAskingTerms} assessment={leaseAssessment} onSaved={(assessment) => { setLeaseAssessment(assessment); refreshReviewState(); }} />
+      <CandidateEconomicVersionSelector candidateId={record.candidateId} caseId={record.caseId} initialView={initialEconomicSelectionView} onSelectionChanged={refreshReviewState} />
       <CandidateContractReadinessPanel candidateId={record.candidateId} caseId={record.caseId} view={readinessView} onViewChange={setReadinessView} onSnapshotSaved={() => { void refreshDecision(); }} />
       <CandidateHumanDecisionPanel candidateId={record.candidateId} caseId={record.caseId} view={decisionView} onViewChange={setDecisionView} />
 

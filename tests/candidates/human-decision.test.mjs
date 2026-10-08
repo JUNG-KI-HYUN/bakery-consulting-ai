@@ -112,6 +112,7 @@ test("Candidate Human Decision은 최신 Readiness Snapshot에 사람의 판단�
     lease: "FRAMEONE_CANDIDATE_LEASE_FILE",
     runs: "FRAMEONE_ANALYSIS_RUNS_FILE",
     readiness: "FRAMEONE_CONTRACT_READINESS_FILE",
+    economicSelections: "FRAMEONE_CANDIDATE_ECONOMIC_SELECTIONS_FILE",
     decisions: "FRAMEONE_CANDIDATE_DECISIONS_FILE",
   };
   const previous = Object.fromEntries(Object.entries(envNames).map(([key, envName]) => [key, process.env[envName]]));

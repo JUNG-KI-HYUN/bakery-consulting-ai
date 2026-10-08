@@ -1,6 +1,7 @@
 import { isCanonicalAnalysisRunId } from "../analysis-runs/analysis-run-snapshot";
 import { calculateBakeryFacilityRiskSummary } from "./bakery-facility-risk";
 import { calculateCandidateLeaseRiskSummary } from "./candidate-lease-risk";
+import { sameEconomicVersionIdentity } from "./candidate-economic-selection-contract";
 import {
   CONTRACT_READINESS_RULE_VERSION,
   CONTRACT_READINESS_SCHEMA_VERSION,
@@ -159,14 +160,37 @@ export function calculateContractReadiness(input: ContractReadinessInput): Contr
       }
 
       const economicVersions = analysisRun.sections.economic?.versions ?? [];
+      let economic = economicVersions.length === 1 ? economicVersions[0] : null;
       if (economicVersions.length === 0) {
         evidenceGaps.push(issue("ECONOMIC_SNAPSHOT_MISSING", "ECONOMIC", "persisted Economic Snapshot이 없습니다."));
         addUnique(nextActions, "연결된 Analysis Run의 경제성 분석 결과를 저장합니다.");
       } else if (economicVersions.length > 1) {
-        evidenceGaps.push(issue("ECONOMIC_VERSION_SELECTION_REQUIRED", "ECONOMIC", "Economic version이 여러 개이며 계약 검토에 사용할 version이 선택되지 않았습니다."));
-        addUnique(nextActions, "계약 검토에 사용할 Economic version을 명시적으로 선택합니다.");
-      } else {
-        const economic = economicVersions[0];
+        const selection = input.economicSelection;
+        if (!selection) {
+          evidenceGaps.push(issue("ECONOMIC_VERSION_SELECTION_REQUIRED", "ECONOMIC", "Economic version이 여러 개이며 계약 검토에 사용할 version이 선택되지 않았습니다."));
+          addUnique(nextActions, "계약 검토에 사용할 Economic version을 명시적으로 선택합니다.");
+        } else if (selection.candidateId !== candidate.candidateId || selection.caseId !== candidate.caseId) {
+          reviewIssues.push(issue("ECONOMIC_SELECTION_OWNERSHIP_MISMATCH", "ECONOMIC", "Economic version 선택의 Candidate 또는 Case 귀속이 일치하지 않습니다."));
+          addUnique(nextActions, "Economic version 선택의 Candidate와 Case 귀속을 확인합니다.");
+        } else if (selection.analysisRunId !== analysisRun.analysisRunId) {
+          reviewIssues.push(issue("ECONOMIC_SELECTION_RUN_MISMATCH", "ECONOMIC", "Economic version 선택의 Analysis Run이 현재 연결과 일치하지 않습니다."));
+          addUnique(nextActions, "현재 Analysis Run에 속한 Economic version을 다시 선택합니다.");
+        } else {
+          const matches = economicVersions.filter((version) => sameEconomicVersionIdentity({
+            analysisRunId: version.binding.analysisRunId,
+            generatedAt: version.generatedAt,
+            assumptionRevision: version.binding.assumptionRevision,
+            engineVersion: version.result.metadata.engineVersion,
+          }, selection));
+          if (matches.length !== 1) {
+            reviewIssues.push(issue("ECONOMIC_VERSION_SELECTION_INVALID", "ECONOMIC", "선택한 Economic version identity가 현재 Analysis Run에서 유일하게 확인되지 않습니다."));
+            addUnique(nextActions, "현재 Analysis Run에 존재하는 Economic version을 다시 선택합니다.");
+          } else {
+            economic = matches[0];
+          }
+        }
+      }
+      if (economic) {
         sourceReferences.economic = {
           analysisRunId: economic.binding.analysisRunId,
           generatedAt: economic.generatedAt,

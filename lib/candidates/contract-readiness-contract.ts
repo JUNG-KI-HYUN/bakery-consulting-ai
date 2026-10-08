@@ -2,6 +2,7 @@ import type { AnalysisRunSnapshot } from "../analysis-runs/analysis-run-snapshot
 import type { BakeryFacilityAssessment } from "./bakery-facility-assessment-contract";
 import type { CandidateStore } from "./candidate-contract";
 import type { CandidateLeaseAssessment } from "./candidate-lease-assessment-contract";
+import type { CandidateEconomicSelection } from "./candidate-economic-selection-contract";
 
 export const CONTRACT_READINESS_SCHEMA_VERSION = "frameone.contract-readiness.v1" as const;
 export const CONTRACT_READINESS_RULE_VERSION = "contract-readiness-v1" as const;
@@ -95,6 +96,7 @@ export interface ContractReadinessInput {
   facilityAssessment: BakeryFacilityAssessment | null;
   leaseAssessment: CandidateLeaseAssessment | null;
   analysisRun: AnalysisRunSnapshot | null;
+  economicSelection?: CandidateEconomicSelection | null;
   evaluatedAt: string;
 }
 

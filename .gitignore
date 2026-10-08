@@ -39,6 +39,9 @@
 # Candidate Contract Readiness runtime snapshots
 /data/candidate-contract-readiness.json
 
+# Candidate Economic version current selections
+/data/candidate-economic-selections.json
+
 # Candidate Human Decision runtime history
 /data/candidate-human-decisions.json
 

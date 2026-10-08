@@ -1,0 +1,33 @@
+[
+  {
+    "candidateId": "candidate-economic-selection-smoke",
+    "caseId": "case-economic-selection-smoke",
+    "label": "Economic 선택 UI Fixture 점포",
+    "address": "서울특별시 테스트 주소",
+    "propertyFacts": {},
+    "currentAskingTerms": {},
+    "status": "REVIEWING",
+    "source": "MARKET_ANALYSIS",
+    "analysisLinks": [
+      {
+        "analysisRunId": "basic-location-run:33333333-3333-4333-8333-333333333333",
+        "targetSnapshot": {
+          "analysisRunId": "basic-location-run:33333333-3333-4333-8333-333333333333",
+          "label": "Economic 선택 Fixture 위치",
+          "address": "서울특별시 테스트 주소",
+          "latitude": 37.5,
+          "longitude": 127,
+          "radiusM": 300,
+          "source": "candidate_store",
+          "explorationSnapshot": { "source": "fixture" },
+          "officialReference": null,
+          "createdAt": "2026-10-08T01:00:00.000Z",
+          "updatedAt": "2026-10-08T01:00:00.000Z"
+        },
+        "linkedAt": "2026-10-08T01:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-10-08T01:00:00.000Z",
+    "updatedAt": "2026-10-08T01:00:00.000Z"
+  }
+]
