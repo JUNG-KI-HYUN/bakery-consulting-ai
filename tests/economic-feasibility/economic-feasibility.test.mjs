@@ -172,9 +172,12 @@ test("BEP·일 BEP·필요 결제건수와 BASE 여유를 계산한다", () => {
 
 test("객단가 0·영업일 0·공헌이익률 0 이하는 안전하게 계산하지 않는다", () => {
   const zeroTicket = calculate(plan({ expectedTicket: 0 }));
+  assert.equal(zeroTicket.bep.monthlyBepSales, null);
+  assert.equal(zeroTicket.bep.dailyBepSales, null);
   assert.equal(zeroTicket.bep.requiredDailyTransactionsForBep, null);
   assert.ok(zeroTicket.validation.errors.some((message) => message.includes("객단가")));
   const zeroDays = calculate(plan({ operatingDaysPerMonth: 0 }));
+  assert.equal(zeroDays.bep.monthlyBepSales, null);
   assert.equal(zeroDays.bep.dailyBepSales, null);
   assert.equal(zeroDays.scenarios.base.monthlySales, null);
   const noContribution = calculate(plan({ variableCostRates: { materialCostRate: 1 } }));

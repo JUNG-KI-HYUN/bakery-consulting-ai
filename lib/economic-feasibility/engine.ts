@@ -268,7 +268,10 @@ export function calculateEconomicFeasibility(input: EconomicFeasibilityEngineInp
   const variableCostRate = sumIfValid(variableRateValues(plan));
   const contributionMarginRate = variableCostRate !== null ? 1 - variableCostRate : null;
   // BEP = 월 고정비 / 공헌이익률. 공헌이익률이 0 이하이면 계산하지 않는다.
-  const monthlyBepSales = totalFixedCost !== null && contributionMarginRate !== null && contributionMarginRate > 0
+  const monthlyBepSales = validation.errors.length === 0
+    && totalFixedCost !== null
+    && contributionMarginRate !== null
+    && contributionMarginRate > 0
     ? totalFixedCost / contributionMarginRate
     : null;
   const dailyBepSales = monthlyBepSales !== null && plan.operatingDaysPerMonth > 0
@@ -385,4 +388,17 @@ export function calculateEconomicFeasibility(input: EconomicFeasibilityEngineInp
       rentalMarketIncluded: rentalMarketReference.status === "AVAILABLE",
     },
   };
+}
+
+function finiteResult(value: number | null) {
+  return value !== null && Number.isFinite(value);
+}
+
+export function hasCustomerUsableEconomicResults(result: EconomicFeasibilityResult) {
+  return result.validation.errors.length === 0
+    && finiteResult(result.scenarios.base.monthlySales)
+    && finiteResult(result.scenarios.base.estimatedOperatingProfit)
+    && finiteResult(result.bep.monthlyBepSales)
+    && finiteResult(result.bep.dailyBepSales)
+    && finiteResult(result.bep.requiredDailyTransactionsForBep);
 }

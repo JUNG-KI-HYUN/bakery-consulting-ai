@@ -22,6 +22,7 @@ export default async function CandidateCustomerReportPage({
         caseId={caseId}
         candidateId={candidateId}
         reportStatus={report.meta.reportStatus}
+        reviewReasons={report.meta.reviewReasons}
         initialLatestSnapshot={latest ? {
           reportSnapshotId: latest.reportSnapshotId,
           issuedAt: latest.issuedAt,

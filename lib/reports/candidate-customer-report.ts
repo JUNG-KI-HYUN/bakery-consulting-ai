@@ -14,11 +14,13 @@ import {
   type CandidateLeaseCheck,
 } from "../candidates/candidate-lease-assessment-contract";
 import { calculateCandidateLeaseRiskSummary } from "../candidates/candidate-lease-risk";
-import type {
-  CandidateContractReadinessSnapshot,
-  ContractReadinessResult,
-  ContractReadinessSourceReferences,
+import {
+  contractReadinessInputBinding,
+  type CandidateContractReadinessSnapshot,
+  type ContractReadinessResult,
+  type ContractReadinessSourceReferences,
 } from "../candidates/contract-readiness-contract";
+import { hasCustomerUsableEconomicResults } from "../economic-feasibility/engine";
 import {
   HUMAN_DECISION_VERDICT_LABELS,
   type CandidateHumanDecision,
@@ -297,27 +299,53 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
     analysisRun: null,
     economic: null,
   };
+  if (input.readinessSnapshot && !same(
+    input.readinessSnapshot.inputBinding,
+    contractReadinessInputBinding(input.readinessSnapshot.sourceReferences),
+  )) {
+    reviewReasons.push("Contract Readiness Snapshot의 근거 연결정보가 일치하지 않습니다.");
+  }
   const decisionStale = Boolean(input.decision && input.readinessSnapshot && !same(
     input.readinessSnapshot.sourceReferences,
     input.currentReadiness.sourceReferences,
   ));
   if (decisionStale) reviewReasons.push("최종 판단 이후 근거자료가 변경되었습니다.");
 
-  const facilityRevision = sourceReferences.facility && input.facilityAssessment?.assessmentId === sourceReferences.facility.assessmentId
-    ? input.facilityAssessment.revisions.find((item) => item.revisionId === sourceReferences.facility?.revisionId) ?? null
+  if (!sourceReferences.facility) reviewReasons.push("시설 검토 기준이 저장되지 않았습니다.");
+  const facilityRevision = sourceReferences.facility
+    && input.facilityAssessment?.assessmentId === sourceReferences.facility.assessmentId
+    && input.facilityAssessment.candidateId === input.candidate.candidateId
+    && input.facilityAssessment.caseId === input.caseRecord.caseId
+    ? input.facilityAssessment.revisions.find((item) =>
+      item.revisionId === sourceReferences.facility?.revisionId
+      && item.recordedAt === sourceReferences.facility.recordedAt
+    ) ?? null
     : null;
   if (sourceReferences.facility && !facilityRevision) reviewReasons.push("Decision 기준 Facility revision을 조회하지 못했습니다.");
   const facilityBasis = facilityRevision ? { checks: facilityRevision.checks } : null;
   const facilitySummary = calculateBakeryFacilityRiskSummary(facilityBasis);
 
-  const leaseRevision = sourceReferences.lease && input.leaseAssessment?.assessmentId === sourceReferences.lease.assessmentId
-    ? input.leaseAssessment.revisions.find((item) => item.revisionId === sourceReferences.lease?.revisionId) ?? null
+  if (!sourceReferences.lease) reviewReasons.push("임대차 검토 기준이 저장되지 않았습니다.");
+  const leaseRevision = sourceReferences.lease
+    && input.leaseAssessment?.assessmentId === sourceReferences.lease.assessmentId
+    && input.leaseAssessment.candidateId === input.candidate.candidateId
+    && input.leaseAssessment.caseId === input.caseRecord.caseId
+    ? input.leaseAssessment.revisions.find((item) =>
+      item.revisionId === sourceReferences.lease?.revisionId
+      && item.recordedAt === sourceReferences.lease.recordedAt
+    ) ?? null
     : null;
   if (sourceReferences.lease && !leaseRevision) reviewReasons.push("Decision 기준 Lease revision을 조회하지 못했습니다.");
   const leaseBasis = leaseRevision ? { checks: leaseRevision.checks, reviewedTerms: leaseRevision.reviewedTerms } : null;
   const leaseSummary = calculateCandidateLeaseRiskSummary(leaseBasis);
 
-  const analysisRunMatches = Boolean(sourceReferences.analysisRun && input.analysisRun?.analysisRunId === sourceReferences.analysisRun.analysisRunId);
+  if (!sourceReferences.analysisRun) reviewReasons.push("분석 실행 기준이 저장되지 않았습니다.");
+  const analysisRunMatches = Boolean(
+    sourceReferences.analysisRun
+    && input.analysisRun?.analysisRunId === sourceReferences.analysisRun.analysisRunId
+    && input.analysisRun.targetSnapshot.analysisRunId === sourceReferences.analysisRun.analysisRunId
+    && input.analysisRun.updatedAt === sourceReferences.analysisRun.snapshotUpdatedAt
+  );
   if (sourceReferences.analysisRun && !analysisRunMatches) reviewReasons.push("Decision 기준 Analysis Run을 조회하지 못했습니다.");
   const analysisRun = analysisRunMatches ? input.analysisRun : null;
   const basisAt = input.readinessSnapshot?.savedAt ?? null;
@@ -327,9 +355,14 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
   const contextualScopeMatches = Boolean(
     analysisRun
     && targetLink
+    && targetLink.linkedAt === sourceReferences.analysisRun?.linkedAt
     && targetLink.targetSnapshot.analysisRunId === analysisRun.analysisRunId
-    && analysisRun.targetSnapshot.analysisRunId === analysisRun.analysisRunId,
+    && analysisRun.targetSnapshot.analysisRunId === analysisRun.analysisRunId
+    && same(targetLink.targetSnapshot, analysisRun.targetSnapshot)
   );
+  if (analysisRunMatches && !contextualScopeMatches) {
+    reviewReasons.push("후보점포와 Decision 기준 Analysis Run 연결을 확인할 수 없습니다.");
+  }
   const contextualAnalysisRunId = contextualScopeMatches ? analysisRun?.analysisRunId ?? null : null;
   const target = contextualScopeMatches ? targetLink?.targetSnapshot ?? null : null;
   const locationVersion = contextualVersionAtOrBefore(
@@ -347,15 +380,25 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
     basisAt,
     contextualAnalysisRunId,
   );
-  const economicVersion = sourceReferences.economic && analysisRun
-    ? analysisRun.sections.economic?.versions.find((item) =>
+  if (!sourceReferences.economic) reviewReasons.push("경제성 계산 기준이 저장되지 않았습니다.");
+  const matchingEconomicVersions = sourceReferences.economic && analysisRun
+    ? analysisRun.sections.economic?.versions.filter((item) =>
       item.generatedAt === sourceReferences.economic?.generatedAt
       && item.binding.analysisRunId === sourceReferences.economic.analysisRunId
       && item.binding.assumptionRevision === sourceReferences.economic.assumptionRevision
       && item.result.metadata.engineVersion === sourceReferences.economic.engineVersion
-    ) ?? null
-    : null;
+      && item.result.metadata.generatedAt === sourceReferences.economic.generatedAt
+    ) ?? []
+    : [];
+  const economicVersion = matchingEconomicVersions.length === 1 ? matchingEconomicVersions[0] : null;
   if (sourceReferences.economic && !economicVersion) reviewReasons.push("Decision 기준 Economic Snapshot을 조회하지 못했습니다.");
+  const economicResult = economicVersion?.result ?? null;
+  const economicUsable = economicResult ? hasCustomerUsableEconomicResults(economicResult) : false;
+  if (economicResult && economicResult.validation.errors.length > 0) {
+    reviewReasons.push("경제성 필수 입력값이 확인되지 않아 현재 손익분기점을 계산할 수 없습니다.");
+  } else if (economicResult && !economicUsable) {
+    reviewReasons.push("경제성 계산 결과에서 고객용 손익분기점을 확인할 수 없습니다.");
+  }
 
   const locationPresentation = locationVersion?.result.presentation;
   const locationMetrics: ReportMetric[] = [
@@ -374,7 +417,7 @@ export function assembleCandidateCustomerReport(input: CandidateCustomerReportIn
     group.items.map((item) => `${item.label}: ${item.description}`),
   );
 
-  const economic = economicVersion?.result ?? null;
+  const economic = economicUsable ? economicResult : null;
   const scenarioLabels = { conservative: "보수", base: "기준", upside: "상향" } as const;
   const assumptions = economic ? [
     { label: "객단가 가정", value: economic.inputs.expectedTicket, unit: "원" },

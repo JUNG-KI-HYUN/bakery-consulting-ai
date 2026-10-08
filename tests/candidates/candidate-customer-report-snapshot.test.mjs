@@ -41,6 +41,87 @@ function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+const READY_AT = "2026-10-07T01:00:00.000Z";
+const READY_RUN_ID = "basic-location-run:99999999-9999-4999-8999-999999999999";
+const READY_REFS = {
+  facility: { assessmentId: "facility-report-smoke", revisionId: "facility-report-smoke-r1", recordedAt: READY_AT, updatedAt: READY_AT },
+  lease: { assessmentId: "lease-report-smoke", revisionId: "lease-report-smoke-r1", recordedAt: READY_AT, updatedAt: READY_AT },
+  analysisRun: { analysisRunId: READY_RUN_ID, linkedAt: READY_AT, snapshotUpdatedAt: READY_AT },
+  economic: { analysisRunId: READY_RUN_ID, generatedAt: READY_AT, assumptionRevision: 1, engineVersion: "economic-feasibility-v1" },
+};
+
+function readyBinding() {
+  return {
+    facilityAssessmentId: READY_REFS.facility.assessmentId,
+    facilityUpdatedAt: READY_AT,
+    leaseAssessmentId: READY_REFS.lease.assessmentId,
+    leaseUpdatedAt: READY_AT,
+    analysisRunId: READY_RUN_ID,
+    economicGeneratedAt: READY_AT,
+    economicEngineVersion: "economic-feasibility-v1",
+    economicAssumptionRevision: 1,
+  };
+}
+
+function installReadyFixture() {
+  const targetSnapshot = {
+    analysisRunId: READY_RUN_ID,
+    label: "고객 리포트 UI Fixture 점포",
+    address: "서울특별시 테스트 주소",
+    latitude: 37.5,
+    longitude: 127,
+    radiusM: 300,
+    source: "candidate_store",
+    explorationSnapshot: { marketId: null, marketName: null, submarketId: null, submarketName: null, nodeId: null, nodeName: null },
+    officialReference: null,
+    createdAt: READY_AT,
+    updatedAt: READY_AT,
+  };
+  const candidates = readJson(paths.candidates);
+  candidates[0].analysisLinks = [{ analysisRunId: READY_RUN_ID, targetSnapshot, linkedAt: READY_AT }];
+  writeJson(paths.candidates, candidates);
+  writeJson(paths.facility, [{
+    assessmentId: READY_REFS.facility.assessmentId, candidateId: CANDIDATE_ID, caseId: CASE_ID,
+    checks: { electricity: { state: "UNKNOWN", verificationStatus: "NOT_CHECKED", sourceType: "FIELD" } },
+    revisions: [{ revisionId: READY_REFS.facility.revisionId, checks: { electricity: { state: "UNKNOWN", verificationStatus: "NOT_CHECKED", sourceType: "FIELD" } }, recordedAt: READY_AT }],
+    createdAt: READY_AT, updatedAt: READY_AT,
+  }]);
+  writeJson(paths.lease, [{
+    assessmentId: READY_REFS.lease.assessmentId, candidateId: CANDIDATE_ID, caseId: CASE_ID,
+    reviewedTerms: { monthlyRentWon: 4000000 },
+    checks: { requiredWorksConsent: { state: "CONDITIONAL", verificationStatus: "LANDLORD_CONFIRM_REQUIRED", sourceType: "LANDLORD" } },
+    revisions: [{ revisionId: READY_REFS.lease.revisionId, reviewedTerms: { monthlyRentWon: 4000000 }, checks: { requiredWorksConsent: { state: "CONDITIONAL", verificationStatus: "LANDLORD_CONFIRM_REQUIRED", sourceType: "LANDLORD" } }, recordedAt: READY_AT }],
+    createdAt: READY_AT, updatedAt: READY_AT,
+  }]);
+  const scenario = { monthlySales: 40000000, estimatedOperatingProfit: 3000000, rentBurdenRate: 0.1 };
+  writeJson(paths.analysisRuns, { schemaVersion: "frameone.analysis-run-registry.v1", runs: [{
+    schemaVersion: "frameone.analysis-run-snapshot.v1", analysisRunId: READY_RUN_ID, targetSnapshot,
+    createdAt: READY_AT, updatedAt: READY_AT,
+    sections: { economic: { versions: [{
+      generatedAt: READY_AT,
+      binding: { analysisRunId: READY_RUN_ID, assumptionRevision: 1 },
+      result: {
+        schemaVersion: "frameone.economic-feasibility.v1",
+        inputs: { expectedTicket: 10000, operatingDaysPerMonth: 25, fixedMonthlyCosts: { rentMonthly: 4000000, managementFeeMonthly: 300000, laborMonthly: 8000000 } },
+        scenarios: { conservative: scenario, base: scenario, upside: scenario },
+        bep: { monthlyBepSales: 28000000, dailyBepSales: 1120000, requiredDailyTransactionsForBep: 112 },
+        officialBenchmark: { status: "NOT_AVAILABLE" }, validation: { errors: [], warnings: [] },
+        limitations: ["Fixture 계산 결과"], metadata: { engineVersion: "economic-feasibility-v1", generatedAt: READY_AT },
+      },
+    }] } },
+  }] });
+  writeJson(paths.readiness, [{
+    readinessSnapshotId: "contract-readiness-report-smoke", candidateId: CANDIDATE_ID, caseId: CASE_ID,
+    schemaVersion: "frameone.contract-readiness.v1", ruleVersion: "contract-readiness-v1",
+    result: { readinessStatus: "REVIEW_REQUIRED", blockingIssues: [], reviewIssues: [], evidenceGaps: [], nextActions: [] },
+    inputBinding: readyBinding(), sourceReferences: structuredClone(READY_REFS), evaluatedAt: READY_AT, savedAt: READY_AT,
+    createsVerdict: false, createsApproval: false,
+  }]);
+  const decisions = readJson(paths.decisions);
+  decisions[0].basis.readinessInputBinding = readyBinding();
+  writeJson(paths.decisions, decisions);
+}
+
 before(() => {
   tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), "frameone-report-snapshot-"));
   paths = {
@@ -97,6 +178,20 @@ test("Customer Report Snapshot repository and UI contract", async (t) => {
     assert.deepEqual(view, { latestSnapshot: null, snapshotCount: 0 });
   });
 
+  await t.test("incomplete source POST rejects a client REPORT_READY bypass", async () => {
+    const response = await snapshotCollectionRoute.POST(
+      new Request(`http://localhost/api/candidates/${CANDIDATE_ID}/report-snapshots`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ caseId: CASE_ID, reportStatus: "REPORT_READY" }),
+      }),
+      { params: Promise.resolve({ candidateId: CANDIDATE_ID }) },
+    );
+    assert.equal(response.status, 409);
+    assert.equal(readJson(paths.snapshots).length, 0);
+    installReadyFixture();
+  });
+
   await t.test("REPORT_READY POST ignores client report data and creates a server-materialized immutable snapshot", async () => {
     const response = await snapshotCollectionRoute.POST(
       new Request(`http://localhost/api/candidates/${CANDIDATE_ID}/report-snapshots`, {
@@ -130,10 +225,7 @@ test("Customer Report Snapshot repository and UI contract", async (t) => {
 
   await t.test("decisionBasisSources and contextualSources are preserved", () => {
     assert.deepEqual(firstSnapshot.materializedReport.provenance.decisionBasisSources, {
-      facility: null,
-      lease: null,
-      analysisRun: null,
-      economic: null,
+      ...READY_REFS,
       readinessSnapshot: { readinessSnapshotId: "contract-readiness-report-smoke", savedAt: "2026-10-07T01:00:00.000Z" },
       humanDecision: {
         decisionId: "human-decision-report-smoke",
@@ -162,7 +254,8 @@ test("Customer Report Snapshot repository and UI contract", async (t) => {
     const reloaded = await response.json();
     assert.equal(reloaded.materializedReport.candidateSummary.label, "고객 리포트 UI Fixture 점포");
     assert.equal(reloaded.materializedReport.facility.hard.length, 0);
-    assert.equal(reloaded.materializedReport.lease.conditional.length, 0);
+    assert.equal(reloaded.materializedReport.lease.conditional.length, 1);
+    assert.equal(reloaded.materializedReport.lease.conditional.some((item) => item.label === "변조"), false);
     assert.equal(reloaded.materializedReport.economics.limitations.includes("변조"), false);
     assert.equal(reloaded.materializedReport.decision.verdictLabel, "조건부 추천");
     firstSnapshot = reloaded;
@@ -182,8 +275,8 @@ test("Customer Report Snapshot repository and UI contract", async (t) => {
     const stored = await snapshotRepository.getCandidateCustomerReportSnapshot(CANDIDATE_ID, CASE_ID, firstSnapshot.reportSnapshotId);
     assert.equal(live.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
     assert.equal(stored.materializedReport.meta.reportStatus, "REPORT_READY");
-    assert.equal(stored.materializedReport.facility.status, "NOT_AVAILABLE");
-    writeJson(paths.facility, []);
+    assert.equal(stored.materializedReport.facility.status, "AVAILABLE");
+    installReadyFixture();
   });
 
   await t.test("Lease source change leaves the issued snapshot unchanged", async () => {
@@ -200,8 +293,8 @@ test("Customer Report Snapshot repository and UI contract", async (t) => {
     const live = await getCandidateCustomerReport(CASE_ID, CANDIDATE_ID);
     const stored = await snapshotRepository.getCandidateCustomerReportSnapshot(CANDIDATE_ID, CASE_ID, firstSnapshot.reportSnapshotId);
     assert.equal(live.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
-    assert.equal(stored.materializedReport.lease.status, "NOT_AVAILABLE");
-    writeJson(paths.lease, []);
+    assert.equal(stored.materializedReport.lease.status, "AVAILABLE");
+    installReadyFixture();
   });
 
   await t.test("Economic result mutation cannot change the issued materialized report", async () => {

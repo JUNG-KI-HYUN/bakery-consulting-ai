@@ -63,6 +63,7 @@ function economicResult() {
       upside: scenario(50000000, 5000000),
     },
     bep: { monthlyBepSales: 28000000, dailyBepSales: 1120000, requiredDailyTransactionsForBep: 112 },
+    validation: { errors: [], warnings: [] },
     officialBenchmark: { status: "AVAILABLE", label: "공식상권 제과점 점포당 참고매출", value: 99000000, period: "2026 Q2", limitation: "공식상권 전체 참고값이며 후보점포 예상매출이 아닙니다." },
     limitations: ["입력 가정에 따른 추정치입니다."],
     metadata: { engineVersion: "economic-feasibility-v1", generatedAt: AT },
@@ -180,6 +181,67 @@ test("readiness snapshot binding remains the report basis", () => {
   assert.equal(report.readiness.status, "READY");
 });
 
+for (const [source, message] of [
+  ["facility", /시설 검토 기준/],
+  ["lease", /임대차 검토 기준/],
+  ["analysisRun", /분석 실행 기준/],
+  ["economic", /경제성 계산 기준/],
+]) {
+  test(`missing ${source} source requires report review`, () => {
+    const input = makeInput();
+    input.readinessSnapshot.sourceReferences[source] = null;
+    input.currentReadiness.sourceReferences[source] = null;
+    input.readinessSnapshot.inputBinding = loadModule(path.join(root, "lib/candidates/contract-readiness-contract.ts"))
+      .contractReadinessInputBinding(input.readinessSnapshot.sourceReferences);
+    input.decision.basis.readinessInputBinding = structuredClone(input.readinessSnapshot.inputBinding);
+    const report = assembleCandidateCustomerReport(input);
+    assert.equal(report.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
+    assert.match(report.meta.reviewReasons.join(" "), message);
+  });
+}
+
+for (const [source, clear, message] of [
+  ["facility", (input) => { input.facilityAssessment = null; }, /Facility revision/],
+  ["lease", (input) => { input.leaseAssessment = null; }, /Lease revision/],
+  ["analysisRun", (input) => { input.analysisRun = null; }, /Analysis Run/],
+]) {
+  test(`missing persisted ${source} basis requires report review`, () => {
+    const input = makeInput(); clear(input);
+    const report = assembleCandidateCustomerReport(input);
+    assert.equal(report.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
+    assert.match(report.meta.reviewReasons.join(" "), message);
+  });
+}
+
+test("economic validation errors make customer economics unavailable", () => {
+  const input = makeInput();
+  input.analysisRun.sections.economic.versions[0].result.validation.errors = ["객단가는 0보다 커야 합니다."];
+  const report = assembleCandidateCustomerReport(input);
+  assert.equal(report.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
+  assert.equal(report.economics.status, "NOT_AVAILABLE");
+  assert.equal(report.executiveSummary.monthlyBepSales, null);
+  assert.match(report.meta.reviewReasons.join(" "), /손익분기점을 계산할 수 없습니다/);
+});
+
+test("null monthly BEP makes customer economics unavailable", () => {
+  const input = makeInput();
+  input.analysisRun.sections.economic.versions[0].result.bep.monthlyBepSales = null;
+  const report = assembleCandidateCustomerReport(input);
+  assert.equal(report.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
+  assert.equal(report.economics.bep, null);
+  assert.match(report.meta.reviewReasons.join(" "), /고객용 손익분기점/);
+});
+
+test("UNKNOWN facility and CONDITIONAL lease remain reportable when their bound revisions exist", () => {
+  const input = makeInput();
+  input.facilityAssessment.revisions[0].checks.electricity.state = "UNKNOWN";
+  input.leaseAssessment.revisions[0].checks.requiredWorksConsent.state = "CONDITIONAL";
+  const report = assembleCandidateCustomerReport(input);
+  assert.equal(report.meta.reportStatus, "REPORT_READY");
+  assert.equal(report.facility.checks.find((item) => item.label === "전기").stateLabel, "확인 필요");
+  assert.equal(report.lease.checks.find((item) => item.label === "필수공사 동의").stateLabel, "조건부");
+});
+
 test("explicit Decision basis sources stay separate from contextual sources", () => {
   const report = assembleCandidateCustomerReport(makeInput());
   const basis = report.provenance.decisionBasisSources;
@@ -208,12 +270,29 @@ test("Decision and readiness input binding mismatch requires review", () => {
   assert.match(report.meta.reviewReasons.join(" "), /input binding/);
 });
 
+test("readiness source references and its input binding mismatch requires review", () => {
+  const input = makeInput();
+  input.readinessSnapshot.inputBinding.economicAssumptionRevision = 99;
+  input.decision.basis.readinessInputBinding.economicAssumptionRevision = 99;
+  const report = assembleCandidateCustomerReport(input);
+  assert.equal(report.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
+  assert.match(report.meta.reviewReasons.join(" "), /근거 연결정보/);
+});
+
 test("Economic source binding selects the exact stored version", () => {
   const input = makeInput();
   input.analysisRun.sections.economic.versions.push({ generatedAt: "2026-10-08T01:00:00.000Z", binding: { analysisRunId: RUN_ID, assumptionRevision: 3 }, result: { ...economicResult(), metadata: { engineVersion: "economic-feasibility-v1", generatedAt: "2026-10-08T01:00:00.000Z" } } });
   const report = assembleCandidateCustomerReport(input);
   assert.equal(report.economics.assumptionRevision, 2);
   assert.equal(report.economics.generatedAt, AT);
+});
+
+test("duplicate exact Economic source binding requires review", () => {
+  const input = makeInput();
+  input.analysisRun.sections.economic.versions.push(structuredClone(input.analysisRun.sections.economic.versions[0]));
+  const report = assembleCandidateCustomerReport(input);
+  assert.equal(report.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
+  assert.match(report.meta.reviewReasons.join(" "), /Economic Snapshot/);
 });
 
 test("Facility source uses the revision bound by readiness", () => {
@@ -262,7 +341,8 @@ test("context from an AnalysisRun outside the Candidate scope is not mixed", () 
   input.candidate.analysisLinks = [];
   const report = assembleCandidateCustomerReport(input);
   assert.deepEqual(report.provenance.contextualSources, { location: null, competition: null, rentalMarket: null });
-  assert.equal(report.meta.reportStatus, "REPORT_READY");
+  assert.equal(report.meta.reportStatus, "REPORT_REVIEW_REQUIRED");
+  assert.match(report.meta.reviewReasons.join(" "), /후보점포.*Analysis Run 연결/);
 });
 
 test("missing contextual data stays 자료 없음 without adding a report hard gate", () => {
@@ -333,6 +413,13 @@ test("report route renders the report service result", () => {
   assert.match(source, /getCandidateCustomerReport/);
   assert.match(source, /CandidateCustomerReportDocument/);
   assert.match(source, /params: Promise/);
+  assert.match(source, /reviewReasons=\{report\.meta\.reviewReasons\}/);
+});
+
+test("report issue panel explains why incomplete evidence blocks issue", () => {
+  const source = fs.readFileSync(path.join(root, "components/reports/CandidateCustomerReportIssuePanel.tsx"), "utf8");
+  assert.match(source, /필수 분석 근거가 확인되지 않아 고객용 리포트를 확정할 수 없습니다/);
+  assert.match(source, /reviewReasons\.map/);
 });
 
 test("Candidate detail provides the customer report CTA", () => {

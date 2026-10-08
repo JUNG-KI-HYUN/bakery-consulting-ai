@@ -22,12 +22,14 @@ export function CandidateCustomerReportIssuePanel({
   caseId,
   candidateId,
   reportStatus,
+  reviewReasons,
   initialLatestSnapshot,
   initialSnapshotCount,
 }: {
   caseId: string;
   candidateId: string;
   reportStatus: CandidateCustomerReportStatus;
+  reviewReasons: string[];
   initialLatestSnapshot: SnapshotSummary | null;
   initialSnapshotCount: number;
 }) {
@@ -93,9 +95,14 @@ export function CandidateCustomerReportIssuePanel({
       </div>
 
       {!ready ? (
-        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
-          현재 자료 변경 또는 미확인 항목으로 고객용 리포트를 확정할 수 없습니다. 최종 판단을 먼저 재검토하세요.
-        </p>
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
+          <p className="font-semibold">필수 분석 근거가 확인되지 않아 고객용 리포트를 확정할 수 없습니다.</p>
+          {reviewReasons.length > 0 ? (
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              {reviewReasons.map((reason) => <li key={reason}>{reason}</li>)}
+            </ul>
+          ) : null}
+        </div>
       ) : null}
       {message ? <p className="mt-4 text-sm font-semibold text-stone-800">{message}</p> : null}
 

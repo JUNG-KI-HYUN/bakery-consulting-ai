@@ -116,7 +116,7 @@ async function assertOwnedCandidate(candidateId: string, caseId: string) {
 function assertIssuableReport(report: CandidateCustomerReport) {
   if (report.meta.reportStatus !== "REPORT_READY") {
     throw new CustomerReportSnapshotReferenceError(
-      "현재 고객 리포트는 재검토가 필요하여 확정할 수 없습니다. 최종 판단을 먼저 재검토하세요.",
+      "필수 분석 근거가 확인되지 않아 고객용 리포트를 확정할 수 없습니다.",
       409,
     );
   }
