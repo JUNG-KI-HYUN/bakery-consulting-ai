@@ -136,7 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const setAnalysisHeader = useCallback((value: AnalysisHeaderContextValue | null) => {
     setRegisteredHeader(value);
   }, []);
-  const isCandidateCustomerReport = /^\/cases\/[^/]+\/candidates\/[^/]+\/report$/.test(pathname);
+  const isCandidateCustomerReport = /^\/cases\/[^/]+\/candidates\/[^/]+\/report(?:\/[^/]+)?$/.test(pathname);
 
   useEffect(() => {
     const readTarget = () => {

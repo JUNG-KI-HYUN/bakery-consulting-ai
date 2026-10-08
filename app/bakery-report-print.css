@@ -1,5 +1,5 @@
 @page {
-  size: A4;
+  size: A4 portrait;
   margin: 12mm;
 }
 
@@ -11,6 +11,7 @@
 
   header,
   .no-print,
+  .report-interactive,
   .print\:hidden {
     display: none !important;
   }
@@ -23,6 +24,7 @@
 
   .report-doc section,
   .print-card,
+  .report-snapshot-header,
   .report-doc article {
     break-inside: avoid;
     page-break-inside: avoid;

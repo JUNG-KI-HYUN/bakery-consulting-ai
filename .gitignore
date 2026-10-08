@@ -42,6 +42,9 @@
 # Candidate Human Decision runtime history
 /data/candidate-human-decisions.json
 
+# Candidate Customer Report immutable runtime snapshots
+/data/candidate-customer-report-snapshots.json
+
 # official source intake raw snapshots (keep the tracked directory placeholder)
 /data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/*
 !/data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/.gitkeep
