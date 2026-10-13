@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { CandidateStore, CandidateStoreSource } from "@/lib/candidates/candidate-contract";
 import { CandidateStoreFormFields, type CandidateStoreFormValues } from "./CandidateStoreFormFields";
+import { parseWonInput } from "@/lib/format/won";
 
 function optionalNumber(value: string) {
   return value === "" ? undefined : Number(value);
@@ -20,10 +21,10 @@ function requestBody(values: CandidateStoreFormValues, caseId: string, source: C
     frontageM: optionalNumber(values.frontageM),
     parkingStatus: values.parkingStatus || undefined,
     parkingNote: values.parkingNote || undefined,
-    depositWon: optionalNumber(values.depositWon),
-    monthlyRentWon: optionalNumber(values.monthlyRentWon),
-    maintenanceFeeWon: optionalNumber(values.maintenanceFeeWon),
-    premiumWon: optionalNumber(values.premiumWon),
+    depositWon: parseWonInput(values.depositWon),
+    monthlyRentWon: parseWonInput(values.monthlyRentWon),
+    maintenanceFeeWon: parseWonInput(values.maintenanceFeeWon),
+    premiumWon: parseWonInput(values.premiumWon),
     source,
     linkedAnalysisRunId: linkedAnalysisRunId ?? undefined,
   };

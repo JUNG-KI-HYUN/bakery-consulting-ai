@@ -189,6 +189,7 @@ test("customer goal, FRAMEONE recommendation, capital plan, and Candidate actual
     unknownBudgetItems: ["보증금"],
   };
   input.caseRecord.frameoneRecommendation = {
+    recommendedMonthlyRentMaxWon: 3_400_000,
     recommendedAreaMinPyeong: 30,
     recommendedAreaMaxPyeong: 35,
     capitalPlan: { depositBudgetWon: 30_000_000, operatingReserveWon: 20_000_000 },
@@ -204,7 +205,9 @@ test("customer goal, FRAMEONE recommendation, capital plan, and Candidate actual
   const report = assembleCandidateCustomerReport(input);
   assert.equal(report.consultation.customer.totalAvailableCapitalWon, 100_000_000);
   assert.equal(report.consultation.frameone.capitalPlan.operatingReserveWon, 20_000_000);
+  assert.equal(report.consultation.frameone.recommendedMonthlyRentMaxWon, 3_400_000);
   assert.equal(report.consultation.candidateActual.askingTerms.monthlyRentWon, 3_500_000);
+  assert.notEqual(report.consultation.frameone.recommendedMonthlyRentMaxWon, report.consultation.candidateActual.askingTerms.monthlyRentWon);
   assert.equal(report.economics.requiredDemand.requiredMonthlySales, 23_468_750);
   assert.equal(report.economics.requiredDemand.marketDemandAssessment, "REQUIRES_ADDITIONAL_ANALYSIS");
   assert.notEqual(report.consultation.customer.unknownBudgetItems[0], report.consultation.candidateActual.askingTerms.depositWon);

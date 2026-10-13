@@ -4,6 +4,7 @@ import {
   type CaseLifecycleStage,
 } from "@/lib/cases/case-contract";
 import type { Dispatch, SetStateAction } from "react";
+import { WonInput } from "@/components/forms/WonInput";
 
 export interface CaseFormValues {
   name: string;
@@ -47,14 +48,8 @@ export function CaseFormFields({
         <span className="field-label">희망지역</span>
         <input className="input" value={values.preferredArea} onChange={(event) => update("preferredArea", event.target.value)} maxLength={200} placeholder="확인된 희망지역만 입력" autoComplete="off" />
       </label>
-      <label className="block">
-        <span className="field-label">최소 예산</span>
-        <input className="input" type="number" min="0" step="10000" inputMode="numeric" value={values.budgetMin} onChange={(event) => update("budgetMin", event.target.value)} placeholder="원 단위" />
-      </label>
-      <label className="block">
-        <span className="field-label">최대 예산</span>
-        <input className="input" type="number" min="0" step="10000" inputMode="numeric" value={values.budgetMax} onChange={(event) => update("budgetMax", event.target.value)} placeholder="원 단위" />
-      </label>
+      <WonInput label="최소 예산" value={values.budgetMin} onChange={(value) => update("budgetMin", value)} />
+      <WonInput label="최대 예산" value={values.budgetMax} onChange={(value) => update("budgetMax", value)} />
       <label className="block">
         <span className="field-label">목표 오픈일</span>
         <input className="input" type="date" value={values.targetOpeningDate} onChange={(event) => update("targetOpeningDate", event.target.value)} />

@@ -5,6 +5,7 @@ import {
   type CandidateStoreStatus,
 } from "@/lib/candidates/candidate-contract";
 import type { Dispatch, SetStateAction } from "react";
+import { WonInput } from "@/components/forms/WonInput";
 
 export interface CandidateStoreFormValues {
   label: string;
@@ -79,10 +80,7 @@ export function CandidateStoreFormFields({
         ["maintenanceFeeWon", "관리비 (원)"],
         ["premiumWon", "권리금 (원)"],
       ].map(([key, label]) => (
-        <label className="block" key={key}>
-          <span className="field-label">{label}</span>
-          <input className="input" type="number" min="0" step="10000" inputMode="numeric" value={values[key as keyof CandidateStoreFormValues] ?? ""} onChange={(event) => update(key as keyof CandidateStoreFormValues, event.target.value)} />
-        </label>
+        <WonInput key={key} label={label.replace(" (원)", "")} value={values[key as keyof CandidateStoreFormValues] ?? ""} onChange={(value) => update(key as keyof CandidateStoreFormValues, value)} />
       ))}
       {includeStatus ? (
         <label className="block">

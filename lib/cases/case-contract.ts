@@ -61,6 +61,7 @@ export interface CaseCapitalPlan {
 
 export interface CaseFrameoneRecommendation {
   recommendedConcept?: string;
+  recommendedMonthlyRentMaxWon?: number;
   recommendedAreaMinPyeong?: number;
   recommendedAreaMaxPyeong?: number;
   recommendedSeatMin?: number;
@@ -231,6 +232,7 @@ function frameoneRecommendationInput(value: unknown): CaseFrameoneRecommendation
   const input = inputObject(value);
   return {
     recommendedConcept: optionalText(input.recommendedConcept, "권장 사업모델", 500),
+    recommendedMonthlyRentMaxWon: optionalBudget(input.recommendedMonthlyRentMaxWon, "권장 월세 상한"),
     recommendedAreaMinPyeong: optionalNumber(input.recommendedAreaMinPyeong, "권장 최소면적"),
     recommendedAreaMaxPyeong: optionalNumber(input.recommendedAreaMaxPyeong, "권장 최대면적"),
     recommendedSeatMin: optionalNumber(input.recommendedSeatMin, "권장 최소좌석"),

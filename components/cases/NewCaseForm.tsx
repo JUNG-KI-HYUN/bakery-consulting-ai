@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { CaseFormFields, type CaseFormValues } from "./CaseFormFields";
 import type { CaseRecord } from "@/lib/cases/case-contract";
+import { parseWonInput } from "@/lib/format/won";
 
 const initialValues: CaseFormValues = {
   name: "",
@@ -21,8 +22,8 @@ function requestBody(values: CaseFormValues) {
     clientName: values.clientName,
     bakeryType: values.bakeryType,
     preferredArea: values.preferredArea,
-    budgetMin: values.budgetMin ? Number(values.budgetMin) : undefined,
-    budgetMax: values.budgetMax ? Number(values.budgetMax) : undefined,
+    budgetMin: parseWonInput(values.budgetMin),
+    budgetMax: parseWonInput(values.budgetMax),
     targetOpeningDate: values.targetOpeningDate || undefined,
   };
 }

@@ -77,42 +77,141 @@ test("Case 전용 repository와 API는 실제 프로젝트 데이터에서 격�
       assert.deepEqual(created.analysisRunIds, []);
       assert.deepEqual(created.analysisRunLinks, []);
       assert.deepEqual(created.consultationIds, []);
+      assert.equal(created.targetOpeningDate, "2027-03-01");
       assert.equal(created.customerProfile, undefined);
       assert.equal(created.frameoneRecommendation, undefined);
       assert.equal(created.createdAt, created.updatedAt);
     });
 
-    await t.test("customer input and FRAMEONE recommendation save and load without mixing", async () => {
+    await t.test("legacy Case without consultation profiles loads", async () => {
+      const response = await detail.GET(new Request(`http://localhost/api/cases/${created.caseId}`), {
+        params: Promise.resolve({ caseId: created.caseId }),
+      });
+      assert.equal(response.status, 200);
+      const loaded = await response.json();
+      assert.equal(loaded.customerProfile, undefined);
+      assert.equal(loaded.frameoneRecommendation, undefined);
+    });
+
+    await t.test("CUSTOMER profile saves and reloads without FRAMEONE fallback", async () => {
       const customerProfile = {
-        brandName: "테스트 베이커리",
+        brandName: "프레임원 베이커리 2호 Pilot",
         totalAvailableCapitalWon: 100_000_000,
         ownerWorksInStore: true,
-        ownerRoles: ["운영", "판매"],
+        ownerRoles: ["제조", "운영"],
+        conceptPreference: "동네 제조형 베이커리 희망",
+        preferredAreaMinPyeong: 30,
+        preferredAreaMaxPyeong: 40,
+        directManufacturing: true,
+        coffeeSales: false,
+        hallPreference: "소규모 홀 희망",
+        deliveryPreference: "초기에는 미운영",
+        employeePlan: "대표 포함 3명",
         targetMonthlyOwnerIncomeWon: 4_000_000,
-        unknownBudgetItems: ["보증금", "권리금"],
-      };
-      const frameoneRecommendation = {
-        recommendedConcept: "제조형 + 테이크아웃 중심",
-        recommendedAreaMinPyeong: 30,
-        recommendedAreaMaxPyeong: 35,
-        capitalPlan: { depositBudgetWon: 30_000_000, premiumBudgetWon: 0 },
-        premiumPolicy: "0원 우선",
+        loanPreference: "정책자금 검토 희망",
+        equipmentSupportNeeded: "장비 구성 상담 필요",
+        taxLaborPmNeeded: "필요",
+        longTermPlan: "2호점은 운영 안정화 후 검토",
       };
       const response = await detail.PATCH(new Request(`http://localhost/api/cases/${created.caseId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ customerProfile, frameoneRecommendation }),
+        body: JSON.stringify({
+          preferredArea: "성수동 우선 / 대안지역 제안 가능",
+          customerProfile,
+        }),
       }), { params: Promise.resolve({ caseId: created.caseId }) });
       assert.equal(response.status, 200);
       const saved = await response.json();
       assert.deepEqual(saved.customerProfile, customerProfile);
+      assert.equal(saved.customerProfile.brandName, "프레임원 베이커리 2호 Pilot");
+      assert.equal(saved.customerProfile.totalAvailableCapitalWon, 100_000_000);
+      assert.equal(saved.customerProfile.preferredAreaMinPyeong, 30);
+      assert.equal(saved.customerProfile.preferredAreaMaxPyeong, 40);
+      assert.equal(saved.preferredArea, "성수동 우선 / 대안지역 제안 가능");
+      assert.equal(saved.frameoneRecommendation, undefined);
+
+      const loaded = await detail.GET(new Request(`http://localhost/api/cases/${created.caseId}`), {
+        params: Promise.resolve({ caseId: created.caseId }),
+      });
+      const reloaded = await loaded.json();
+      assert.deepEqual(reloaded.customerProfile, customerProfile);
+      assert.equal(reloaded.preferredArea, "성수동 우선 / 대안지역 제안 가능");
+      assert.equal(reloaded.frameoneRecommendation, undefined);
+    });
+
+    await t.test("FRAMEONE recommendation and capital plan save and reload without CUSTOMER mixing", async () => {
+      const frameoneRecommendation = {
+        recommendedConcept: "제조형 + 테이크아웃 중심",
+        recommendedMonthlyRentMaxWon: 3_500_000,
+        recommendedAreaMinPyeong: 30,
+        recommendedAreaMaxPyeong: 35,
+        recommendedSeatMin: 8,
+        recommendedSeatMax: 12,
+        staffingRecommendation: "대표 포함 3명",
+        capitalPlan: {
+          operatingReserveWon: 20_000_000,
+          preOpeningInvestmentLimitWon: 120_000_000,
+          depositBudgetWon: 30_000_000,
+          equipmentBudgetWon: 25_000_000,
+          fitoutBudgetWon: 40_000_000,
+          openingCostBudgetWon: 10_000_000,
+          premiumBudgetWon: 0,
+        },
+        premiumPolicy: "0원 우선",
+        facilityStrategy: "전기·배기 현장 확인 후 확정",
+        recommendationNotes: "시장 및 시설 조사 결과에 따라 재검토",
+      };
+      const response = await detail.PATCH(new Request(`http://localhost/api/cases/${created.caseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frameoneRecommendation }),
+      }), { params: Promise.resolve({ caseId: created.caseId }) });
+      assert.equal(response.status, 200);
+      const saved = await response.json();
       assert.deepEqual(saved.frameoneRecommendation, frameoneRecommendation);
-      assert.equal(saved.customerProfile.unknownBudgetItems.includes("보증금"), true);
+      assert.equal(saved.frameoneRecommendation.recommendedMonthlyRentMaxWon, 3_500_000);
       assert.equal(saved.frameoneRecommendation.capitalPlan.depositBudgetWon, 30_000_000);
       const loaded = await detail.GET(new Request(`http://localhost/api/cases/${created.caseId}`), {
         params: Promise.resolve({ caseId: created.caseId }),
       });
-      assert.deepEqual((await loaded.json()).frameoneRecommendation, frameoneRecommendation);
+      const reloaded = await loaded.json();
+      assert.deepEqual(reloaded.frameoneRecommendation, frameoneRecommendation);
+      assert.equal(reloaded.frameoneRecommendation.recommendedMonthlyRentMaxWon, 3_500_000);
+      assert.equal(reloaded.customerProfile.conceptPreference, "동네 제조형 베이커리 희망");
+      assert.equal(reloaded.customerProfile.brandName, "프레임원 베이커리 2호 Pilot");
+      assert.equal(reloaded.customerProfile.totalAvailableCapitalWon, 100_000_000);
+      assert.equal(reloaded.customerProfile.preferredAreaMinPyeong, 30);
+      assert.equal(reloaded.customerProfile.preferredAreaMaxPyeong, 40);
+      assert.equal(reloaded.preferredArea, "성수동 우선 / 대안지역 제안 가능");
+      assert.notEqual(reloaded.customerProfile.conceptPreference, reloaded.frameoneRecommendation.recommendedConcept);
+      assert.equal(reloaded.customerProfile.targetMonthlyOwnerIncomeWon, 4_000_000);
+      assert.equal(reloaded.frameoneRecommendation.capitalPlan.preOpeningInvestmentLimitWon, 120_000_000);
+    });
+
+    await t.test("opening date saves, serializes and reloads as the same calendar date", async () => {
+      const response = await detail.PATCH(new Request(`http://localhost/api/cases/${created.caseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetOpeningDate: "2026-12-15" }),
+      }), { params: Promise.resolve({ caseId: created.caseId }) });
+      assert.equal(response.status, 200);
+      const saved = await response.json();
+      assert.equal(saved.targetOpeningDate, "2026-12-15");
+
+      const serialized = JSON.parse(fs.readFileSync(casesFile, "utf8"));
+      assert.equal(serialized.find((item) => item.caseId === created.caseId).targetOpeningDate, "2026-12-15");
+
+      const loaded = await detail.GET(new Request(`http://localhost/api/cases/${created.caseId}`), {
+        params: Promise.resolve({ caseId: created.caseId }),
+      });
+      const reloaded = await loaded.json();
+      assert.equal(reloaded.targetOpeningDate, "2026-12-15");
+      assert.equal(reloaded.name, created.name);
+      assert.equal(reloaded.clientName, created.clientName);
+      assert.equal(reloaded.preferredArea, "성수동 우선 / 대안지역 제안 가능");
+      assert.equal(reloaded.budgetMin, created.budgetMin);
+      assert.equal(reloaded.budgetMax, created.budgetMax);
     });
 
     await t.test("Case list and detail return the created record", async () => {

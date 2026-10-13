@@ -19,6 +19,7 @@ import { CandidateHumanDecisionPanel } from "./CandidateHumanDecisionPanel";
 import { CandidateLeaseAssessmentEditor } from "./CandidateLeaseAssessmentEditor";
 import { CandidateStoreFormFields, type CandidateStoreFormValues } from "./CandidateStoreFormFields";
 import { CandidateEconomicVersionSelector } from "./CandidateEconomicVersionSelector";
+import { formatWon, formatWonInput, parseWonInput } from "@/lib/format/won";
 
 function valuesFromRecord(record: CandidateStore): CandidateStoreFormValues {
   return {
@@ -30,10 +31,10 @@ function valuesFromRecord(record: CandidateStore): CandidateStoreFormValues {
     frontageM: record.propertyFacts.frontageM?.toString() ?? "",
     parkingStatus: record.propertyFacts.parkingStatus ?? "",
     parkingNote: record.propertyFacts.parkingNote ?? "",
-    depositWon: record.currentAskingTerms.depositWon?.toString() ?? "",
-    monthlyRentWon: record.currentAskingTerms.monthlyRentWon?.toString() ?? "",
-    maintenanceFeeWon: record.currentAskingTerms.maintenanceFeeWon?.toString() ?? "",
-    premiumWon: record.currentAskingTerms.premiumWon?.toString() ?? "",
+    depositWon: formatWonInput(record.currentAskingTerms.depositWon),
+    monthlyRentWon: formatWonInput(record.currentAskingTerms.monthlyRentWon),
+    maintenanceFeeWon: formatWonInput(record.currentAskingTerms.maintenanceFeeWon),
+    premiumWon: formatWonInput(record.currentAskingTerms.premiumWon),
     status: record.status,
   };
 }
@@ -52,16 +53,16 @@ function updateBody(values: CandidateStoreFormValues) {
     frontageM: optionalNumber(values.frontageM),
     parkingStatus: values.parkingStatus || null,
     parkingNote: values.parkingNote || null,
-    depositWon: optionalNumber(values.depositWon),
-    monthlyRentWon: optionalNumber(values.monthlyRentWon),
-    maintenanceFeeWon: optionalNumber(values.maintenanceFeeWon),
-    premiumWon: optionalNumber(values.premiumWon),
+    depositWon: parseWonInput(values.depositWon) ?? null,
+    monthlyRentWon: parseWonInput(values.monthlyRentWon) ?? null,
+    maintenanceFeeWon: parseWonInput(values.maintenanceFeeWon) ?? null,
+    premiumWon: parseWonInput(values.premiumWon) ?? null,
     status: values.status,
   };
 }
 
 function money(value?: number) {
-  return value === undefined ? "미입력" : `${value.toLocaleString("ko-KR")}원`;
+  return formatWon(value, "미입력");
 }
 
 export function CandidateStoreDetailClient({

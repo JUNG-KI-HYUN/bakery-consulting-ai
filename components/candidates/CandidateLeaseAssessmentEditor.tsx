@@ -15,6 +15,8 @@ import {
 } from "@/lib/candidates/candidate-lease-assessment-contract";
 import { calculateCandidateLeaseRiskSummary } from "@/lib/candidates/candidate-lease-risk";
 import type { CandidateStoreAskingTerms } from "@/lib/candidates/candidate-contract";
+import { WonInput } from "@/components/forms/WonInput";
+import { formatWonInput, parseWonInput } from "@/lib/format/won";
 
 type CheckDraft = Record<CandidateLeaseCheckKey, CandidateLeaseCheck>;
 type TermsDraft = Record<keyof CandidateLeaseReviewedTerms, string>;
@@ -57,10 +59,10 @@ function checkDraft(assessment: CandidateLeaseAssessment | null): CheckDraft {
 function termsDraft(assessment: CandidateLeaseAssessment | null, askingTerms: CandidateStoreAskingTerms): TermsDraft {
   const terms: CandidateLeaseReviewedTerms = assessment ? assessment.reviewedTerms : askingTerms;
   return {
-    depositWon: terms.depositWon?.toString() ?? "",
-    monthlyRentWon: terms.monthlyRentWon?.toString() ?? "",
-    maintenanceFeeWon: terms.maintenanceFeeWon?.toString() ?? "",
-    premiumWon: terms.premiumWon?.toString() ?? "",
+    depositWon: formatWonInput(terms.depositWon),
+    monthlyRentWon: formatWonInput(terms.monthlyRentWon),
+    maintenanceFeeWon: formatWonInput(terms.maintenanceFeeWon),
+    premiumWon: formatWonInput(terms.premiumWon),
     leaseTermMonths: terms.leaseTermMonths?.toString() ?? "",
     rentFreeMonths: terms.rentFreeMonths?.toString() ?? "",
     vatTreatment: terms.vatTreatment ?? "",
@@ -70,10 +72,10 @@ function termsDraft(assessment: CandidateLeaseAssessment | null, askingTerms: Ca
 function optionalNumber(value: string) { return value === "" ? null : Number(value); }
 function termsBody(terms: TermsDraft) {
   return {
-    depositWon: optionalNumber(terms.depositWon),
-    monthlyRentWon: optionalNumber(terms.monthlyRentWon),
-    maintenanceFeeWon: optionalNumber(terms.maintenanceFeeWon),
-    premiumWon: optionalNumber(terms.premiumWon),
+    depositWon: parseWonInput(terms.depositWon) ?? null,
+    monthlyRentWon: parseWonInput(terms.monthlyRentWon) ?? null,
+    maintenanceFeeWon: parseWonInput(terms.maintenanceFeeWon) ?? null,
+    premiumWon: parseWonInput(terms.premiumWon) ?? null,
     leaseTermMonths: optionalNumber(terms.leaseTermMonths),
     rentFreeMonths: optionalNumber(terms.rentFreeMonths),
     vatTreatment: terms.vatTreatment || null,
@@ -141,7 +143,7 @@ export function CandidateLeaseAssessmentEditor({ candidateId, caseId, currentAsk
         <h4 className="text-base font-bold text-stone-950">현재 검토 임대조건</h4>
         <p className="mt-1 text-xs text-stone-500">시장 적정성 판정이 아니라 이번 계약검토에 사용한 snapshot입니다.</p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {(["depositWon", "monthlyRentWon", "maintenanceFeeWon", "premiumWon"] as const).map((key, index) => <label key={key} className="block"><span className="field-label">{["보증금 (원)", "월세 (원)", "관리비 (원)", "권리금 (원)"][index]}</span><input type="number" min="0" className="input" value={terms[key]} onChange={(event) => updateTerm(key, event.target.value)} /></label>)}
+          {(["depositWon", "monthlyRentWon", "maintenanceFeeWon", "premiumWon"] as const).map((key, index) => <WonInput key={key} label={["보증금", "월세", "관리비", "권리금"][index]} value={terms[key]} onChange={(value) => updateTerm(key, value)} />)}
           <label className="block"><span className="field-label">계약기간 (개월)</span><input type="number" min="0" className="input" value={terms.leaseTermMonths} onChange={(event) => updateTerm("leaseTermMonths", event.target.value)} /></label>
           <label className="block"><span className="field-label">렌트프리 (개월)</span><input type="number" min="0" className="input" value={terms.rentFreeMonths} onChange={(event) => updateTerm("rentFreeMonths", event.target.value)} /></label>
           <label className="block"><span className="field-label">부가세 처리</span><select className="input" value={terms.vatTreatment} onChange={(event) => updateTerm("vatTreatment", event.target.value)}><option value="">미기록</option>{VAT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>

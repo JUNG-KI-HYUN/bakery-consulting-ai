@@ -43,6 +43,9 @@ test("all minimal lifecycle stages have Korean user labels", () => {
 
 test("Case detail exposes Case-aware market navigation, candidates and linked analysis states", () => {
   const detail = read("components/cases/CaseDetailClient.tsx");
+  const editors = read("components/cases/ConsultationInputEditors.tsx");
+  const reportDocument = read("components/reports/CandidateCustomerReportDocument.tsx");
+  const wonInput = read("components/forms/WonInput.tsx");
   for (const copy of ["아직 연결된 분석이 없습니다", "후보점포가 없습니다", "아직 생성된 리포트가 없습니다"]) {
     assert.match(detail, new RegExp(copy));
   }
@@ -57,6 +60,29 @@ test("Case detail exposes Case-aware market navigation, candidates and linked an
   for (const copy of ["고객 상담정보", "FRAMEONE 권장조건", "후보점포 실제조건", "고객이 상담 과정에서 제공한 정보입니다", "시장·시설 확인에 따라 변경될 수 있습니다"]) {
     assert.match(detail, new RegExp(copy));
   }
+  for (const copy of ["고객 상담정보 입력·수정", "FRAMEONE 권장안 입력·수정", "고객 상담정보 저장", "FRAMEONE 권장안 저장"]) {
+    assert.match(editors, new RegExp(copy));
+  }
+  assert.match(editors, /customerProfile: customerProfile/);
+  assert.match(editors, /preferredArea:/);
+  for (const field of ["브랜드명", "총 가용자본", "희망지역", "희망 최소면적", "희망 최대면적"]) {
+    assert.match(editors, new RegExp(field));
+  }
+  assert.match(editors, /권장 월세 상한/);
+  assert.match(editors, /사업성·자본계획을 기준으로 상담자가 제안한 월세 검토 상한입니다/);
+  assert.match(detail, /recommendation\.recommendedMonthlyRentMaxWon/);
+  assert.match(detail, /primaryCandidate\.currentAskingTerms\.monthlyRentWon/);
+  assert.match(detail, /추천 요청/);
+  assert.match(reportDocument, /권장 월세 상한/);
+  assert.match(reportDocument, /recommendedMonthlyRentMaxWon/);
+  assert.match(wonInput, /inputMode="numeric"/);
+  assert.match(wonInput, />원<\/span>/);
+  assert.match(read("components/cases/CaseFormFields.tsx"), /WonInput/);
+  assert.match(read("components/candidates/CandidateStoreFormFields.tsx"), /WonInput/);
+  assert.match(detail, /record\.preferredArea \?\? "확인 필요"/);
+  assert.equal(detail.includes("customer.areaPreferenceNote ?? \"확인 필요\""), false);
+  assert.match(editors, /frameoneRecommendation: frameoneRecommendation/);
+  assert.equal(`${detail}${editors}`.includes("AI 자동 추천"), false);
   assert.match(detail, /Report 열기/);
   const page = read("app/cases/[caseId]/page.tsx");
   assert.match(page, /listCandidateCustomerReportSnapshotsByCase/);
