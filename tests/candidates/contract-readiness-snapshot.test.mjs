@@ -421,9 +421,9 @@ test("Candidate Contract Readiness Snapshot은 현재 평가와 명시적 이력
       assert.equal((await getView(scenario)).body.isLatestSnapshotStale, true);
     });
 
-    await t.test("repository reload 후에도 Economic 선택을 유지한다", async () => {
+    await t.test("기존 Economic 선택을 변경하면 exact identity가 durable하게 교체된다", async () => {
       const scenario = await createScenario();
-      replaceRun(scenario.runId, (run) => { run.sections.economic.versions.push(economicVersion(scenario.runId, { generatedAt: LATER })); });
+      replaceRun(scenario.runId, (run) => { run.sections.economic.versions.push(economicVersion(scenario.runId, { generatedAt: LATER, assumptionRevision: 2 })); });
       await economicSelection.PUT(request("http://localhost", "PUT", {
         caseId: scenario.caseRecord.caseId,
         analysisRunId: scenario.runId,
@@ -431,12 +431,57 @@ test("Candidate Contract Readiness Snapshot은 현재 평가와 명시적 이력
         assumptionRevision: 1,
         engineVersion: "economic-feasibility-v1",
       }), scenario.params);
+      const changed = await economicSelection.PUT(request("http://localhost", "PUT", {
+        caseId: scenario.caseRecord.caseId,
+        analysisRunId: scenario.runId,
+        generatedAt: LATER,
+        assumptionRevision: 2,
+        engineVersion: "economic-feasibility-v1",
+      }), scenario.params);
+      assert.equal(changed.status, 200);
+      const changedSelection = (await changed.json()).selection;
+      assert.deepEqual({ ...changedSelection, selectedAt: "<timestamp>" }, {
+        schemaVersion: "frameone.candidate-economic-selection.v1",
+        candidateId: scenario.candidate.candidateId,
+        caseId: scenario.caseRecord.caseId,
+        analysisRunId: scenario.runId,
+        generatedAt: LATER,
+        assumptionRevision: 2,
+        engineVersion: "economic-feasibility-v1",
+        selectedAt: "<timestamp>",
+      });
+      assert.ok(Number.isFinite(Date.parse(changedSelection.selectedAt)));
       const repositoryPath = path.join(repositoryRoot, "lib/candidates/candidate-economic-selection-repository.ts");
       delete loadModule.cache[loadModule.resolve(repositoryPath)];
       const freshRepository = loadModule(repositoryPath);
       const restored = await freshRepository.getCandidateEconomicSelection(scenario.candidate.candidateId, scenario.caseRecord.caseId);
-      assert.equal(restored.generatedAt, AT);
+      assert.equal(restored.generatedAt, LATER);
       assert.equal(restored.analysisRunId, scenario.runId);
+      assert.equal(restored.assumptionRevision, 2);
+      assert.equal(restored.engineVersion, "economic-feasibility-v1");
+      const stored = JSON.parse(fs.readFileSync(files.economicSelections, "utf8"));
+      const matching = stored.filter((item) => item.candidateId === scenario.candidate.candidateId && item.caseId === scenario.caseRecord.caseId);
+      assert.equal(matching.length, 1);
+      assert.equal(matching[0].generatedAt, LATER);
+    });
+
+    await t.test("Economic 선택 저장 실패는 성공 응답을 반환하지 않는다", async () => {
+      const scenario = await createScenario();
+      const original = process.env.FRAMEONE_CANDIDATE_ECONOMIC_SELECTIONS_FILE;
+      process.env.FRAMEONE_CANDIDATE_ECONOMIC_SELECTIONS_FILE = tempRoot;
+      try {
+        const response = await economicSelection.PUT(request("http://localhost", "PUT", {
+          caseId: scenario.caseRecord.caseId,
+          analysisRunId: scenario.runId,
+          generatedAt: AT,
+          assumptionRevision: 1,
+          engineVersion: "economic-feasibility-v1",
+        }), scenario.params);
+        assert.equal(response.status, 500);
+        assert.doesNotMatch((await response.json()).message, /선택했습니다/);
+      } finally {
+        process.env.FRAMEONE_CANDIDATE_ECONOMIC_SELECTIONS_FILE = original;
+      }
     });
 
     await t.test("repository reload 후에도 Snapshot 이력을 읽는다", async () => {

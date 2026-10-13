@@ -72,6 +72,16 @@ async function writeSelections(filePath: string, selections: CandidateEconomicSe
   }
 }
 
+function currentSelection(
+  selections: CandidateEconomicSelection[],
+  candidateId: string,
+  caseId: string,
+) {
+  return selections
+    .filter((item) => item.candidateId === candidateId && item.caseId === caseId)
+    .sort((left, right) => Date.parse(right.selectedAt) - Date.parse(left.selectedAt))[0] ?? null;
+}
+
 async function ownedCandidate(candidateId: string, caseId: string) {
   if (!caseId.trim()) throw new CandidateEconomicSelectionReferenceError("caseId는 필수입니다.", 400);
   const candidate = await getCandidateStore(candidateId);
@@ -104,7 +114,7 @@ export async function getCandidateEconomicSelection(candidateId: string, caseId:
   await pendingWrite;
   await ownedCandidate(candidateId, caseId);
   const selections = await readSelections(selectionFilePath());
-  return structuredClone(selections.find((item) => item.candidateId === candidateId && item.caseId === caseId) ?? null);
+  return structuredClone(currentSelection(selections, candidateId, caseId));
 }
 
 export async function getCandidateEconomicSelectionView(candidateId: string, caseId: string): Promise<CandidateEconomicSelectionView> {
@@ -122,7 +132,7 @@ export async function getCandidateEconomicSelectionView(candidateId: string, cas
   return {
     analysisRunId: run?.analysisRunId ?? null,
     versions,
-    selection: structuredClone(selections.find((item) => item.candidateId === candidateId && item.caseId === caseId) ?? null),
+    selection: structuredClone(currentSelection(selections, candidateId, caseId)),
   };
 }
 
@@ -162,10 +172,15 @@ export function saveCandidateEconomicSelection(candidateId: string, input: unkno
       ...versionIdentity(selected),
       selectedAt: new Date().toISOString(),
     };
-    const previousIndex = selections.findIndex((item) => item.candidateId === candidateId && item.caseId === requested.caseId);
-    if (previousIndex >= 0) selections[previousIndex] = selection;
-    else selections.push(selection);
-    await writeSelections(filePath, selections);
+    const nextSelections = selections.filter((item) => item.candidateId !== candidateId || item.caseId !== requested.caseId);
+    nextSelections.push(selection);
+    await writeSelections(filePath, nextSelections);
+    const persisted = currentSelection(await readSelections(filePath), candidateId, requested.caseId);
+    if (!persisted
+      || persisted.selectedAt !== selection.selectedAt
+      || !sameEconomicVersionIdentity(persisted, selection)) {
+      throw new CandidateEconomicSelectionRepositoryError("저장된 Economic 선택값을 확인하지 못했습니다.");
+    }
     result = {
       analysisRunId: run.analysisRunId,
       versions: versions.map((version) => ({
@@ -174,7 +189,7 @@ export function saveCandidateEconomicSelection(candidateId: string, input: unkno
         baseMonthlySales: version.result.scenarios?.base?.monthlySales ?? null,
         validationErrorCount: version.result.validation.errors.length,
       })),
-      selection,
+      selection: persisted,
     };
   });
   pendingWrite = operation.then(() => undefined, () => undefined);
