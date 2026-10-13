@@ -192,6 +192,40 @@ test("사용자 목표부담률 기준 세 시나리오 월세상한을 계산�
   assert.equal(result.rentCeiling.upsideRentCeiling, 3_000_000);
 });
 
+test("목표 월세부담률 미설정은 월세상한만 제외하고 손익·BEP·민감도 계산을 허용한다", () => {
+  const withoutTarget = plan();
+  delete withoutTarget.rentPlanning.targetRentBurdenRate;
+  const result = calculate(withoutTarget);
+
+  assert.deepEqual(result.validation.errors, []);
+  assert.equal(result.inputs.rentPlanning.targetRentBurdenRate, undefined);
+  assert.equal(result.scenarios.base.monthlySales, 25_000_000);
+  assert.equal(result.scenarios.base.estimatedOperatingProfit, 3_750_000);
+  assert.equal(result.scenarios.base.rentBurdenRate, 0.12);
+  assert.ok(result.bep.monthlyBepSales > 0);
+  assert.ok(result.bep.dailyBepSales > 0);
+  assert.ok(result.bep.requiredDailyTransactionsForBep > 0);
+  assert.equal(result.stressTests.length, 6);
+  assert.ok(result.stressTests.every((item) => item.estimatedOperatingProfit !== null));
+  assert.deepEqual(result.rentCeiling, {
+    targetRentBurdenRate: null,
+    conservativeRentCeiling: null,
+    baseRentCeiling: null,
+    upsideRentCeiling: null,
+  });
+});
+
+test("목표 월세부담률의 명시적 0%는 기존처럼 유효하고 범위 밖 값은 거부한다", () => {
+  const zero = calculate(plan({ rentPlanning: { targetRentBurdenRate: 0 } }));
+  assert.deepEqual(zero.validation.errors, []);
+  assert.equal(zero.rentCeiling.targetRentBurdenRate, 0);
+  assert.equal(zero.rentCeiling.baseRentCeiling, 0);
+
+  const invalid = calculate(plan({ rentPlanning: { targetRentBurdenRate: 1.01 } }));
+  assert.ok(invalid.validation.errors.some((message) => message.includes("목표 월세부담률")));
+  assert.equal(invalid.bep.monthlyBepSales, null);
+});
+
 test("BASE 민감도 6종은 각 충격만 독립 적용한다", () => {
   const result = calculate();
   const byKey = Object.fromEntries(result.stressTests.map((item) => [item.key, item]));

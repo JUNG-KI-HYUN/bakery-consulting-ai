@@ -11,10 +11,19 @@ import {
 import { analyzeRentalMarket } from "@/lib/research/rental-market-analysis";
 import { listResearchRecords } from "@/lib/research/research-repository";
 import { getAnalysisRunSnapshot } from "@/lib/analysis-runs/analysis-run-repository";
+import { getCase } from "@/lib/cases/case-repository";
 import {
   AnalysisWorkflow,
 } from "../AnalysisWorkflow";
 import EconomicFeasibilityClient from "./EconomicFeasibilityClient";
+import { EconomicVersionSelector } from "./EconomicVersionSelector";
+import {
+  economicVersionHref,
+  economicVersionIdentity,
+  hasEconomicVersionSelectionQuery,
+  parseEconomicVersionSelection,
+  resolveEconomicWorkspaceVersion,
+} from "@/lib/economic-feasibility/version-selection";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +54,17 @@ export default async function EconomicFeasibilityPage({
   const persistedRun = activeTarget
     ? await getAnalysisRunSnapshot(activeTarget.analysisRunId)
     : null;
+  const caseRecord = caseId ? await getCase(caseId) : null;
+  const economicVersions = persistedRun?.sections.economic?.versions ?? [];
+  const requestedSelection = parseEconomicVersionSelection(query);
+  const selectionResolution = hasEconomicVersionSelectionQuery(query) && !requestedSelection
+    ? { selected: null, selectionRequired: true, explicit: true }
+    : resolveEconomicWorkspaceVersion(economicVersions, requestedSelection);
+  const selectionHrefs = Object.fromEntries(economicVersions.map((version) => [
+    version.generatedAt,
+    economicVersionHref("/markets/economic-feasibility", query, economicVersionIdentity(version)),
+  ]));
+  const clearRecoverySelectionHref = economicVersionHref("/markets/economic-feasibility", query, null);
   let officialMarketData: BakeryOfficialMarketData | null = null;
   let officialStatus = "현재 분석대상에 연결된 공식통계 참고상권이 없습니다.";
   if (activeTarget?.officialReference) {
@@ -71,13 +91,24 @@ export default async function EconomicFeasibilityPage({
         </div>
         <Link href={activeAnalysisTargetHref("/markets", activeTarget)} className="btn-outline">상권분석으로 돌아가기</Link>
       </header>
+      <EconomicVersionSelector
+        versions={economicVersions}
+        selectedGeneratedAt={selectionResolution.selected?.generatedAt ?? null}
+        selectionRequired={selectionResolution.selectionRequired}
+        selectionHrefs={selectionHrefs}
+      />
       <EconomicFeasibilityClient
+        key={`${activeTarget?.analysisRunId ?? "none"}:${selectionResolution.selected?.generatedAt ?? "none"}`}
         activeTarget={activeTarget}
         rentalMarketResult={rentalMarketResult}
         officialMarketData={officialMarketData}
         officialStatus={officialStatus}
-        initialEconomicResult={persistedRun?.sections.economic?.versions.at(-1) ?? null}
+        initialEconomicResult={selectionResolution.selected}
         initialRentalConfirmation={persistedRun?.sections.rental?.versions.at(-1)?.result.confirmation ?? null}
+        customerTargetMonthlyIncomeWon={caseRecord?.customerProfile?.targetMonthlyOwnerIncomeWon}
+        frameoneRecommendedMonthlyRentMaxWon={caseRecord?.frameoneRecommendation?.recommendedMonthlyRentMaxWon}
+        versionSelectionRequired={selectionResolution.selectionRequired}
+        clearRecoverySelectionHref={selectionResolution.explicit ? clearRecoverySelectionHref : null}
       />
     </div>
   );

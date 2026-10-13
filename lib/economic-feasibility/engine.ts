@@ -15,8 +15,8 @@ const SCENARIO_TRANSACTION_FIELDS: Record<EconomicScenarioKey, keyof EconomicPla
   upside: "upsideDailyTransactions",
 };
 
-function finiteNonnegative(value: number) {
-  return Number.isFinite(value) && value >= 0;
+function finiteNonnegative(value: number | undefined) {
+  return value !== undefined && Number.isFinite(value) && value >= 0;
 }
 
 function safeRatio(numerator: number | null, denominator: number | null) {
@@ -96,6 +96,7 @@ function calculateScenario(
   const estimatedOperatingProfit = monthlySales !== null && totalCost !== null
     ? monthlySales - totalCost
     : null;
+  const targetRentBurdenRate = plan.rentPlanning.targetRentBurdenRate;
 
   return {
     key,
@@ -123,9 +124,10 @@ function calculateScenario(
       ? safeRatio(materialCost + plan.fixedMonthlyCosts.laborMonthly, monthlySales)
       : null,
     rentCeilingByTargetRate: monthlySales !== null
-      && finiteNonnegative(plan.rentPlanning.targetRentBurdenRate)
-      && plan.rentPlanning.targetRentBurdenRate <= 1
-      ? monthlySales * plan.rentPlanning.targetRentBurdenRate
+      && targetRentBurdenRate !== undefined
+      && finiteNonnegative(targetRentBurdenRate)
+      && targetRentBurdenRate <= 1
+      ? monthlySales * targetRentBurdenRate
       : null,
   };
 }
@@ -227,7 +229,9 @@ function validatePlan(plan: EconomicPlanInput) {
     if (value !== undefined && !finiteNonnegative(value)) errors.push(`${name}은(는) 0 이상의 숫자여야 합니다.`);
   }
   const target = plan.rentPlanning.targetRentBurdenRate;
-  if (!(Number.isFinite(target) && target >= 0 && target <= 1)) errors.push("목표 월세부담률은 0% 이상 100% 이하로 입력해야 합니다.");
+  if (target !== undefined && !(Number.isFinite(target) && target >= 0 && target <= 1)) {
+    errors.push("목표 월세부담률은 0% 이상 100% 이하로 입력해야 합니다.");
+  }
   const variableCostRate = sumIfValid(variableRateValues(plan));
   if (variableCostRate !== null && variableCostRate >= 1) warnings.push("총 변동비율이 100% 이상이므로 BEP를 계산할 수 없습니다.");
   return { errors, warnings };
@@ -358,7 +362,7 @@ export function calculateEconomicFeasibility(input: EconomicFeasibilityEngineInp
     scenarios,
     bep: { variableCostRate, contributionMarginRate, monthlyBepSales, dailyBepSales, requiredDailyTransactionsForBep, baseBufferAmount, baseBufferRate },
     rentCeiling: {
-      targetRentBurdenRate: plan.rentPlanning.targetRentBurdenRate,
+      targetRentBurdenRate: plan.rentPlanning.targetRentBurdenRate ?? null,
       conservativeRentCeiling: scenarios.conservative.rentCeilingByTargetRate,
       baseRentCeiling,
       upsideRentCeiling: scenarios.upside.rentCeilingByTargetRate,

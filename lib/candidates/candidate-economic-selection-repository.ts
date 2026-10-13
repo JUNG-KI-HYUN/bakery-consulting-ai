@@ -151,6 +151,9 @@ export function saveCandidateEconomicSelection(candidateId: string, input: unkno
     const versions = run.sections.economic?.versions ?? [];
     const selected = versions.find((version) => sameEconomicVersionIdentity(versionIdentity(version), requested));
     if (!selected) throw new CandidateEconomicSelectionReferenceError("해당 Economic version을 찾을 수 없습니다.", 400);
+    if (selected.result.validation.errors.length > 0) {
+      throw new CandidateEconomicSelectionReferenceError("유효하지 않은 Economic version은 판정 기준으로 선택할 수 없습니다.", 400);
+    }
     const selections = await readSelections(filePath);
     const selection: CandidateEconomicSelection = {
       schemaVersion: CANDIDATE_ECONOMIC_SELECTION_SCHEMA_VERSION,

@@ -38,7 +38,7 @@ export interface EconomicPlanInput {
     deliveryFixedMonthly?: number;
   };
   rentPlanning: {
-    targetRentBurdenRate: number;
+    targetRentBurdenRate?: number;
   };
 }
 
@@ -139,7 +139,7 @@ export interface EconomicFeasibilityResult {
     baseBufferRate: number | null;
   };
   rentCeiling: {
-    targetRentBurdenRate: number;
+    targetRentBurdenRate: number | null;
     conservativeRentCeiling: number | null;
     baseRentCeiling: number | null;
     upsideRentCeiling: number | null;

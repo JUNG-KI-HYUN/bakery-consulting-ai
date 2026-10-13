@@ -72,7 +72,7 @@ function confirmation(analysisRunId = RUN_A, officialMarketCode = "100001", sele
 }
 
 function economicResult(analysisRunId = RUN_A, officialMarketCode = "100001", assumptionRevision = 1) {
-  return { generatedAt: AT, binding: { analysisRunId, officialBenchmarkIdentity: { officialMarketCode, quarterCode: "20262", industryCode: "CS100005" }, rentalConfirmationId: "rental-scope:one", assumptionRevision }, result: { schemaVersion: "frameone.economic-feasibility.v1", metadata: { generatedAt: AT } } };
+  return { generatedAt: AT, binding: { analysisRunId, officialBenchmarkIdentity: { officialMarketCode, quarterCode: "20262", industryCode: "CS100005" }, rentalConfirmationId: "rental-scope:one", assumptionRevision }, result: { schemaVersion: "frameone.economic-feasibility.v1", validation: { errors: [], warnings: [] }, metadata: { generatedAt: AT } } };
 }
 
 test("Analysis Run Snapshot registry persists only validated run-bound results", async (t) => {
@@ -136,6 +136,31 @@ test("Analysis Run Snapshot registry persists only validated run-bound results",
       assert.throws(() => repository.saveAnalysisRunSection({ section: "economic", target: target(), result: economicResult(RUN_A, "100001", -1) }), /revision/);
       const saved = await repository.saveAnalysisRunSection({ section: "economic", target: target(), result: economicResult() });
       assert.equal(saved.sections.economic.versions[0].binding.assumptionRevision, 1);
+    });
+
+    await t.test("invalid Economic result is rejected without appending a version", async () => {
+      const before = await repository.getAnalysisRunSnapshot(RUN_A);
+      const invalid = economicResult();
+      invalid.generatedAt = "2026-10-01T03:00:00.000Z";
+      invalid.result.validation.errors = ["객단가는 0보다 커야 합니다."];
+      assert.throws(
+        () => repository.saveAnalysisRunSection({ section: "economic", target: target(), result: invalid }),
+        /INVALID_ECONOMIC_RESULT/,
+      );
+      const after = await repository.getAnalysisRunSnapshot(RUN_A);
+      assert.equal(after.sections.economic.versions.length, before.sections.economic.versions.length);
+    });
+
+    await t.test("legacy invalid Economic version remains readable", async () => {
+      const registry = JSON.parse(fs.readFileSync(registryFile, "utf8"));
+      const run = registry.runs.find((item) => item.analysisRunId === RUN_A);
+      const invalid = economicResult();
+      invalid.generatedAt = "2026-09-30T03:00:00.000Z";
+      invalid.result.validation.errors = ["legacy invalid fixture"];
+      run.sections.economic.versions.push({ generatedAt: invalid.generatedAt, binding: invalid.binding, result: invalid.result });
+      fs.writeFileSync(registryFile, JSON.stringify(registry));
+      const restored = await repository.getAnalysisRunSnapshot(RUN_A);
+      assert.equal(restored.sections.economic.versions.at(-1).result.validation.errors[0], "legacy invalid fixture");
     });
 
     await t.test("new generatedAt appends a version instead of overwriting", async () => {

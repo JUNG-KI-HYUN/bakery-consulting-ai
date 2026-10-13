@@ -252,6 +252,13 @@ export function normalizeSectionSave(input: AnalysisRunSectionSaveInput) {
   if (!Number.isInteger(input.result.binding.assumptionRevision) || input.result.binding.assumptionRevision < 0) {
     throw new AnalysisRunSnapshotValidationError("Economic assumption revision이 올바르지 않습니다.");
   }
+  const validationErrors = input.result.result?.validation?.errors;
+  if (!Array.isArray(validationErrors) || validationErrors.some((error) => typeof error !== "string")) {
+    throw new AnalysisRunSnapshotValidationError("INVALID_ECONOMIC_RESULT: Economic validation 결과가 올바르지 않습니다.");
+  }
+  if (validationErrors.length > 0) {
+    throw new AnalysisRunSnapshotValidationError("INVALID_ECONOMIC_RESULT: validation 오류가 있는 Economic result는 저장할 수 없습니다.");
+  }
   return {
     section: input.section,
     targetSnapshot,

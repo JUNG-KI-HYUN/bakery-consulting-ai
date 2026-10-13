@@ -86,6 +86,7 @@ export function CandidateEconomicVersionSelector({
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         {view.versions.map((version) => {
           const selected = Boolean(view.selection && sameEconomicVersionIdentity(view.selection, version));
+          const invalid = version.validationErrorCount > 0;
           const key = identityKey(version);
           return (
             <article key={key} className={`rounded-xl border p-4 ${selected ? "border-[#b99b5e] bg-[#fbf7ed]" : "border-stone-200 bg-white"}`}>
@@ -100,9 +101,9 @@ export function CandidateEconomicVersionSelector({
                 <div><dt className="text-stone-500">기준 월매출</dt><dd className="mt-1 font-semibold text-stone-900">{money(version.baseMonthlySales)}</dd></div>
                 <div><dt className="text-stone-500">월 BEP</dt><dd className="mt-1 font-semibold text-stone-900">{money(version.monthlyBepSales)}</dd></div>
               </dl>
-              {version.validationErrorCount > 0 ? <p className="mt-3 text-xs font-semibold text-amber-800">입력 검증 오류 {version.validationErrorCount}건 — READY 판단에 사용할 수 없습니다.</p> : null}
-              <button type="button" className="btn-outline mt-4 w-full sm:w-auto" onClick={() => void selectVersion(version)} disabled={selected || pendingKey !== null}>
-                {pendingKey === key ? "선택 중…" : selected ? "현재 판정 기준" : "판정 기준으로 사용"}
+              {invalid ? <p className="mt-3 text-xs font-semibold text-amber-800">유효하지 않은 과거 저장본 · 입력 검증 오류 {version.validationErrorCount}건 — 판정 기준으로 선택할 수 없습니다.</p> : null}
+              <button type="button" className="btn-outline mt-4 w-full sm:w-auto" onClick={() => void selectVersion(version)} disabled={invalid || selected || pendingKey !== null}>
+                {invalid ? "유효하지 않아 선택 불가" : pendingKey === key ? "선택 중…" : selected ? "현재 판정 기준" : "판정 기준으로 사용"}
               </button>
             </article>
           );

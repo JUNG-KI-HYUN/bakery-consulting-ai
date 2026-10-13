@@ -1,8 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { calculateEconomicFeasibility } from "@/lib/economic-feasibility/engine";
 import type { EconomicPlanInput, EconomicScenarioResult } from "@/lib/economic-feasibility/types";
+import {
+  economicPlanDraftFromResult,
+  economicPlanFromDraft,
+  economicResultStatusForDraft,
+  emptyEconomicPlanDraft,
+  type EconomicPlanDraft,
+} from "@/lib/economic-feasibility/assumption-draft";
 import type { BakeryOfficialMarketData } from "@/lib/market-data/services/bakery-official-market";
 import type { ActiveAnalysisTarget } from "@/lib/market-data/basic-location/run";
 import type { RentalMarketResult, RentalScopeConfirmation } from "@/lib/research/types";
@@ -11,13 +19,15 @@ import {
   isRentalScopeConfirmationCurrent,
 } from "@/lib/research/rental-scope";
 import {
-  economicResultStatus,
   officialBenchmarkIdentity,
   type BoundEconomicResult,
   type EconomicResultBinding,
 } from "@/lib/economic-feasibility/workspace-binding";
 import { AnalysisTargetHeader } from "../AnalysisWorkflow";
 import { persistAnalysisRunSection } from "@/lib/analysis-runs/analysis-run-client";
+import { WonInput } from "@/components/forms/WonInput";
+import { formatWon, formatWonInput, parseWonInput } from "@/lib/format/won";
+import { calculateTargetIncomeRequiredDemand } from "@/lib/reports/candidate-customer-report";
 
 const ECONOMIC_WORKSPACE_SESSION_KEY = "frameone:economic-workspace:v1";
 
@@ -47,7 +57,7 @@ const initialPlan: EconomicPlanInput = {
     otherFixedMonthly: 0,
     deliveryFixedMonthly: 0,
   },
-  rentPlanning: { targetRentBurdenRate: 0 },
+  rentPlanning: {},
 };
 
 const moneyFields: Array<[keyof EconomicPlanInput["fixedMonthlyCosts"], string]> = [
@@ -70,10 +80,6 @@ const rateFields: Array<[keyof EconomicPlanInput["variableCostRates"], string]> 
   ["otherVariableRate", "기타 변동비율"],
 ];
 
-function numericValue(value: string) {
-  return value === "" ? 0 : Number(value);
-}
-
 function Money({ value }: { value: number | null }) {
   if (value === null || !Number.isFinite(value)) return <span>계산 불가</span>;
   const rounded = Math.round(value);
@@ -86,8 +92,8 @@ function Percent({ value }: { value: number | null }) {
 
 function NumberInput({ label, value, onChange, suffix = "원", step = 1 }: {
   label: string;
-  value: number;
-  onChange: (value: number) => void;
+  value: number | null;
+  onChange: (value: number | null) => void;
   suffix?: string;
   step?: number;
 }) {
@@ -95,7 +101,7 @@ function NumberInput({ label, value, onChange, suffix = "원", step = 1 }: {
     <label className="block text-xs font-semibold text-slate-600">
       {label}
       <span className="mt-1 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2">
-        <input className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" type="number" min="0" step={step} value={value || ""} onChange={(event) => onChange(numericValue(event.target.value))} />
+        <input className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none" type="number" min="0" step={step} value={value ?? ""} onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))} />
         <span className="text-slate-400">{suffix}</span>
       </span>
     </label>
@@ -106,7 +112,7 @@ function Metric({ label, children }: { label: string; children: React.ReactNode 
   return <div><dt className="text-xs text-slate-500">{label}</dt><dd className="mt-1 font-bold text-[#0B1220]">{children}</dd></div>;
 }
 
-function ScenarioCard({ title, scenario, rent, labor }: { title: string; scenario: EconomicScenarioResult; rent: number; labor: number }) {
+function ScenarioCard({ title, scenario, rent, labor }: { title: string; scenario: EconomicScenarioResult; rent: number | null; labor: number | null }) {
   return (
     <article className="rounded-xl border border-slate-200 bg-white p-4">
       <h4 className="text-base font-bold text-[#0B1220]">{title}</h4>
@@ -143,6 +149,10 @@ export default function EconomicFeasibilityClient({
   officialStatus,
   initialEconomicResult,
   initialRentalConfirmation,
+  customerTargetMonthlyIncomeWon,
+  frameoneRecommendedMonthlyRentMaxWon,
+  versionSelectionRequired,
+  clearRecoverySelectionHref,
 }: {
   activeTarget: ActiveAnalysisTarget | null;
   rentalMarketResult: RentalMarketResult;
@@ -150,9 +160,16 @@ export default function EconomicFeasibilityClient({
   officialStatus: string;
   initialEconomicResult: BoundEconomicResult | null;
   initialRentalConfirmation: RentalScopeConfirmation | null;
+  customerTargetMonthlyIncomeWon?: number;
+  frameoneRecommendedMonthlyRentMaxWon?: number;
+  versionSelectionRequired: boolean;
+  clearRecoverySelectionHref: string | null;
 }) {
-  const [plan, setPlan] = useState(initialPlan);
-  const [assumptionRevision, setAssumptionRevision] = useState(0);
+  const router = useRouter();
+  const [plan, setPlan] = useState<EconomicPlanDraft>(() => initialEconomicResult
+    ? economicPlanDraftFromResult(initialEconomicResult)
+    : emptyEconomicPlanDraft());
+  const [assumptionRevision, setAssumptionRevision] = useState(() => initialEconomicResult?.binding.assumptionRevision ?? 0);
   const [rentalConfirmation, setRentalConfirmation] = useState<RentalScopeConfirmation | null>(initialRentalConfirmation);
   const [rentalScopeBasis, setRentalScopeBasis] = useState(initialRentalConfirmation?.basis ?? "");
   const [hydrated, setHydrated] = useState(false);
@@ -221,33 +238,23 @@ export default function EconomicFeasibilityClient({
 
   const [calculation, setCalculation] = useState<BoundEconomicResult | null>(() => {
     if (initialEconomicResult) return initialEconomicResult;
-    if (!activeTarget) return null;
-    const generatedAt = new Date().toISOString();
-    return {
-          generatedAt,
-          binding: {
-            analysisRunId: activeTarget.analysisRunId,
-            officialBenchmarkIdentity: officialBenchmarkIdentity(officialMarketData),
-            rentalConfirmationId: null,
-            assumptionRevision: 0,
-          },
-          result: calculateEconomicFeasibility({
-            plan: initialPlan,
-            officialMarketData,
-            rentalMarketResult,
-            rentalMarketScopeConfirmation: null,
-            generatedAt,
-          }),
-        };
+    return null;
   });
 
   const runAndPersistCalculation = useCallback(() => {
-    const next = calculateBoundResult(plan, assumptionRevision, rentalConfirmation);
+    if (versionSelectionRequired) return;
+    const validated = economicPlanFromDraft(plan);
+    if (!validated.plan) return;
+    const next = calculateBoundResult(validated.plan, assumptionRevision, rentalConfirmation);
     setCalculation(next);
     if (next && activeTarget) {
-      void persistAnalysisRunSection({ section: "economic", target: activeTarget, result: next }).catch(() => undefined);
+      void persistAnalysisRunSection({ section: "economic", target: activeTarget, result: next })
+        .then(() => {
+          if (clearRecoverySelectionHref) router.replace(clearRecoverySelectionHref, { scroll: false });
+        })
+        .catch(() => undefined);
     }
-  }, [activeTarget, assumptionRevision, calculateBoundResult, plan, rentalConfirmation]);
+  }, [activeTarget, assumptionRevision, calculateBoundResult, clearRecoverySelectionHref, plan, rentalConfirmation, router, versionSelectionRequired]);
 
   const updateRentalConfirmation = useCallback((checked: boolean) => {
     if (!checked || !activeTarget) {
@@ -279,14 +286,16 @@ export default function EconomicFeasibilityClient({
         const raw = sessionStorage.getItem(ECONOMIC_WORKSPACE_SESSION_KEY);
         if (raw) {
           const stored = JSON.parse(raw) as {
-            plan?: EconomicPlanInput;
+            analysisRunId?: string;
+            plan?: EconomicPlanDraft;
             assumptionRevision?: number;
             rentalScopeBasis?: string;
             rentalConfirmation?: RentalScopeConfirmation | null;
             calculation?: BoundEconomicResult | null;
           };
-          if (stored.plan && typeof stored.plan === "object") setPlan(stored.plan);
-          if (Number.isInteger(stored.assumptionRevision) && stored.assumptionRevision! >= 0) setAssumptionRevision(stored.assumptionRevision!);
+          const sameRun = stored.analysisRunId === activeTarget?.analysisRunId;
+          if (!initialEconomicResult && !versionSelectionRequired && sameRun && stored.plan && typeof stored.plan === "object") setPlan(stored.plan);
+          if (!initialEconomicResult && !versionSelectionRequired && sameRun && Number.isInteger(stored.assumptionRevision) && stored.assumptionRevision! >= 0) setAssumptionRevision(stored.assumptionRevision!);
           if (typeof stored.rentalScopeBasis === "string") setRentalScopeBasis(stored.rentalScopeBasis);
           const storedConfirmation = stored.rentalConfirmation ?? null;
           setRentalConfirmation(isRentalScopeConfirmationCurrent(storedConfirmation, {
@@ -294,7 +303,7 @@ export default function EconomicFeasibilityClient({
             officialMarketCode: activeTarget?.officialReference?.marketCode,
             selectedRecordIds: rentalMarketResult.selectedRecordIds,
           }) ? storedConfirmation : null);
-          if (stored.calculation) setCalculation(stored.calculation);
+          // Persisted server results are the only source for a current calculation.
         }
       } catch {
         // Invalid tab-scoped data is ignored; no persistent data is changed.
@@ -303,12 +312,13 @@ export default function EconomicFeasibilityClient({
       }
     });
     return () => { active = false; };
-  }, [activeTarget?.analysisRunId, activeTarget?.officialReference?.marketCode, rentalMarketResult.selectedRecordIds]);
+  }, [activeTarget?.analysisRunId, activeTarget?.officialReference?.marketCode, initialEconomicResult, rentalMarketResult.selectedRecordIds, versionSelectionRequired]);
 
   useEffect(() => {
     if (!hydrated) return;
     try {
       sessionStorage.setItem(ECONOMIC_WORKSPACE_SESSION_KEY, JSON.stringify({
+        analysisRunId: activeTarget?.analysisRunId ?? null,
         plan,
         assumptionRevision,
         rentalScopeBasis,
@@ -319,42 +329,52 @@ export default function EconomicFeasibilityClient({
       // The server-side Analysis Run snapshot remains available when the
       // browser's tab-scoped storage quota is exhausted.
     }
-  }, [assumptionRevision, calculation, hydrated, plan, rentalConfirmation, rentalScopeBasis]);
+  }, [activeTarget?.analysisRunId, assumptionRevision, calculation, hydrated, plan, rentalConfirmation, rentalScopeBasis]);
 
-  const updatePlan = useCallback((updater: (current: EconomicPlanInput) => EconomicPlanInput) => {
+  const updatePlan = useCallback((updater: (current: EconomicPlanDraft) => EconomicPlanDraft) => {
     setPlan((current) => updater(current));
     setAssumptionRevision((current) => current + 1);
   }, []);
-  const resultStatus = economicResultStatus(calculation, expectedBinding);
+  const draftValidation = economicPlanFromDraft(plan);
+  const resultStatus = economicResultStatusForDraft(calculation, expectedBinding, plan);
   const result = calculation?.result ?? calculateEconomicFeasibility({
-    plan,
+    plan: initialPlan,
     officialMarketData,
     rentalMarketResult,
     rentalMarketScopeConfirmation: null,
     generatedAt: new Date().toISOString(),
   });
 
-  const fixed = plan.fixedMonthlyCosts;
+  const fixed = calculation?.result.inputs.fixedMonthlyCosts ?? null;
   const benchmark = result.officialBenchmark;
   const rental = result.rentalMarketReference;
   const benchmarkBindingCurrent = JSON.stringify(calculation?.binding.officialBenchmarkIdentity ?? null) ===
     JSON.stringify(expectedBinding?.officialBenchmarkIdentity ?? null);
   const rentalBindingCurrent = (calculation?.binding.rentalConfirmationId ?? null) ===
     (expectedBinding?.rentalConfirmationId ?? null);
+  const targetIncomeRequiredDemand = customerTargetMonthlyIncomeWon === undefined
+    ? null
+    : calculateTargetIncomeRequiredDemand(result, customerTargetMonthlyIncomeWon);
 
   return (
     <div className="space-y-6">
       <AnalysisTargetHeader target={activeTarget} status={resultStatus} officialReferencePeriod={officialMarketData?.referencePeriod ?? null} />
-      {resultStatus !== "CURRENT" ? (
+      {versionSelectionRequired ? (
+        <section className="panel-card border-amber-300 bg-amber-50 p-4" role="status">
+          <p className="text-sm font-bold text-amber-950">사업계획 버전 선택 필요</p>
+          <p className="mt-1 text-xs leading-5 text-amber-900">최신 Economic 저장본이 유효하지 않습니다. 위 이력에서 사용할 VALID 버전을 직접 선택해 주세요.</p>
+          <button type="button" disabled className="mt-3 min-h-11 rounded-lg bg-amber-900 px-4 text-sm font-bold text-white opacity-50">현재 조건으로 다시 계산</button>
+        </section>
+      ) : resultStatus !== "CURRENT" ? (
         <section className="panel-card border-amber-300 bg-amber-50 p-4" role="status">
           <p className="text-sm font-bold text-amber-950">{resultStatus === "STALE" ? "다시 분석 필요" : "아직 계산하지 않음"}</p>
           <p className="mt-1 text-xs leading-5 text-amber-900">{resultStatus === "STALE" ? "이 결과는 이전 분석대상 또는 이전 조건으로 생성되었습니다. 입력한 사업계획은 현재 탭에서 그대로 이어집니다." : "분석대상을 확정한 뒤 현재 조건으로 계산해 주세요."}</p>
-          <button type="button" disabled={!activeTarget} onClick={runAndPersistCalculation} className="mt-3 min-h-11 rounded-lg bg-amber-900 px-4 text-sm font-bold text-white disabled:opacity-50">현재 조건으로 다시 계산</button>
+          <button type="button" disabled={!activeTarget || !draftValidation.plan || versionSelectionRequired} onClick={runAndPersistCalculation} className="mt-3 min-h-11 rounded-lg bg-amber-900 px-4 text-sm font-bold text-white disabled:opacity-50">현재 조건으로 다시 계산</button>
         </section>
       ) : (
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
           <p className="text-xs font-semibold text-emerald-900">현재 분석대상·공식자료·임대 확인범위·사업계획 입력과 일치하는 결과입니다.</p>
-          <button type="button" onClick={runAndPersistCalculation} className="btn-outline">현재 조건으로 다시 계산</button>
+          <button type="button" disabled={!draftValidation.plan} onClick={runAndPersistCalculation} className="btn-outline disabled:opacity-50">현재 조건으로 다시 계산</button>
         </section>
       )}
       {calculation && activeTarget && calculation.binding.analysisRunId !== activeTarget.analysisRunId ? (
@@ -367,25 +387,37 @@ export default function EconomicFeasibilityClient({
         <p className="mt-1 text-xs text-slate-500">모든 금액은 원, 비율은 화면에서 %로 입력합니다. 일 결제건수는 시장 수요예측값이 아니라 사업비용 구조를 검토하기 위한 검증 시나리오 입력값입니다.</p>
         <div className="mt-5 grid gap-5 xl:grid-cols-2">
           <div className="grid gap-3 sm:grid-cols-2">
-            <NumberInput label="예상 객단가" value={plan.expectedTicket} onChange={(value) => updatePlan((current) => ({ ...current, expectedTicket: value }))} />
+            <WonInput label="예상 객단가" value={formatWonInput(plan.expectedTicket)} onChange={(value) => updatePlan((current) => ({ ...current, expectedTicket: parseWonInput(value) ?? null }))} />
             <NumberInput label="월 영업일" suffix="일" value={plan.operatingDaysPerMonth} onChange={(value) => updatePlan((current) => ({ ...current, operatingDaysPerMonth: value }))} />
             {(["conservativeDailyTransactions", "baseDailyTransactions", "upsideDailyTransactions"] as const).map((field, index) => (
               <NumberInput key={field} label={`${["보수", "기준", "상향"][index]} 일 결제건수`} suffix="건" value={plan.salesScenario[field]} onChange={(value) => updatePlan((current) => ({ ...current, salesScenario: { ...current.salesScenario, [field]: value } }))} />
             ))}
-            <NumberInput label="사용자 설정 목표 월세부담률" suffix="%" step={0.1} value={plan.rentPlanning.targetRentBurdenRate * 100} onChange={(value) => updatePlan((current) => ({ ...current, rentPlanning: { targetRentBurdenRate: value / 100 } }))} />
+            <NumberInput label="사용자 설정 목표 월세부담률" suffix="%" step={0.1} value={plan.rentPlanning.targetRentBurdenRate === null ? null : plan.rentPlanning.targetRentBurdenRate * 100} onChange={(value) => updatePlan((current) => ({ ...current, rentPlanning: { targetRentBurdenRate: value === null ? null : value / 100 } }))} />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {rateFields.map(([field, label]) => <NumberInput key={field} label={label} suffix="%" step={0.1} value={plan.variableCostRates[field] * 100} onChange={(value) => updatePlan((current) => ({ ...current, variableCostRates: { ...current.variableCostRates, [field]: value / 100 } }))} />)}
+            {rateFields.map(([field, label]) => <NumberInput key={field} label={label} suffix="%" step={0.1} value={plan.variableCostRates[field] === null ? null : plan.variableCostRates[field] * 100} onChange={(value) => updatePlan((current) => ({ ...current, variableCostRates: { ...current.variableCostRates, [field]: value === null ? null : value / 100 } }))} />)}
           </div>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {moneyFields.map(([field, label]) => <NumberInput key={field} label={label} value={plan.fixedMonthlyCosts[field] ?? 0} onChange={(value) => updatePlan((current) => ({ ...current, fixedMonthlyCosts: { ...current.fixedMonthlyCosts, [field]: value } }))} />)}
+          {moneyFields.map(([field, label]) => <WonInput key={field} label={label} value={formatWonInput(plan.fixedMonthlyCosts[field])} onChange={(value) => updatePlan((current) => ({ ...current, fixedMonthlyCosts: { ...current.fixedMonthlyCosts, [field]: parseWonInput(value) ?? null } }))} />)}
         </div>
-        {(result.validation.errors.length > 0 || result.validation.warnings.length > 0) && (
+        {(draftValidation.errors.length > 0 || result.validation.errors.length > 0 || result.validation.warnings.length > 0) && (
           <div className="mt-4 rounded-xl bg-amber-50 p-4 text-xs text-amber-900">
-            {[...result.validation.errors, ...result.validation.warnings].map((message) => <p key={message}>• {message}</p>)}
+            {[...new Set([...draftValidation.errors, ...result.validation.errors, ...result.validation.warnings])].map((message) => <p key={message}>• {message}</p>)}
           </div>
         )}
+      </section>
+
+      <section className="panel-card p-5 md:p-6">
+        <h3 className="text-lg font-bold">상담 기준 참고</h3>
+        <p className="mt-1 text-xs text-slate-500">CUSTOMER와 FRAMEONE의 저장값을 읽기 전용으로 표시하며 사업계획 입력에 자동 반영하지 않습니다.</p>
+        <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
+          <Metric label="고객 목표 세전 영업이익"><>{formatWon(customerTargetMonthlyIncomeWon)} / 월</></Metric>
+          <Metric label="FRAMEONE 권장 월세 상한"><>{frameoneRecommendedMonthlyRentMaxWon === undefined ? "확인 필요" : `${formatWon(frameoneRecommendedMonthlyRentMaxWon)} 이하`}</></Metric>
+          <Metric label="목표 달성 필요 월매출"><Money value={targetIncomeRequiredDemand?.requiredMonthlySales ?? null} /></Metric>
+          <Metric label="목표 달성 필요 일결제건수"><>{targetIncomeRequiredDemand?.requiredDailyTransactions === null || targetIncomeRequiredDemand?.requiredDailyTransactions === undefined ? "계산 불가" : `${targetIncomeRequiredDemand.requiredDailyTransactions.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}건`}</></Metric>
+        </dl>
+        <p className="mt-4 text-xs text-slate-500">목표소득 달성을 위해 필요한 판매량이며, 상권에서 실제 발생할 것으로 예측한 수요가 아닙니다.</p>
       </section>
 
       <section className="panel-card p-5 md:p-6">
@@ -401,14 +433,14 @@ export default function EconomicFeasibilityClient({
         <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">BEP 필요 일결제건수</p><p className="mt-2 font-bold">{result.bep.requiredDailyTransactionsForBep === null ? "계산 불가" : `${result.bep.requiredDailyTransactionsForBep.toLocaleString("ko-KR", { maximumFractionDigits: 2 })}건 (운영 참고 ${Math.ceil(result.bep.requiredDailyTransactionsForBep)}건)`}</p></article>
         <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">기준 월세 부담률</p><p className="mt-2 font-bold"><Percent value={result.scenarios.base.rentBurdenRate} /></p></article>
         <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">추정 영업이익 · 입력값 기준</p><p className="mt-2 font-bold"><Money value={result.scenarios.base.estimatedOperatingProfit} /></p></article>
-        <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">사용자 설정 기준 월세상한</p><p className="mt-2 font-bold"><Money value={result.rentCeiling.baseRentCeiling} /></p></article>
+        <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">사용자 설정 기준 월세상한</p><p className="mt-2 font-bold">{plan.rentPlanning.targetRentBurdenRate === null ? "목표 월세부담률 미설정" : <Money value={result.rentCeiling.baseRentCeiling} />}</p></article>
         <article className="rounded-xl border border-slate-200 bg-white p-4"><p className="text-xs text-slate-500">손익분기 매출 대비 여유</p><p className="mt-2 font-bold"><Money value={result.bep.baseBufferAmount} /> <span className="block text-xs text-slate-500"><Percent value={result.bep.baseBufferRate} /></span></p></article>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
-        <ScenarioCard title="보수" scenario={result.scenarios.conservative} rent={fixed.rentMonthly} labor={fixed.laborMonthly} />
-        <ScenarioCard title="기준" scenario={result.scenarios.base} rent={fixed.rentMonthly} labor={fixed.laborMonthly} />
-        <ScenarioCard title="상향" scenario={result.scenarios.upside} rent={fixed.rentMonthly} labor={fixed.laborMonthly} />
+        <ScenarioCard title="보수" scenario={result.scenarios.conservative} rent={fixed?.rentMonthly ?? null} labor={fixed?.laborMonthly ?? null} />
+        <ScenarioCard title="기준" scenario={result.scenarios.base} rent={fixed?.rentMonthly ?? null} labor={fixed?.laborMonthly ?? null} />
+        <ScenarioCard title="상향" scenario={result.scenarios.upside} rent={fixed?.rentMonthly ?? null} labor={fixed?.laborMonthly ?? null} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">

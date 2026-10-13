@@ -351,6 +351,27 @@ test("Candidate Contract Readiness Snapshot은 현재 평가와 명시적 이력
       assert.equal(current.sourceReferences.economic.generatedAt, AT);
     });
 
+    await t.test("INVALID Economic version은 판정 기준으로 선택할 수 없다", async () => {
+      const scenario = await createScenario();
+      replaceRun(scenario.runId, (run) => {
+        const invalid = economicVersion(scenario.runId, { generatedAt: LATER, assumptionRevision: 0 });
+        invalid.result.validation.errors = ["invalid fixture"];
+        run.sections.economic.versions.push(invalid);
+      });
+      const response = await economicSelection.PUT(request("http://localhost", "PUT", {
+        caseId: scenario.caseRecord.caseId,
+        analysisRunId: scenario.runId,
+        generatedAt: LATER,
+        assumptionRevision: 0,
+        engineVersion: "economic-feasibility-v1",
+      }), scenario.params);
+      assert.equal(response.status, 400);
+      const view = await response.json();
+      assert.match(view.message, /유효하지 않은 Economic version/);
+      const selections = JSON.parse(fs.readFileSync(files.economicSelections, "utf8"));
+      assert.equal(selections.some((item) => item.candidateId === scenario.candidate.candidateId), false);
+    });
+
     await t.test("존재하지 않거나 다른 Analysis Run의 Economic version 선택을 거부한다", async () => {
       const scenario = await createScenario();
       replaceRun(scenario.runId, (run) => { run.sections.economic.versions.push(economicVersion(scenario.runId, { generatedAt: LATER })); });
