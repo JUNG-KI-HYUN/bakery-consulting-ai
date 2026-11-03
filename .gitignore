@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -20,6 +21,10 @@
 # production
 /build
 /docs/market-data/archive/*.zip
+
+# Local generated deliverables and temporary renders. These may contain customer data.
+/output/
+/tmp/
 
 # official source intake raw snapshots (keep the tracked directory placeholder)
 /data/seoul-market/v1.1-final/13_SOURCE_INGEST/raw/*
@@ -58,6 +63,21 @@ next-env.d.ts
 /data/field-surveys/
 /data/space-fit-layouts/
 /data/equipment-definitions/
+
+# Detailed Report runtime photos. Customer photo binaries must not enter git.
+/data/detailed-report-photos/
+/data/detailed-reports/
+/data/pork33-simple-reports/
+
+# PORK33 private source, derived assets, and append-only runtime snapshots.
+/data/pork33-sbiz365-source/
+/data/pork33-candidate-photos-source/
+/data/pork33-candidate-map-source/
+/data/pork33-candidate-photos-extracted/
+/data/pork33-candidate-shortlist/pork33-field-source-2026-10.v1.json
+/data/pork33-candidate-shortlist/private/
+/data/pork33-candidate-shortlist/runtime/
+/data/pork33-candidate-shortlist/photo-runtime/
 
 # Seoul living population publication runtime artifacts
 data/seoul-market/v1.1-final/13_SOURCE_INGEST/manifests/SRC-SEOUL-LIVING/current.json
