@@ -1,0 +1,62 @@
+import { SITE_CRITERIA_PROFILE_SCHEMA_VERSION, type SiteCriteriaProfileV1 } from "./types";
+
+/** 기존 PORK33 기준을 값 변경 없이 재사용하기 위한 authoritative profile 상수다. */
+export const PORK33_SITE_CRITERIA_PROFILE_V1: SiteCriteriaProfileV1 = Object.freeze({
+  schemaVersion: SITE_CRITERIA_PROFILE_SCHEMA_VERSION,
+  profileId: "pork33-site-criteria",
+  profileVersion: "1",
+  profileScope: "BRAND_SPECIFIC",
+  brandLabel: "PORK33",
+  industry: "FRESH_FOOD_RETAIL",
+  storeFormat: "SMALL_NEIGHBORHOOD_RETAIL",
+  criteria: Object.freeze([
+    Object.freeze({
+      key: "exclusiveArea",
+      label: "전용 약 10평",
+      importance: "PREFERRED",
+      comparisonType: "QUALITATIVE",
+      target: Object.freeze({ reference: 10, qualifier: "APPROXIMATE" }),
+      unit: "pyeong",
+      evidenceRequirement: "DOCUMENT_REQUIRED",
+    }),
+    Object.freeze({
+      key: "deposit",
+      label: "보증금 1,000~2,000만원 선호",
+      importance: "CONDITIONAL",
+      comparisonType: "RANGE",
+      target: Object.freeze({ preferredMin: 10_000_000, preferredMax: 20_000_000, exceptionalMax: 30_000_000 }),
+      unit: "KRW",
+      note: "매우 좋은 입지는 예외적으로 3,000만원 검토 가능",
+    }),
+    Object.freeze({
+      key: "rent",
+      label: "월세 100~200만원 선호",
+      importance: "PREFERRED",
+      comparisonType: "RANGE",
+      target: Object.freeze({ min: 1_000_000, max: 2_000_000 }),
+      unit: "KRW_PER_MONTH",
+    }),
+    Object.freeze({
+      key: "goodwill",
+      label: "무권리 원칙",
+      importance: "REQUIRED",
+      comparisonType: "EQUALS",
+      target: 0,
+      unit: "KRW",
+    }),
+    Object.freeze({
+      key: "householdBase",
+      label: "1,500세대 이상 주거배후 선호",
+      importance: "PREFERRED",
+      comparisonType: "MINIMUM",
+      target: 1500,
+      unit: "households",
+    }),
+    Object.freeze({ key: "mainResidentialFlow", label: "아파트 주생활동선", importance: "PREFERRED", comparisonType: "QUALITATIVE", target: "IMPORTANT" }),
+    Object.freeze({ key: "vehicleAccess", label: "차량 접근", importance: "PREFERRED", comparisonType: "PRESENCE", target: true }),
+    Object.freeze({ key: "shortTermParking", label: "단기정차", importance: "PREFERRED", comparisonType: "PRESENCE", target: true }),
+    Object.freeze({ key: "visibility", label: "가시성", importance: "PREFERRED", comparisonType: "QUALITATIVE", target: "IMPORTANT" }),
+    Object.freeze({ key: "repeatPurchaseTradeArea", label: "반복구매 생활상권", importance: "PREFERRED", comparisonType: "QUALITATIVE", target: "IMPORTANT" }),
+  ]),
+  createdAt: "2026-10-30T00:00:00.000Z",
+});

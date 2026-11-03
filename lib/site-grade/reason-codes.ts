@@ -1,0 +1,12 @@
+export const SITE_GRADE_REASON_CODES = Object.freeze([
+  "REQUIRED_HARD_GAP",
+  "REQUIRED_UNKNOWN",
+  "REQUIRED_GAP",
+  "REQUIRED_CONDITIONAL",
+  "PREFERRED_GAP",
+  "PREFERRED_HARD_GAP",
+  "FULL_REQUIRED_MATCH",
+  "FALLBACK_UNGRADED",
+] as const);
+
+export type SiteGradeReasonCode = (typeof SITE_GRADE_REASON_CODES)[number];
