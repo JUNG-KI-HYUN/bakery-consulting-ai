@@ -1,0 +1,21 @@
+{
+  "templateOnly": true,
+  "applyAutomatically": false,
+  "organization": {
+    "name": "PORK33",
+    "status": "ACTIVE"
+  },
+  "clientUser": {
+    "authUserId": "<PROVISIONED_AUTH_USER_UUID>",
+    "loginIdentifier": "pork33-hq-01",
+    "role": "VIEWER",
+    "status": "ACTIVE"
+  },
+  "project": {
+    "caseId": "case_pork33_field_2026_10",
+    "name": "2026 수도권·대전 출점후보",
+    "status": "ACTIVE"
+  },
+  "candidateShares": "CREATE_ONLY_AFTER_CASE_AND_CANDIDATE_VALIDATION",
+  "reportShares": "CREATE_ONLY_AFTER_GENERATION_MANIFEST_VALIDATION"
+}
